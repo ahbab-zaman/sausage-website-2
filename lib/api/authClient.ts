@@ -284,10 +284,16 @@ class AuthApiClient {
         success: false,
         error: response.error || response.message || "Logout failed"
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      let errorMessage = "Logout failed";
+
+      if (error instanceof Error) {
+        errorMessage = error.message; // ✅ safe now
+      }
+
       return {
         success: false,
-        error: error.message || "Logout failed"
+        error: errorMessage
       };
     }
   }
@@ -354,8 +360,17 @@ class AuthApiClient {
         success: false,
         error: response.error || response.message || "Failed to fetch account"
       };
-    } catch (err: any) {
-      return { success: false, error: err?.message || "Failed to fetch account" };
+    } catch (error: unknown) {
+      let errorMessage = "Logout failed";
+
+      if (error instanceof Error) {
+        errorMessage = error.message; // ✅ safe now
+      }
+
+      return {
+        success: false,
+        error: errorMessage
+      };
     }
   }
 
@@ -393,8 +408,17 @@ class AuthApiClient {
         success: false,
         error: response.error || response.message || "Failed to update account"
       };
-    } catch (error: any) {
-      return { success: false, error: error.message || "Failed to update account" };
+    } catch (error: unknown) {
+      let errorMessage = "Logout failed";
+
+      if (error instanceof Error) {
+        errorMessage = error.message; // ✅ safe now
+      }
+
+      return {
+        success: false,
+        error: errorMessage
+      };
     }
   }
 }

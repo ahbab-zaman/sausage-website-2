@@ -58,7 +58,7 @@ export function OTPModal({ isOpen, onClose, email }: OTPModalProps) {
         <DialogHeader>
           <DialogTitle>Verify Your Email</DialogTitle>
           <DialogDescription>
-            We've sent a verification code to <strong>{email}</strong>. Please enter it below.
+            We have sent a verification code to <strong>{email}</strong>. Please enter it below.
           </DialogDescription>
         </DialogHeader>
 
@@ -103,7 +103,7 @@ export function OTPModal({ isOpen, onClose, email }: OTPModalProps) {
           </div>
 
           <p className="text-center text-sm text-gray-600">
-            Didn't receive the code?{" "}
+            Did not receive the code?{" "}
             <button
               type="button"
               className="text-primary hover:text-primary/80 font-medium"

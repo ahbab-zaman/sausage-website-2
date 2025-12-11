@@ -5,13 +5,13 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useForm } from "@/hooks/useForm";
-import { ForgotPasswordSchema, type ForgotPasswordForm } from "@/lib/schemas";
+import { ForgotPasswordSchema } from "@/lib/schemas";
 
 export default function ForgotPasswordPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const { data, errors, isSubmitting, setValue, handleSubmit } = useForm(ForgotPasswordSchema);
 
-  const onSubmit = async (formData: ForgotPasswordForm) => {
+  const onSubmit = async () => {
     // Simulate password reset request
     await new Promise((resolve) => setTimeout(resolve, 1000));
     setIsSubmitted(true);

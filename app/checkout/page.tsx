@@ -11,7 +11,7 @@ export default function CheckoutPage() {
   const { items, getTotal, clearCart } = useCartStore();
   const { data, errors, isSubmitting, setValue, handleSubmit } = useForm(CheckoutSchema);
 
-  const onSubmit = async (formData: CheckoutForm) => {
+  const onSubmit = async (_formData: CheckoutForm) => {
     // Handle checkout logic here
     await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate API call
     alert("Order placed successfully!");

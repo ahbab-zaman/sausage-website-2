@@ -72,7 +72,7 @@ export interface UpdateAccountRequest {
 export interface UpdateAccountResponse {
   success: boolean;
   data?: User;
-  error?: string;
+  error?: unknown;
 }
 
 export interface TokenResponse {

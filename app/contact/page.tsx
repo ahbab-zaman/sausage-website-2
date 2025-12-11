@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MapPin, Phone, Mail, Clock, Send } from "lucide-react";
+import { MapPin, Phone, Mail, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useForm } from "@/hooks/useForm";
@@ -27,7 +27,7 @@ export default function ContactPage() {
           </div>
           <h2 className="mb-2 text-2xl font-bold text-green-800">Message Sent Successfully!</h2>
           <p className="mb-4 text-green-700">
-            Thank you for contacting us. We'll get back to you within 24 hours.
+            Thank you for contacting us. We will get back to you within 24 hours.
           </p>
           <Button
             onClick={() => setIsSubmitted(false)}
@@ -45,7 +45,7 @@ export default function ContactPage() {
       <div className="mb-12 text-center">
         <h1 className="mb-4 text-4xl font-bold text-gray-900">Contact Us</h1>
         <p className="text-muted-foreground mx-auto max-w-2xl text-lg">
-          We'd love to hear from you. Send us a message and we'll respond as soon as
+          We would love to hear from you. Send us a message and we will respond as soon as
           possible.
         </p>
       </div>
@@ -268,7 +268,7 @@ export default function ContactPage() {
                   className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
                 />
                 <label htmlFor="newsletter" className="ml-2 block text-sm text-gray-700">
-                  I'd like to receive updates about new products and promotions
+                  I would like to receive updates about new products and promotions
                 </label>
               </div>
 
@@ -284,7 +284,7 @@ export default function ContactPage() {
       <div className="mt-16">
         <h2 className="mb-6 text-center text-2xl font-semibold text-gray-900">Visit Our Store</h2>
         <div className="relative h-96 overflow-hidden rounded-xl bg-gray-100">
-          {/* Placeholder for map - in a real app, you'd use Google Maps, Mapbox, etc. */}
+          {/* Placeholder for map - in a real app, you d use Google Maps, Mapbox, etc. */}
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
               <MapPin className="mx-auto mb-4 h-16 w-16 text-gray-400" />
@@ -324,7 +324,7 @@ export default function ContactPage() {
           </div>
           <h3 className="mb-2 text-lg font-semibold text-gray-900">Email Support</h3>
           <p className="text-muted-foreground text-balance">
-            Send us an email and we'll respond within 24 hours during business days.
+            Send us an email and we will respond within 24 hours during business days.
           </p>
         </div>
 

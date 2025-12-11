@@ -18,7 +18,7 @@ export default function Categories() {
         <div className="mb-12 text-center">
           <h2 className="mb-4 text-3xl font-bold text-gray-900 md:text-4xl">Shop by Category</h2>
           <p className="text-lg text-gray-600">
-            Find exactly what you're looking for in our organized categories
+            Find exactly what you are looking for in our organized categories
           </p>
         </div>
 
