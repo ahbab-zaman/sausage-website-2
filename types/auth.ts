@@ -1,10 +1,12 @@
 export interface User {
-  id: string;
+  customer_id?: string;
+  firstname: string;
+  lastname: string;
   email: string;
-  firstName: string;
-  lastName: string;
   telephone?: string;
-  token?: string;
+  country_code?: string;
+  dob?: string;
+  token?: string; 
 }
 
 export interface LoginRequest {
@@ -63,6 +65,21 @@ export interface VerifyOTPResponse {
   };
   error?: string;
   message?: string;
+}
+
+export interface UpdateAccountRequest {
+  firstname?: string;
+  lastname?: string;
+  email?: string;
+  telephone?: string;
+  country_code?: string;
+  dob?: string;
+}
+
+export interface UpdateAccountResponse {
+  success: boolean;
+  data?: User;
+  error?: string;
 }
 
 export interface TokenResponse {

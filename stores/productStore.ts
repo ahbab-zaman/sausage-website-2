@@ -1,4 +1,4 @@
-// store/productStore.ts
+// stores/productStore.ts
 
 import { create } from "zustand";
 import { Product } from "@/types/product";
@@ -39,7 +39,8 @@ export const useProductStore = create<ProductState>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const featuredProducts = await apiClient.getFeaturedProducts();
-      set({ featuredProducts, loading: false });
+      // Ensure we only show 4 products
+      set({ featuredProducts: featuredProducts.slice(0, 4), loading: false });
     } catch (error) {
       set({
         error: error instanceof Error ? error.message : "Failed to fetch featured products",

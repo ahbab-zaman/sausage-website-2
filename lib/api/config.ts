@@ -6,7 +6,7 @@ export const API_CONFIG = {
   BASE_URL,
   ENDPOINTS: {
     PRODUCTS: "/index.php?route=feed/rest_api/products",
-    FEATURED_PRODUCTS: "/index.php?route=feed/rest_api/products&category=183&filter_max_price=5"
+    FEATURED_PRODUCTS: "/index.php?route=feed/rest_api/products"
   },
   HEADERS: {
     "Content-Type": "application/json"

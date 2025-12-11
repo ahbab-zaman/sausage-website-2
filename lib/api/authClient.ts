@@ -7,7 +7,8 @@ import {
   VerifyOTPRequest,
   VerifyOTPResponse,
   TokenResponse,
-  User
+  User,
+  UpdateAccountRequest
 } from "@/types/auth";
 
 class AuthApiClient {
@@ -191,42 +192,6 @@ class AuthApiClient {
     }
   }
 
-  // Login
-  async login(credentials: LoginRequest): Promise<{ user: User | null; error: string | null }> {
-    try {
-      const formData = new FormData();
-      formData.append("email", credentials.email);
-      formData.append("password", credentials.password);
-
-      const response = await this.requestFormData<LoginResponse>(
-        "/index.php?route=rest/login/login",
-        formData
-      );
-
-      if (response.success && response.data) {
-        const user: User = {
-          id: response.data.customer_id,
-          email: response.data.email,
-          firstName: response.data.firstname,
-          lastName: response.data.lastname,
-          telephone: response.data.telephone,
-          token: response.data.token
-        };
-        return { user, error: null };
-      }
-
-      return {
-        user: null,
-        error: response.error || response.message || "Login failed"
-      };
-    } catch (error) {
-      return {
-        user: null,
-        error: error instanceof Error ? error.message : "Login failed"
-      };
-    }
-  }
-
   // Register
   async register(data: RegisterRequest): Promise<{
     success: boolean;
@@ -267,7 +232,7 @@ class AuthApiClient {
 
       return {
         success: false,
-        error: response.error || response.message || "Registration failed"
+        error: response.error || "Registration failed"
       };
     } catch (error) {
       return {
@@ -295,13 +260,141 @@ class AuthApiClient {
 
       return {
         success: false,
-        error: response.error || response.message || "OTP verification failed"
+        error: response.error || "OTP verification failed"
       };
     } catch (error) {
       return {
         success: false,
         error: error instanceof Error ? error.message : "OTP verification failed"
       };
+    }
+  }
+
+  async logout(): Promise<{ success: boolean; error: string | null }> {
+    try {
+      const response = await this.request<any>("/index.php?route=rest/logout/logout", {
+        method: "POST"
+      });
+
+      if (response.success) {
+        return { success: true, error: null };
+      }
+
+      return {
+        success: false,
+        error: response.error || response.message || "Logout failed"
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        error: error.message || "Logout failed"
+      };
+    }
+  }
+
+  // inside AuthApiClient class (authClient.ts)
+  // --- LOGIN ---
+  async login(credentials: LoginRequest): Promise<{ user: User | null; error: string | null }> {
+    try {
+      const formData = new FormData();
+      formData.append("email", credentials.email);
+      formData.append("password", credentials.password);
+
+      const response = await this.requestFormData<LoginResponse>(
+        "/index.php?route=rest/login/login",
+        formData
+      );
+
+      if (response.success && response.data) {
+        const user: User = {
+          customer_id: response.data.customer_id,
+          email: response.data.email,
+          firstname: response.data.firstname,
+          lastname: response.data.lastname,
+          telephone: response.data.telephone,
+          token: response.data.token
+        };
+        return { user, error: null };
+      }
+
+      return {
+        user: null,
+        error: response.error || response.message || "Login failed"
+      };
+    } catch (err: any) {
+      return {
+        user: null,
+        error: err instanceof Error ? err.message : "Login failed"
+      };
+    }
+  }
+
+  // --- GET ACCOUNT INFO ---
+  async getAccountInfo(): Promise<{ success: boolean; data?: User; error?: string | null }> {
+    try {
+      const response = await this.request<any>("/index.php?route=rest/account/account", {
+        method: "GET"
+      });
+
+      if (response.success && response.data) {
+        const user: User = {
+          customer_id: response.data.customer_id,
+          email: response.data.email,
+          firstname: response.data.firstname,
+          lastname: response.data.lastname,
+          telephone: response.data.telephone,
+          country_code: response.data.country_code,
+          dob: response.data.dob
+          // token not returned here typically
+        };
+        return { success: true, data: user };
+      }
+
+      return {
+        success: false,
+        error: response.error || response.message || "Failed to fetch account"
+      };
+    } catch (err: any) {
+      return { success: false, error: err?.message || "Failed to fetch account" };
+    }
+  }
+
+  async updateAccount(
+    data: UpdateAccountRequest
+  ): Promise<{ success: boolean; error: string | null }> {
+    try {
+      const formData = new FormData();
+
+      // Required fields (guaranteed strings)
+      formData.append("firstname", data.firstname ?? "");
+      formData.append("lastname", data.lastname ?? "");
+      formData.append("email", data.email ?? "");
+      formData.append("telephone", data.telephone ?? "");
+
+      // Optional fields — append ONLY if defined
+      if (data.country_code) {
+        formData.append("country_code", String(data.country_code));
+      }
+
+      if (data.dob) {
+        formData.append("dob", String(data.dob));
+      }
+
+      const response = await this.requestFormData<any>(
+        "/index.php?route=rest/account/account",
+        formData
+      );
+
+      if (response.success) {
+        return { success: true, error: null };
+      }
+
+      return {
+        success: false,
+        error: response.error || response.message || "Failed to update account"
+      };
+    } catch (error: any) {
+      return { success: false, error: error.message || "Failed to update account" };
     }
   }
 }

@@ -1,13 +1,18 @@
-import { products } from "@/lib/data";
-import ProductDetailPage from "@/app/products/[id]/product-detail";
+// app/products/[id]/page.tsx
+import ProductDetailPage from "./product-detail";
+import { apiClient } from "@/lib/api/client";
 
-export default async function Page({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const product = products.find((p) => p.id === id);
-  const relatedProducts = products
-    .filter((p) => p.id !== id && p.category === product?.category)
-    .slice(0, 3);
+interface PageProps {
+  params: { id: string };
+}
 
+export default async function Page({ params }: PageProps) {
+  const { id } = params;
+
+  // Fetch single product from API
+  const product = await apiClient.getProductById(id);
+
+  // If product not found, show fallback
   if (!product) {
     return (
       <div className="mx-auto max-w-7xl px-4 py-16 text-center sm:px-6 lg:px-8">
@@ -15,6 +20,12 @@ export default async function Page({ params }: { params: Promise<{ id: string }>
       </div>
     );
   }
+
+  // Fetch all products to get related ones
+  const allProducts = await apiClient.getProducts();
+  const relatedProducts = allProducts
+    .filter((p) => p.id !== product.id && p.category === product.category)
+    .slice(0, 3);
 
   return <ProductDetailPage product={product} relatedProducts={relatedProducts} />;
 }

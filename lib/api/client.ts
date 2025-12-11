@@ -5,19 +5,65 @@ import { ApiProductResponse, Product, ProductsApiResponse } from "@/types/produc
 
 class ApiClient {
   private baseUrl: string;
+  private accessToken: string | null = null;
+  private tokenExpiry: number | null = null;
+  private readonly credentials = "apiuser:2024?08X^sausage"; // Basic auth credentials
 
   constructor() {
     this.baseUrl = API_CONFIG.BASE_URL;
   }
 
+  // Get valid access token (reuse if not expired, otherwise fetch new)
+  private async getValidToken(): Promise<string | null> {
+    const now = Date.now();
+
+    // If token exists and hasn't expired, reuse it
+    if (this.accessToken && this.tokenExpiry && now < this.tokenExpiry) {
+      return this.accessToken;
+    }
+
+    // Otherwise, fetch a new token using Basic Auth
+    try {
+      const credentials = btoa(this.credentials); // Base64 encode
+
+      const response = await fetch(
+        `${this.baseUrl}/index.php?route=feed/rest_api/gettoken&grant_type=client_credentials`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Basic ${credentials}`
+          }
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success && data.data?.access_token) {
+        this.accessToken = data.data.access_token;
+        // Set expiry time (expires_in is in seconds, subtract 60s for safety margin)
+        const expiresIn = data.data.expires_in || 3600;
+        this.tokenExpiry = now + (expiresIn - 60) * 1000;
+        return this.accessToken;
+      }
+
+      console.error("Token response:", data);
+      return null;
+    } catch (error) {
+      console.error("Failed to get token:", error);
+      return null;
+    }
+  }
+
   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
     const url = `${this.baseUrl}${endpoint}`;
+    const token = await this.getValidToken();
 
     try {
       const response = await fetch(url, {
         ...options,
         headers: {
           ...API_CONFIG.HEADERS,
+          ...(token && { Authorization: `Bearer ${token}` }),
           ...options?.headers
         }
       });
@@ -27,6 +73,35 @@ class ApiClient {
       }
 
       const data = await response.json();
+
+      // If token expired, clear it and retry once
+      if (
+        data.error &&
+        typeof data.error === "string" &&
+        data.error.toLowerCase().includes("token")
+      ) {
+        this.accessToken = null;
+        this.tokenExpiry = null;
+        const newToken = await this.getValidToken();
+
+        if (newToken) {
+          const retryResponse = await fetch(url, {
+            ...options,
+            headers: {
+              ...API_CONFIG.HEADERS,
+              Authorization: `Bearer ${newToken}`,
+              ...options?.headers
+            }
+          });
+
+          if (!retryResponse.ok) {
+            throw new Error(`API Error: ${retryResponse.status} ${retryResponse.statusText}`);
+          }
+
+          return await retryResponse.json();
+        }
+      }
+
       return data;
     } catch (error) {
       console.error("API Request Error:", error);
@@ -36,10 +111,12 @@ class ApiClient {
 
   // Transform API response to match frontend Product interface
   private transformProduct(apiProduct: ApiProductResponse): Product {
-    const price = parseFloat(apiProduct.price.replace(/[^0-9.-]+/g, "")) || 0;
-    const special = apiProduct.special
-      ? parseFloat(apiProduct.special.replace(/[^0-9.-]+/g, ""))
-      : undefined;
+    const price = Number(apiProduct.price) || 0;
+
+    const special =
+      apiProduct.special && apiProduct.special !== "0.00 AED"
+        ? Number(apiProduct.special.replace(" AED", ""))
+        : undefined;
 
     return {
       id: apiProduct.product_id,
@@ -51,14 +128,11 @@ class ApiClient {
       images: [apiProduct.image, apiProduct.thumb].filter(Boolean) as string[],
       rating: apiProduct.rating || 0,
       reviews: 0, // API doesn't provide reviews count, you may need to fetch this separately
-      category: apiProduct.category_id,
       badge: special ? "Sale" : undefined,
-      thumb: apiProduct.thumb,
       quantity: apiProduct.quantity ? parseInt(apiProduct.quantity, 10) : 0,
       model: apiProduct.model,
       manufacturer: apiProduct.manufacturer,
       stock_status: apiProduct.stock_status,
-      href: apiProduct.href
     };
   }
 
@@ -84,8 +158,8 @@ class ApiClient {
       );
 
       if (response.success && response.data) {
-        // Return first 6 products
-        return response.data.slice(0, 6).map(this.transformProduct);
+        // Return first 4 products for featured section
+        return response.data.map(this.transformProduct);
       }
 
       return [];

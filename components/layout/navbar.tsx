@@ -6,7 +6,6 @@ import { ShoppingCart, User, Menu, X, Search, Heart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/stores/cartStore";
 import { useAuthStore } from "@/stores/authStore";
-import Image from "next/image";
 import Navigation from "@/components/layout/navigation";
 import Logo from "@/components/logo";
 

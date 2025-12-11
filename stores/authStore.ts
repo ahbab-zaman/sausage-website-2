@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { User } from "@/types/auth";
+import type { UpdateAccountRequest, User } from "@/types/auth";
 import { authApiClient } from "@/lib/api/authClient";
 
 interface AuthStore {
@@ -23,6 +23,10 @@ interface AuthStore {
   verifyOTP: (otp: string) => Promise<{ success: boolean; error: string | null }>;
   logout: () => void;
   clearError: () => void;
+  fetchAccountInfo: () => Promise<{ success: boolean; error: string | null }>;
+  updateAccountInfo: (
+    data: UpdateAccountRequest
+  ) => Promise<{ success: boolean; error: string | null }>;
 }
 
 export const useAuthStore = create<AuthStore>()(
@@ -137,6 +141,46 @@ export const useAuthStore = create<AuthStore>()(
 
       clearError: () => {
         set({ error: null });
+      },
+
+      fetchAccountInfo: async () => {
+        set({ isLoading: true, error: null });
+
+        try {
+          const { success, data, error } = await authApiClient.getAccountInfo();
+
+          if (success && data) {
+            set({ user: data, isLoading: false });
+            return { success: true, error: null };
+          }
+
+          set({ isLoading: false, error });
+          return { success: false, error };
+        } catch (error: any) {
+          const msg = error.message || "Failed to load account";
+          set({ isLoading: false, error: msg });
+          return { success: false, error: msg };
+        }
+      },
+      updateAccountInfo: async (data: any) => {
+        set({ isLoading: true, error: null });
+
+        try {
+          const { success, error } = await authApiClient.updateAccount(data);
+
+          if (success) {
+            await get().fetchAccountInfo();
+            set({ isLoading: false });
+            return { success: true, error: null };
+          }
+
+          set({ isLoading: false, error });
+          return { success: false, error };
+        } catch (e: any) {
+          const msg = e.message || "Account update failed";
+          set({ isLoading: false, error: msg });
+          return { success: false, error: msg };
+        }
       }
     }),
     {
