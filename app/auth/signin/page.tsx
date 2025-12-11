@@ -1,3 +1,5 @@
+// app/auth/signin/page.tsx
+
 "use client";
 
 import Link from "next/link";
@@ -10,12 +12,17 @@ import { useRouter } from "next/navigation";
 
 export default function SignInPage() {
   const router = useRouter();
-  const { login, isLoading } = useAuthStore();
+  const { login, isLoading, error: authError } = useAuthStore();
   const { data, errors, isSubmitting, setValue, handleSubmit } = useForm(SignInSchema);
 
   const onSubmit = async (formData: SignInForm) => {
-    await login(formData.email, formData.password);
-    router.push("/");
+    const { success, error } = await login(formData.email, formData.password);
+
+    if (success) {
+      router.push("/");
+    } else {
+      console.error("Login failed:", error);
+    }
   };
 
   return (
@@ -32,6 +39,12 @@ export default function SignInPage() {
             </Link>
           </p>
         </div>
+
+        {authError && (
+          <div className="rounded-md bg-red-50 p-4">
+            <p className="text-sm text-red-800">{authError}</p>
+          </div>
+        )}
 
         <form
           className="mt-8 space-y-6"
