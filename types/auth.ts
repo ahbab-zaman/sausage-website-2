@@ -6,7 +6,7 @@ export interface User {
   telephone?: string;
   country_code?: string;
   dob?: string;
-  token?: string; 
+  token?: string;
 }
 
 export interface LoginRequest {
@@ -16,14 +16,7 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   success: boolean;
-  data?: {
-    customer_id: string;
-    email: string;
-    firstname: string;
-    lastname: string;
-    telephone: string;
-    token?: string;
-  };
+  data?: User;
   error?: string;
   message?: string;
 }

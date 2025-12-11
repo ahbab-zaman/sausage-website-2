@@ -5,6 +5,7 @@ import { Star, Heart } from "lucide-react";
 import { useCartStore } from "@/stores/cartStore";
 import type { Product } from "@/lib/schemas";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 
 interface ProductCardProps {
   product: Product;
@@ -35,7 +36,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           <Heart className="h-4 w-4 text-gray-600" />
         </button>
         <Link href={`/products/${product.id}`}>
-          <img
+          <Image
             src={product.image || "/placeholder.svg"}
             alt={product.name}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"

@@ -93,7 +93,7 @@ export default function Navigation() {
                 Complete your look with our stylish bags, jewelry, and more.
               </ListItem>
               <ListItem href="#" title="Sale">
-                Shop discounted items before they&#39;re gone.
+                Shop discounted items before they're gone.
               </ListItem>
             </ul>
           </NavigationMenuContent>

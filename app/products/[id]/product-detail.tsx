@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/stores/cartStore";
 import ProductCard from "@/components/ProductCard";
 import { Product } from "@/lib/schemas";
+import Image from "next/image";
 
 type Props = { product: Product; relatedProducts: Product[] };
 
@@ -46,7 +47,7 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
         {/* Product Images */}
         <div className="space-y-4">
           <div className="aspect-square overflow-hidden rounded-xl bg-gray-100">
-            <img
+            <Image
               src={productImages[selectedImage] || "/placeholder.svg"}
               alt={product.name}
               className="h-full w-full object-cover"
@@ -60,7 +61,7 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
                 className={`aspect-square overflow-hidden rounded-lg border-2 bg-gray-100 ${
                   selectedImage === index ? "border-primary" : "border-transparent"
                 }`}>
-                <img
+                <Image
                   src={image || "/placeholder.svg"}
                   alt={`${product.name} ${index + 1}`}
                   className="h-full w-full object-cover"

@@ -4,6 +4,7 @@ import { Minus, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/stores/cartStore";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function CartPage() {
   const { items, updateQuantity, removeItem, getTotal } = useCartStore();
@@ -13,7 +14,7 @@ export default function CartPage() {
       <div className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 lg:px-8">
         <h1 className="mb-4 text-3xl font-bold text-gray-900">Your Cart is Empty</h1>
         <p className="text-muted-foreground mb-8">
-          Looks like you haven&#39;t added anything to your cart yet.
+          Looks like you haven't added anything to your cart yet.
         </p>
         <Link href="/products">
           <Button size="lg">Continue Shopping</Button>
@@ -30,7 +31,7 @@ export default function CartPage() {
         <div className="divide-y divide-gray-200">
           {items.map((item) => (
             <div key={item.id} className="flex items-center space-x-4 p-6">
-              <img
+              <Image
                 src={item.image || "/placeholder.svg"}
                 alt={item.name}
                 className="h-20 w-20 rounded-lg object-cover"

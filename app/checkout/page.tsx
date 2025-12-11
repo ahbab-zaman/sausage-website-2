@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useCartStore } from "@/stores/cartStore";
 import { useForm } from "@/hooks/useForm";
 import { CheckoutSchema, type CheckoutForm } from "@/lib/schemas";
+import Image from "next/image";
 
 export default function CheckoutPage() {
   const { items, getTotal, clearCart } = useCartStore();
@@ -180,7 +181,7 @@ export default function CheckoutPage() {
             <div className="mb-6 space-y-4">
               {items.map((item) => (
                 <div key={item.id} className="flex items-center space-x-4">
-                  <img
+                  <Image
                     src={item.image || "/placeholder.svg"}
                     alt={item.name}
                     className="h-16 w-16 rounded-lg object-cover"

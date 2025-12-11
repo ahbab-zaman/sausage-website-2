@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { UpdateAccountRequest, User } from "@/types/auth";
+import type { LoginRequest, LoginResponse, UpdateAccountRequest, User } from "@/types/auth";
 import { authApiClient } from "@/lib/api/authClient";
 
 interface AuthStore {
@@ -10,7 +10,8 @@ interface AuthStore {
   pendingEmail: string | null;
   pendingCustomerId: string | null;
   pendingOTP: string | null;
-  login: (email: string, password: string) => Promise<{ success: boolean; error: string | null }>;
+
+  login: (data: LoginRequest) => Promise<LoginResponse>;
   signup: (
     email: string,
     password: string,
@@ -39,26 +40,48 @@ export const useAuthStore = create<AuthStore>()(
       pendingCustomerId: null,
       pendingOTP: null,
 
-      login: async (email, password) => {
-        set({ isLoading: true, error: null });
-
+      login: async ({ email, password }: LoginRequest): Promise<LoginResponse> => {
         try {
-          const { user, error } = await authApiClient.login({ email, password });
+          const res = await fetch("/api/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password })
+          });
 
-          if (user) {
-            set({ user, isLoading: false, error: null });
-            return { success: true, error: null };
+          const json = await res.json();
+
+          if (json.success) {
+            // Map API user to your User type
+            const user: User = {
+              customer_id: json.data.customer_id,
+              firstname: json.data.firstname,
+              lastname: json.data.lastname,
+              email: json.data.email,
+              telephone: json.data.telephone,
+              country_code: json.data.country_code,
+              dob: json.data.dob,
+              token: json.data.token
+            };
+
+            return {
+              success: true,
+              data: user
+            };
+          } else {
+            return {
+              success: false,
+              error: json.error || "Login failed"
+            };
           }
-
-          set({ isLoading: false, error });
-          return { success: false, error };
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : "Login failed";
-          set({ isLoading: false, error: errorMessage });
-          return { success: false, error: errorMessage };
+        } catch (err) {
+          return {
+            success: false,
+            error: err instanceof Error ? err.message : "Login failed"
+          };
         }
       },
 
+      // ----------------- SIGNUP -----------------
       signup: async (email, password, firstName, lastName, telephone, countryCode, dob) => {
         set({ isLoading: true, error: null });
 
@@ -74,7 +97,6 @@ export const useAuthStore = create<AuthStore>()(
           });
 
           if (response.success) {
-            // Store customer_id and OTP from registration response
             set({
               isLoading: false,
               error: null,
@@ -85,18 +107,18 @@ export const useAuthStore = create<AuthStore>()(
             return { success: true, error: null };
           }
 
-          set({ isLoading: false, error: response.error });
-          return { success: false, error: response.error };
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : "Registration failed";
+          set({ isLoading: false, error: response.error || "Registration failed" });
+          return { success: false, error: response.error || "Registration failed" };
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : "Registration failed";
           set({ isLoading: false, error: errorMessage });
           return { success: false, error: errorMessage };
         }
       },
 
+      // ----------------- VERIFY OTP -----------------
       verifyOTP: async (otp: string) => {
         const { pendingCustomerId } = get();
-
         if (!pendingCustomerId) {
           return { success: false, error: "No pending customer verification" };
         }
@@ -104,12 +126,9 @@ export const useAuthStore = create<AuthStore>()(
         set({ isLoading: true, error: null });
 
         try {
-          const { success, error } = await authApiClient.verifyOTP({
-            customer_id: pendingCustomerId,
-            otp
-          });
+          const response = await authApiClient.verifyOTP({ customer_id: pendingCustomerId, otp });
 
-          if (success) {
+          if (response.success) {
             set({
               isLoading: false,
               error: null,
@@ -120,15 +139,16 @@ export const useAuthStore = create<AuthStore>()(
             return { success: true, error: null };
           }
 
-          set({ isLoading: false, error });
-          return { success: false, error };
-        } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : "OTP verification failed";
+          set({ isLoading: false, error: response.error || "OTP verification failed" });
+          return { success: false, error: response.error || "OTP verification failed" };
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : "OTP verification failed";
           set({ isLoading: false, error: errorMessage });
           return { success: false, error: errorMessage };
         }
       },
 
+      // ----------------- LOGOUT -----------------
       logout: () => {
         set({
           user: null,
@@ -139,65 +159,57 @@ export const useAuthStore = create<AuthStore>()(
         });
       },
 
-      clearError: () => {
-        set({ error: null });
-      },
+      clearError: () => set({ error: null }),
 
+      // ----------------- FETCH ACCOUNT INFO -----------------
       fetchAccountInfo: async () => {
         set({ isLoading: true, error: null });
 
         try {
-          const { success, data, error } = await authApiClient.getAccountInfo();
+          const response = await authApiClient.getAccountInfo();
 
-          if (success && data) {
-            set({ user: data, isLoading: false });
+          if (response.success && response.data) {
+            set({ user: response.data, isLoading: false });
             return { success: true, error: null };
           }
 
-          set({ isLoading: false, error });
-          return { success: false, error };
-        } catch (error: any) {
-          const msg = error.message || "Failed to load account";
-          set({ isLoading: false, error: msg });
-          return { success: false, error: msg };
+          set({ isLoading: false, error: response.error || "Failed to load account" });
+          return { success: false, error: response.error || "Failed to load account" };
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : "Failed to load account";
+          set({ isLoading: false, error: errorMessage });
+          return { success: false, error: errorMessage };
         }
       },
-      updateAccountInfo: async (data: any) => {
+
+      // ----------------- UPDATE ACCOUNT INFO -----------------
+      updateAccountInfo: async (data: UpdateAccountRequest) => {
         set({ isLoading: true, error: null });
 
         try {
-          const { success, error } = await authApiClient.updateAccount(data);
+          const response = await authApiClient.updateAccount(data);
 
-          if (success) {
+          if (response.success) {
             await get().fetchAccountInfo();
             set({ isLoading: false });
             return { success: true, error: null };
           }
 
-          set({ isLoading: false, error });
-          return { success: false, error };
-        } catch (e: any) {
-          const msg = e.message || "Account update failed";
-          set({ isLoading: false, error: msg });
-          return { success: false, error: msg };
+          set({ isLoading: false, error: response.error || "Account update failed" });
+          return { success: false, error: response.error || "Account update failed" };
+        } catch (err) {
+          const errorMessage = err instanceof Error ? err.message : "Account update failed";
+          set({ isLoading: false, error: errorMessage });
+          return { success: false, error: errorMessage };
         }
       }
     }),
     {
       name: "auth-storage",
       storage: createJSONStorage(() => {
-        // Only use localStorage on client side
-        if (typeof window !== "undefined") {
-          return localStorage;
-        }
-        // Return a dummy storage for SSR
-        return {
-          getItem: () => null,
-          setItem: () => {},
-          removeItem: () => {}
-        };
+        if (typeof window !== "undefined") return localStorage;
+        return { getItem: () => null, setItem: () => {}, removeItem: () => {} };
       }),
-      // Only persist user, pendingEmail, pendingCustomerId, and pendingOTP
       partialize: (state) => ({
         user: state.user,
         pendingEmail: state.pendingEmail,
