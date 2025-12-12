@@ -1,149 +1,172 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image"; // Import Next.js Image for optimization
-import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay, Pagination } from "swiper/modules";
 import "swiper/css";
 import "swiper/css/pagination";
-import banner1 from "../../public/banner1.jpg";
-import banner2 from "../../public/banner2.png";
-import banner3 from "../../public/banner3.png";
-import banner4 from "../../public/banner4.png";
-import banner5 from "../../public/banner5.jpg";
 
-// Hero slide data - now using static image paths
+// Hero slide data matching the original structure
 const heroSlides = [
   {
-    title: "Discover Premium",
-    subtitle: "Products",
-    description:
-      "Experience exceptional quality and modern design. Shop our curated collection of premium products crafted for the modern lifestyle.",
-    imagePath: banner1, // Static image in public/images/
-    badgeText: "50%",
-    badgeLabel: "Special Offer",
-    badgeSub: "Limited time only",
-    primaryLink: "/products",
-    secondaryLink: "/about"
+    title: "JUST LANDED!",
+    text: "150 new reasons to raise a glass.",
+    buttonText: "AVAILABLE NOW!",
+    buttonLink: "/wine",
+    imageDesktop:
+      "https://thebottlestoredelivery.com/image/cache/catalog/-ADec%20Banners/NARRW-1600x900.jpg",
+    imageMobile:
+      "https://thebottlestoredelivery.com/image/cache/catalog/-ADec%20Banners/NARRW-1600x900.jpg",
+    imageAlt: "JUST LANDED! Image Text"
   },
   {
-    title: "Explore Luxury",
-    subtitle: "Essentials",
-    description:
-      "Elevate your everyday with our handpicked selection of luxury essentials designed for sophistication and comfort.",
-    imagePath: banner2, // Add your second static image here
-    badgeText: "30%",
-    badgeLabel: "Flash Sale",
-    badgeSub: "Ends soon",
-    primaryLink: "/products",
-    secondaryLink: "/about"
+    title: "Big Savings",
+    text: "On Your Favourite Beers",
+    buttonText: "Shop Now",
+    buttonLink: "/beer-and-cider/beer",
+    imageDesktop:
+      "https://thebottlestoredelivery.com/image/cache/catalog/1ABC%20banners/March%202025/MarchDeals_Website1-1600x900.jpg",
+    imageMobile:
+      "https://thebottlestoredelivery.com/image/cache/catalog/1ABC%20banners/March%202025/MarchDeals_Website1-1600x900.jpg",
+    imageAlt: "Big Savings Image Text"
   },
   {
-    title: "Unleash Style",
-    subtitle: "Innovation",
-    description:
-      "Step into the future of fashion with innovative designs that blend tradition and cutting-edge technology.",
-    imagePath: banner4, // Add your third static image here
-    badgeText: "20%",
-    badgeLabel: "New Arrival",
-    badgeSub: "Just in stock",
-    primaryLink: "/products",
-    secondaryLink: "/about"
+    title: "NICE",
+    text: "WINE IN A CAN",
+    buttonText: null,
+    buttonLink: null,
+    imageDesktop:
+      "https://thebottlestoredelivery.com/image/cache/catalog/-July%20banners/website/7-1600x900.png",
+    imageMobile:
+      "https://thebottlestoredelivery.com/image/cache/catalog/-July%20banners/website/7-1600x900.png",
+    imageAlt: "NICE Image Text"
   },
   {
-    title: "Unleash Style",
-    subtitle: "Innovation",
-    description:
-      "Step into the future of fashion with innovative designs that blend tradition and cutting-edge technology.",
-    imagePath: banner5, // Add your third static image here
-    badgeText: "20%",
-    badgeLabel: "New Arrival",
-    badgeSub: "Just in stock",
-    primaryLink: "/products",
-    secondaryLink: "/about"
+    title: "Patron El Cielo Prestige Silver Tequila",
+    text: "The world's first four-times distilled luxury silver tequila with a subtly sweet and undeniably smooth finish.",
+    buttonText: null,
+    buttonLink: null,
+    imageDesktop:
+      "https://thebottlestoredelivery.com/image/cache/catalog/-September%20banners/Website/1-1600x900.png",
+    imageMobile:
+      "https://thebottlestoredelivery.com/image/cache/catalog/-September%20banners/Website/1-1600x900.png",
+    imageAlt: "Patron El Cielo Prestige Silver Tequila Image Text"
   },
   {
-    title: "Unleash Style",
-    subtitle: "Innovation",
-    description:
-      "Step into the future of fashion with innovative designs that blend tradition and cutting-edge technology.",
-    imagePath: banner3, // Add your third static image here
-    badgeText: "20%",
-    badgeLabel: "New Arrival",
-    badgeSub: "Just in stock",
-    primaryLink: "/products",
-    secondaryLink: "/about"
+    title: "Draught at Home!",
+    text: "Enjoy bar quality pints from the comfort of your own home. Order our starter pack which includes the unit and 2 Heineken 8L Kegs!",
+    buttonText: "Learn More",
+    buttonLink: "/beer-and-cider/beer?product_id=16912",
+    imageDesktop:
+      "https://thebottlestoredelivery.com/image/cache/catalog/-September%20banners/Website/Blade2%20website-1600x900.png",
+    imageMobile:
+      "https://thebottlestoredelivery.com/image/cache/catalog/-September%20banners/Website/Blade2%20website-1600x900.png",
+    imageAlt: "Draught at Home! Image Text"
+  },
+  {
+    title: "Spend More Save More!",
+    text: "The more you shop, the more you save!",
+    buttonText: null,
+    buttonLink: null,
+    imageDesktop:
+      "https://thebottlestoredelivery.com/image/cache/catalog/1ABC%20banners/more-is-more-website-1600x900.jpg",
+    imageMobile:
+      "https://thebottlestoredelivery.com/image/cache/catalog/1ABC%20banners/more-is-more-website-1600x900.jpg",
+    imageAlt: "Spend More Save More! Image Text"
   }
 ];
 
 export default function Hero() {
   return (
-    <section className="bg-[#F2F2F2]">
-      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
-        <Swiper
-          modules={[Autoplay, Pagination]}
-          autoplay={{
-            delay: 3000, // Changed to 3 seconds for auto-slide change
-            disableOnInteraction: false, // Continues autoplay after user interaction
-            pauseOnMouseEnter: true // Optional: Pauses on hover for better UX
-          }}
-          pagination={{ clickable: true, dynamicBullets: true }}
-          loop={true}
-          className="h-full"
-          style={{ paddingBottom: "3rem" }}>
-          {heroSlides.map((slide, index) => (
-            <SwiperSlide key={index} className="flex justify-center">
-              <div className="grid w-full grid-cols-1 items-center gap-12 lg:grid-cols-2">
-                <div className="order-2 lg:order-1">
-                  <h1 className="mb-6 text-4xl font-bold text-gray-900 md:text-6xl">
-                    {slide.title}
-                    <span className="text-primary block">{slide.subtitle}</span>
-                  </h1>
-                  <p className="mb-8 max-w-lg text-xl text-gray-600">{slide.description}</p>
-                  <div className="flex flex-col gap-4 sm:flex-row">
-                    <Link href={slide.primaryLink}>
-                      <Button size="lg" className="w-full sm:w-auto">
-                        Shop Now
-                      </Button>
-                    </Link>
-                    <Link href={slide.secondaryLink}>
-                      <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                        Learn More
-                      </Button>
-                    </Link>
+    <section id="home-slider" className="w-full py-6">
+      <div className="home-slider-wrapper mx-auto w-[90%] bg-[#f2f2f2]">
+        <div className="section-slider">
+          <Swiper
+            modules={[Autoplay, Pagination]}
+            autoplay={{
+              delay: 3000,
+              disableOnInteraction: false
+            }}
+            pagination={{
+              clickable: true,
+              dynamicBullets: false
+            }}
+            loop={true}
+            className="w-full"
+            style={{ height: "360px" }}>
+            {heroSlides.map((slide, index) => (
+              <SwiperSlide key={index}>
+                <div className="single-cell-content flex h-[360px] w-full items-center">
+                  {/* Text Side - Left */}
+                  <div className="textSide flex w-1/2 flex-col justify-center px-8 md:px-12 lg:px-16">
+                    <h2 className="textSide-title mb-4 text-3xl font-bold text-gray-900 md:text-4xl lg:text-5xl">
+                      {slide.title}
+                    </h2>
+                    <p className="textSide-text mb-6 text-base text-gray-700 md:text-lg">
+                      {slide.text}
+                    </p>
+                    {slide.buttonText && slide.buttonLink && (
+                      <Link
+                        href={slide.buttonLink}
+                        className="textSide-btn buttonAnimation inline-flex w-fit items-center rounded-lg bg-gray-900 px-6 py-3 text-base font-semibold text-white transition-all duration-300 hover:bg-gray-800">
+                        <span>{slide.buttonText}</span>
+                      </Link>
+                    )}
                   </div>
-                </div>
-                <div className="relative order-1 lg:order-2">
-                  <div className="relative mx-auto aspect-[4/3] max-w-md overflow-hidden rounded-2xl bg-gray-100 lg:max-w-none">
-                    <Image
-                      src={slide.imagePath}
-                      alt={`${slide.title} Product`}
-                      fill
-                      className="object-cover transition-transform duration-500 hover:scale-105"
-                      sizes="(max-width: 768px) 100vw, 50vw" // Responsive sizing hint for optimization
-                      priority={index === 0} // Preload only the first image
-                    />
-                  </div>
-                  <div className="absolute -bottom-4 -left-4 rounded-xl bg-white p-4 shadow-lg md:-bottom-6 md:-left-6 md:p-6">
-                    <div className="flex items-center space-x-3 md:space-x-4">
-                      <div className="bg-primary flex h-10 w-10 items-center justify-center rounded-full text-xs md:h-12 md:w-12 md:text-base">
-                        <span className="font-bold text-white">{slide.badgeText}</span>
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900 md:text-base">
-                          {slide.badgeLabel}
-                        </p>
-                        <p className="text-xs text-gray-600 md:text-sm">{slide.badgeSub}</p>
-                      </div>
+
+                  {/* Image Side - Right */}
+                  <div className="imageSide h-full w-1/2">
+                    <div className="relative h-full w-full">
+                      <Image
+                        src={slide.imageDesktop}
+                        alt={slide.imageAlt}
+                        width={1600}
+                        height={900}
+                        className="h-full w-full object-cover"
+                        priority={index === 0}
+                        quality={90}
+                      />
                     </div>
                   </div>
                 </div>
-              </div>
-            </SwiperSlide>
-          ))}
-        </Swiper>
+              </SwiperSlide>
+            ))}
+          </Swiper>
+        </div>
       </div>
+
+      <style jsx global>{`
+        .swiper-pagination {
+          bottom: 10px !important;
+        }
+
+        .swiper-pagination-bullet {
+          background: rgba(0, 0, 0, 0.3);
+          opacity: 1;
+          width: 8px;
+          height: 8px;
+        }
+
+        .swiper-pagination-bullet-active {
+          background: rgba(0, 0, 0, 0.8);
+        }
+
+        @media (max-width: 768px) {
+          .single-cell-content {
+            flex-direction: column;
+          }
+
+          .textSide,
+          .imageSide {
+            width: 100% !important;
+          }
+
+          .textSide {
+            padding: 2rem 1rem;
+          }
+        }
+      `}</style>
     </section>
   );
 }

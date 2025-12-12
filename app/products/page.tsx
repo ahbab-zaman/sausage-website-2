@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronDown, Filter } from "lucide-react";
+import { ChevronDown, Filter, ChevronUp } from "lucide-react";
 import ProductCard from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api/client";
@@ -16,10 +16,11 @@ export default function ProductsPage() {
   const [priceRange, setPriceRange] = useState("all");
   const [sortBy, setSortBy] = useState("featured");
   const [showFilters, setShowFilters] = useState(false);
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
 
-  // Pagination state
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 6;
+  // Load More pagination state
+  const [displayCount, setDisplayCount] = useState(12);
+  const itemsPerLoad = 12;
 
   useEffect(() => {
     async function fetchProducts() {
@@ -51,23 +52,43 @@ export default function ProductsPage() {
       return true;
     })
     .sort((a, b) => {
+      if (sortBy === "name-asc") return a.name.localeCompare(b.name);
+      if (sortBy === "name-desc") return b.name.localeCompare(a.name);
       if (sortBy === "price-low") return a.price - b.price;
       if (sortBy === "price-high") return b.price - a.price;
       if (sortBy === "rating") return b.rating - a.rating;
       return 0;
     });
 
-  // Pagination calculations
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-  const paginatedProducts = filteredProducts.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  // Products to display
+  const displayedProducts = filteredProducts.slice(0, displayCount);
+  const hasMore = displayCount < filteredProducts.length;
+  const totalProducts = filteredProducts.length;
 
-  const handlePageChange = (page: number) => {
-    if (page < 1 || page > totalPages) return;
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: "smooth" }); // scroll to top on page change
+  const handleLoadMore = () => {
+    setDisplayCount((prev) => prev + itemsPerLoad);
+  };
+
+  // Reset display count when filters change
+  useEffect(() => {
+    setDisplayCount(12);
+  }, [selectedCategory, priceRange, sortBy]);
+
+  const getSortLabel = () => {
+    switch (sortBy) {
+      case "name-asc":
+        return "Name (A - Z)";
+      case "name-desc":
+        return "Name (Z - A)";
+      case "price-low":
+        return "Price (Low > High)";
+      case "price-high":
+        return "Price (High > Low)";
+      case "rating":
+        return "Highest Rated";
+      default:
+        return "Featured";
+    }
   };
 
   if (loading) {
@@ -89,6 +110,15 @@ export default function ProductsPage() {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      {/* Breadcrumb */}
+      <div className="mb-6 flex items-center text-sm text-gray-600">
+        <a href="/" className="hover:text-gray-900">
+          Home
+        </a>
+        <span className="mx-2">›</span>
+        <span className="text-gray-900">Beer & Cider</span>
+      </div>
+
       <div className="flex flex-col gap-8 lg:flex-row">
         {/* Filters Sidebar */}
         <div className="lg:w-64">
@@ -156,52 +186,107 @@ export default function ProductsPage() {
         {/* Products Grid */}
         <div className="flex-1">
           <div className="mb-6 flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">
-              Products ({filteredProducts.length})
-            </h1>
+            <h1 className="text-2xl font-bold text-gray-900">Products ({totalProducts})</h1>
 
+            {/* Custom Sort Dropdown */}
             <div className="relative">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="focus:ring-primary appearance-none rounded-lg border border-gray-300 bg-white px-4 py-2 pr-8 focus:border-transparent focus:ring-2">
-                <option value="featured">Featured</option>
-                <option value="newest">Newest</option>
-                <option value="price-low">Price: Low to High</option>
-                <option value="price-high">Price: High to Low</option>
-                <option value="rating">Highest Rated</option>
-              </select>
-              <ChevronDown className="pointer-events-none absolute top-1/2 right-2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
+              <button
+                onClick={() => setShowSortDropdown(!showSortDropdown)}
+                className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm hover:border-gray-400 focus:border-gray-400 focus:outline-none">
+                <span className="font-medium">Sort By</span>
+                <span className="text-gray-700">{getSortLabel()}</span>
+                {showSortDropdown ? (
+                  <ChevronUp className="h-4 w-4 text-gray-400" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 text-gray-400" />
+                )}
+              </button>
+
+              {showSortDropdown && (
+                <div className="absolute top-full right-0 z-50 mt-1 w-64 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+                  <button
+                    onClick={() => {
+                      setSortBy("name-asc");
+                      setShowSortDropdown(false);
+                    }}
+                    className={`w-full px-4 py-3 text-left text-sm transition-colors hover:bg-gray-50 ${
+                      sortBy === "name-asc"
+                        ? "bg-red-600 text-white hover:bg-red-700"
+                        : "text-gray-900"
+                    }`}>
+                    Name (A - Z)
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSortBy("name-desc");
+                      setShowSortDropdown(false);
+                    }}
+                    className={`w-full px-4 py-3 text-left text-sm transition-colors hover:bg-gray-50 ${
+                      sortBy === "name-desc"
+                        ? "bg-red-600 text-white hover:bg-red-700"
+                        : "text-gray-900"
+                    }`}>
+                    Name (Z - A)
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSortBy("price-low");
+                      setShowSortDropdown(false);
+                    }}
+                    className={`w-full px-4 py-3 text-left text-sm transition-colors hover:bg-gray-50 ${
+                      sortBy === "price-low"
+                        ? "bg-red-600 text-white hover:bg-red-700"
+                        : "text-gray-900"
+                    }`}>
+                    Price (Low &gt; High)
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSortBy("price-high");
+                      setShowSortDropdown(false);
+                    }}
+                    className={`w-full px-4 py-3 text-left text-sm transition-colors hover:bg-gray-50 ${
+                      sortBy === "price-high"
+                        ? "bg-red-600 text-white hover:bg-red-700"
+                        : "text-gray-900"
+                    }`}>
+                    Price (High &gt; Low)
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {paginatedProducts.map((product) => (
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {displayedProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="mt-8 flex justify-center space-x-2">
-              <Button
-                onClick={() => handlePageChange(currentPage - 1)}
-                disabled={currentPage === 1}>
-                Prev
-              </Button>
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <Button
-                  key={page}
-                  onClick={() => handlePageChange(page)}
-                  variant={currentPage === page ? "default" : "outline"}>
-                  {page}
-                </Button>
-              ))}
-              <Button
-                onClick={() => handlePageChange(currentPage + 1)}
-                disabled={currentPage === totalPages}>
-                Next
-              </Button>
+          {/* Load More Pagination */}
+          {hasMore && (
+            <div className="mt-12 flex flex-col items-center space-y-6">
+              {/* Progress Indicator */}
+              <div className="w-full max-w-md text-center">
+                <p className="mb-4 text-base text-gray-700">
+                  You've viewed {displayedProducts.length} of {totalProducts} products
+                </p>
+                <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                  <div
+                    className="h-2 rounded-full bg-red-500 transition-all duration-300"
+                    style={{
+                      width: `${(displayedProducts.length / totalProducts) * 100}%`
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Load More Button */}
+              <button
+                onClick={handleLoadMore}
+                className="rounded-lg bg-gray-800 px-16 py-4 text-base font-bold tracking-wide text-white uppercase transition-colors duration-200 hover:bg-gray-900">
+                LOAD MORE
+              </button>
             </div>
           )}
 

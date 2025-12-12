@@ -8,6 +8,12 @@ const nextConfig: NextConfig = {
         hostname: "app.mr-sausages.com",
         port: "",
         pathname: "/**"
+      },
+      {
+        protocol: "https",
+        hostname: "thebottlestoredelivery.com",
+        port: "",
+        pathname: "/**"
       }
     ]
   }

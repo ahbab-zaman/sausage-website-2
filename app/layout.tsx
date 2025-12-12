@@ -8,8 +8,10 @@ import Footer from "@/components/layout/footer";
 const inter = Geist({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Modern E-commerce Store",
-  description: "A modern and responsive e-commerce website",
+  title:
+    "The Bottle Store Abu Dhabi | Alcohol Delivery Abu Dhabi | 90 Min Home Delivery of Beer and Wine",
+  description:
+    "The Bottle Store - Experience fast and reliable alcohol home delivery in Abu Dhabi with The Bottle Store. We deliver top beer, wine, and spirit brands in under 90 minutes.",
   generator: "v0.dev"
 };
 

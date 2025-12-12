@@ -92,9 +92,9 @@ export default function FeaturedProducts() {
         </div>
 
         <div className="mt-8 flex justify-center">
-          <Button size="lg" onClick={() => router.push("/products")} className="group">
+          <Button size="lg" onClick={() => router.push("/products")} className="bg-[#3A3938]">
             View All Products
-            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+            <ArrowRight className="ml-2 h-4 w-4 transition-transform" />
           </Button>
         </div>
       </div>

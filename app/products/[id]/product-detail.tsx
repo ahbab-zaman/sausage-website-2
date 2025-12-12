@@ -7,6 +7,7 @@ import { useCartStore } from "@/stores/cartStore";
 import ProductCard from "@/components/ProductCard";
 import { Product } from "@/lib/schemas";
 import Image from "next/image";
+import Link from "next/link";
 
 type Props = { product: Product; relatedProducts: Product[] };
 
@@ -43,19 +44,33 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      {/* Breadcrumb */}
+      <div className="mb-6 flex items-center text-sm text-gray-600">
+        <Link href="/" className="transition-colors hover:text-gray-900">
+          Home
+        </Link>
+        <span className="mx-2">›</span>
+        <Link
+          href={`/categories/${product.category}`}
+          className="transition-colors hover:text-gray-900">
+          {product.category}
+        </Link>
+        <span className="mx-2">›</span>
+        <span className="text-gray-900">{product.name}</span>
+      </div>
+
       <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
         {/* Product Images */}
         <div className="space-y-4">
-          <div className="aspect-square overflow-hidden rounded-xl bg-gray-100">
+          <div className="relative mx-auto aspect-square max-w-[500px] overflow-hidden rounded-xl bg-gray-100">
             <Image
-              width={100}
-              height={100}
+              fill
               src={productImages[selectedImage] || "/placeholder.svg"}
               alt={product.name}
-              className="h-full w-full object-cover"
+              className="object-contain p-8"
             />
           </div>
-          <div className="grid grid-cols-4 gap-4">
+          <div className="mx-auto grid max-w-[500px] grid-cols-4 gap-4">
             {productImages.map((image, index) => (
               <button
                 key={index}
@@ -68,7 +83,7 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
                   height={100}
                   src={image || "/placeholder.svg"}
                   alt={`${product.name} ${index + 1}`}
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-contain p-2"
                 />
               </button>
             ))}
