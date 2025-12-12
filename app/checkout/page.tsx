@@ -4,14 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useCartStore } from "@/stores/cartStore";
 import { useForm } from "@/hooks/useForm";
-import { CheckoutSchema, type CheckoutForm } from "@/lib/schemas";
+import { CheckoutSchema } from "@/lib/schemas";
 import Image from "next/image";
 
 export default function CheckoutPage() {
   const { items, getTotal, clearCart } = useCartStore();
   const { data, errors, isSubmitting, setValue, handleSubmit } = useForm(CheckoutSchema);
 
-  const onSubmit = async (_formData: CheckoutForm) => {
+  const onSubmit = async () => {
     // Handle checkout logic here
     await new Promise((resolve) => setTimeout(resolve, 2000)); // Simulate API call
     alert("Order placed successfully!");
@@ -182,6 +182,8 @@ export default function CheckoutPage() {
               {items.map((item) => (
                 <div key={item.id} className="flex items-center space-x-4">
                   <Image
+                    width={16}
+                    height={16}
                     src={item.image || "/placeholder.svg"}
                     alt={item.name}
                     className="h-16 w-16 rounded-lg object-cover"

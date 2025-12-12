@@ -48,6 +48,8 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
         <div className="space-y-4">
           <div className="aspect-square overflow-hidden rounded-xl bg-gray-100">
             <Image
+              width={100}
+              height={100}
               src={productImages[selectedImage] || "/placeholder.svg"}
               alt={product.name}
               className="h-full w-full object-cover"
@@ -62,6 +64,8 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
                   selectedImage === index ? "border-primary" : "border-transparent"
                 }`}>
                 <Image
+                  width={100}
+                  height={100}
                   src={image || "/placeholder.svg"}
                   alt={`${product.name} ${index + 1}`}
                   className="h-full w-full object-cover"

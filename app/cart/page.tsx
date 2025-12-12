@@ -32,6 +32,8 @@ export default function CartPage() {
           {items.map((item) => (
             <div key={item.id} className="flex items-center space-x-4 p-6">
               <Image
+                width={20}
+                height={20}
                 src={item.image || "/placeholder.svg"}
                 alt={item.name}
                 className="h-20 w-20 rounded-lg object-cover"

@@ -2,12 +2,15 @@
 import ProductDetailPage from "./product-detail";
 import { apiClient } from "@/lib/api/client";
 
+// Updated interface for Next.js 15
 interface PageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
+  searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export default async function Page({ params }: PageProps) {
-  const { id } = params;
+  // Await params in Next.js 15
+  const { id } = await params;
 
   // Fetch single product from API
   const product = await apiClient.getProductById(id);

@@ -16,7 +16,11 @@ export default function SignInPage() {
   const { data, errors, isSubmitting, setValue, handleSubmit } = useForm(SignInSchema);
 
   const onSubmit = async (formData: SignInForm) => {
-    const { success, error } = await login(formData.email, formData.password);
+    // Pass credentials as a single object
+    const { success, error } = await login({
+      email: formData.email,
+      password: formData.password
+    });
 
     if (success) {
       router.push("/");

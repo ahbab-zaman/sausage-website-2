@@ -18,15 +18,16 @@ export default function SignUpPage() {
   const [registeredEmail, setRegisteredEmail] = useState("");
 
   const onSubmit = async (formData: SignUpForm) => {
-    const { success, error } = await signup(
-      formData.email,
-      formData.password,
-      formData.firstName,
-      formData.lastName,
-      formData.telephone,
-      formData.countryCode || "+880",
-      formData.dob
-    );
+    // Pass all data as a single object
+    const { success, error } = await signup({
+      email: formData.email,
+      password: formData.password,
+      firstname: formData.firstName,
+      lastname: formData.lastName,
+      telephone: formData.telephone,
+      country_code: formData.countryCode || "+880",
+      dob: formData.dob
+    });
 
     if (success) {
       setRegisteredEmail(formData.email);

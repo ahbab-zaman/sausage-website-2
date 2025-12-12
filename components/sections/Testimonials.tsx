@@ -28,6 +28,8 @@ export default function Testimonials() {
               <p className="mb-6 text-gray-700 italic">&#34;{testimonial.content}&#34;</p>
               <div className="flex items-center">
                 <Image
+                  width={12}
+                  height={12}
                   src={testimonial.avatar || "/placeholder.svg"}
                   alt={testimonial.name}
                   className="mr-4 h-12 w-12 rounded-full"

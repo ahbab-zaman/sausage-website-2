@@ -37,6 +37,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         </button>
         <Link href={`/products/${product.id}`}>
           <Image
+            fill
             src={product.image || "/placeholder.svg"}
             alt={product.name}
             className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"

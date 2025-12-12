@@ -119,7 +119,7 @@ export default function Hero() {
                     <Image
                       src={slide.imagePath}
                       alt={`${slide.title} Product`}
-                      fill // Fills the parent container
+                      fill
                       className="object-cover transition-transform duration-500 hover:scale-105"
                       sizes="(max-width: 768px) 100vw, 50vw" // Responsive sizing hint for optimization
                       priority={index === 0} // Preload only the first image
