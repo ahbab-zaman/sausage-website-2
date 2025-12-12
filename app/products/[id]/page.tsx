@@ -1,6 +1,9 @@
-// app/products/[id]/page.tsx
 import ProductDetailPage from "./product-detail";
 import { apiClient } from "@/lib/api/client";
+
+// Force dynamic rendering - disable caching
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 // Updated interface for Next.js 15
 interface PageProps {
@@ -30,5 +33,6 @@ export default async function Page({ params }: PageProps) {
     .filter((p) => p.id !== product.id && p.category === product.category)
     .slice(0, 3);
 
-  return <ProductDetailPage product={product} relatedProducts={relatedProducts} />;
+  // Add key prop to force re-render when product changes
+  return <ProductDetailPage key={product.id} product={product} relatedProducts={relatedProducts} />;
 }

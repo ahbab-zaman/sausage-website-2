@@ -1,5 +1,3 @@
-// lib/api/client.ts
-
 import { API_CONFIG } from "./config";
 import { ApiProductResponse, Product, ProductsApiResponse } from "@/types/product";
 
@@ -65,7 +63,8 @@ class ApiClient {
           ...API_CONFIG.HEADERS,
           ...(token && { Authorization: `Bearer ${token}` }),
           ...options?.headers
-        }
+        },
+        cache: "no-store" // Disable Next.js caching
       });
 
       if (!response.ok) {
@@ -91,7 +90,8 @@ class ApiClient {
               ...API_CONFIG.HEADERS,
               Authorization: `Bearer ${newToken}`,
               ...options?.headers
-            }
+            },
+            cache: "no-store"
           });
 
           if (!retryResponse.ok) {
@@ -118,6 +118,13 @@ class ApiClient {
         ? Number(apiProduct.special.replace(" AED", ""))
         : undefined;
 
+    // Build images array properly - no duplicates
+    const images: string[] = [];
+    if (apiProduct.image) images.push(apiProduct.image);
+    if (apiProduct.thumb && apiProduct.thumb !== apiProduct.image) {
+      images.push(apiProduct.thumb);
+    }
+
     return {
       id: apiProduct.product_id,
       name: apiProduct.name,
@@ -125,14 +132,14 @@ class ApiClient {
       price: special || price, // Use special price if available
       originalPrice: special ? price : undefined, // Set original price if there's a special price
       image: apiProduct.image || apiProduct.thumb || "",
-      images: [apiProduct.image, apiProduct.thumb].filter(Boolean) as string[],
+      images: images.length > 0 ? images : [apiProduct.image || "/placeholder.svg"],
       rating: apiProduct.rating || 0,
-      reviews: 0, // API doesn't provide reviews count, you may need to fetch this separately
+      reviews: 0, // API doesn't provide reviews count
       badge: special ? "Sale" : undefined,
       quantity: apiProduct.quantity ? parseInt(apiProduct.quantity, 10) : 0,
       model: apiProduct.model,
       manufacturer: apiProduct.manufacturer,
-      stock_status: apiProduct.stock_status,
+      stock_status: apiProduct.stock_status
     };
   }
 
@@ -141,7 +148,7 @@ class ApiClient {
       const response = await this.request<ProductsApiResponse>(API_CONFIG.ENDPOINTS.PRODUCTS);
 
       if (response.success && response.data) {
-        return response.data.map(this.transformProduct);
+        return response.data.map((p) => this.transformProduct(p));
       }
 
       return [];
@@ -159,7 +166,7 @@ class ApiClient {
 
       if (response.success && response.data) {
         // Return first 4 products for featured section
-        return response.data.map(this.transformProduct);
+        return response.data.map((p) => this.transformProduct(p));
       }
 
       return [];
