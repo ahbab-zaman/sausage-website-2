@@ -6,7 +6,7 @@ import mobile from "@/public/app-device.png";
 export const AppStore = () => {
   return (
     <section className="py-24">
-      <div className="container mx-auto px-4">
+      <div className="w-[65rem] mx-auto px-4">
         <div className="h-[300px] rounded-2xl bg-[#3b3b3b]">
           <div className="grid grid-cols-1 items-stretch lg:grid-cols-2">
             {" "}
