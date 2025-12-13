@@ -78,11 +78,7 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
 
   const handleAddToCart = async () => {
     try {
-      await addItem(product.id, quantity, {
-        name: product.name,
-        price: product.price,
-        image: productImages[0]
-      });
+      await addItem(product.id, quantity);
 
       // Show success message
       setShowSuccess(true);

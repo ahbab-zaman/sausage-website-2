@@ -16,7 +16,7 @@ class CartApiClient {
       const authStorage = localStorage.getItem("auth-storage");
       if (!authStorage) return null;
       const parsed = JSON.parse(authStorage);
-      return parsed?.state?.user?.client_token || null;
+      return parsed?.client_token || null;
     } catch {
       return null;
     }

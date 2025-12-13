@@ -16,13 +16,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [showDropdown, setShowDropdown] = useState(false);
 
   const handleAddToCart = (quantity: number) => {
-    addItem({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: product.image,
-      quantity: quantity
-    });
+    addItem(product.id, quantity);
     setShowDropdown(false);
   };
 
