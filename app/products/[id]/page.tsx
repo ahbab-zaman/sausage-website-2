@@ -30,8 +30,7 @@ export default async function Page({ params }: PageProps) {
   // Fetch all products to get related ones
   const allProducts = await apiClient.getProducts();
   const relatedProducts = allProducts
-    .filter((p) => p.id !== product.id && p.category === product.category)
-    .slice(0, 3);
+    .filter((p) => p.id !== product.id && p.category === product.category);
 
   // Add key prop to force re-render when product changes
   return <ProductDetailPage key={product.id} product={product} relatedProducts={relatedProducts} />;

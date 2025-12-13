@@ -1,15 +1,38 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Star, Heart, Minus, Plus, Truck, RotateCcw } from "lucide-react";
+import {
+  Star,
+  Heart,
+  Minus,
+  Plus,
+  Truck,
+  RotateCcw,
+  Wine,
+  Ruler,
+  Building2,
+  Globe,
+  Share
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/stores/cartStore";
 import ProductCard from "@/components/ProductCard";
-import { Product } from "@/lib/schemas";
+import { Product } from "@/types/product"; // Updated import path
 import Image from "next/image";
 import Link from "next/link";
+import ReviewsSection from "@/components/Review";
 
 type Props = { product: Product; relatedProducts: Product[] };
+
+// Icon mapping for specifications
+const getSpecIcon = (label: string) => {
+  const lowerLabel = label.toLowerCase();
+  if (lowerLabel.includes("abv") || lowerLabel.includes("alcohol")) return Wine;
+  if (lowerLabel.includes("size")) return Ruler;
+  if (lowerLabel.includes("brand")) return Building2;
+  if (lowerLabel.includes("country")) return Globe;
+  return Ruler; // default icon
+};
 
 export default function ProductDetailPage({ product, relatedProducts }: Props) {
   const [selectedImage, setSelectedImage] = useState(0);
@@ -22,13 +45,11 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
     if (product.images && product.images.length > 0) {
       return product.images;
     }
-    // Fallback to single image if no images array
     return product.image ? [product.image] : ["/placeholder.svg"];
   }, [product.images, product.image]);
 
-  // Reset ALL states when product changes - critical fix
+  // Reset ALL states when product changes
   useEffect(() => {
-    console.log("Product changed to:", product.id); // Debug log
     setSelectedImage(0);
     setSelectedColor(product?.colors?.[0]);
     setQuantity(1);
@@ -68,9 +89,9 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
         </Link>
         <span className="mx-2">›</span>
         <Link
-          href={`/categories/${product.category}`}
+          href={`/products`}
           className="transition-colors hover:text-gray-900">
-          {product.category}
+          All Products
         </Link>
         <span className="mx-2">›</span>
         <span className="text-gray-900">{product.name}</span>
@@ -117,34 +138,36 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
         <div className="space-y-6">
           <div>
             <h1 className="mb-2 text-3xl font-bold text-gray-900">{product.name}</h1>
-            <div className="mb-4 flex items-center space-x-4">
-              <div className="flex items-center">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`h-5 w-5 ${
-                      i < Math.floor(product.rating)
-                        ? "fill-current text-yellow-400"
-                        : "text-gray-300"
-                    }`}
-                  />
-                ))}
+            {product.reviews > 0 ? (
+              <div className="mb-4 flex items-center space-x-4">
+                <div className="flex items-center">
+                  {[...Array(5)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className={`h-5 w-5 ${
+                        i < Math.floor(product.rating)
+                          ? "fill-current text-yellow-400"
+                          : "text-gray-300"
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="text-muted-foreground text-sm">({product.reviews} reviews)</span>
               </div>
-              <span className="text-muted-foreground text-sm">({product.reviews} reviews)</span>
-            </div>
+            ) : (
+              <p className="mb-4 text-sm text-gray-500">There are no reviews for this product.</p>
+            )}
             <div className="flex items-center space-x-4">
-              <span className="text-3xl font-bold text-gray-900">${product.price.toFixed(2)}</span>
+              <span className="text-3xl font-bold text-gray-900">
+                {product.price.toFixed(2)} AED
+              </span>
               {product.originalPrice && (
                 <span className="text-xl text-gray-500 line-through">
-                  ${product.originalPrice.toFixed(2)}
+                  {product.originalPrice.toFixed(2)} AED
                 </span>
               )}
             </div>
           </div>
-
-          {product.description && (
-            <p className="text-muted-foreground leading-relaxed">{product.description}</p>
-          )}
 
           {/* Color Selection */}
           {product.colors && product.colors.length > 0 && (
@@ -169,9 +192,8 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
           )}
 
           {/* Quantity */}
-          <div>
-            <h3 className="mb-3 font-semibold text-gray-900">Quantity</h3>
-            <div className="flex items-center space-x-3">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center rounded-md bg-[#f2f2f2] p-[6px]">
               <button
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
                 className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300 transition-colors hover:bg-gray-50">
@@ -184,59 +206,78 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
                 <Plus className="h-4 w-4" />
               </button>
             </div>
+            <div className="w-full">
+              <Button
+                onClick={handleAddToCart}
+                className="w-full bg-gray-800 hover:bg-gray-900 py-[6px]"
+                size="lg">
+                ADD TO CART
+              </Button>
+            </div>
           </div>
 
           {/* Action Buttons */}
           <div className="flex flex-col gap-4 sm:flex-row">
-            <Button onClick={handleAddToCart} className="flex-1" size="lg">
-              Add to Cart
+            <Button variant="outline" size="lg" className="border-gray-300">
+              <Heart className="w-9 h-9 " />
             </Button>
-            <Button variant="outline" size="lg">
-              <Heart className="mr-2 h-5 w-5" />
-              Add to Wishlist
+            <Button variant="outline" size="lg" className="border-gray-300">
+              <Share />
             </Button>
           </div>
-
-          {/* Shipping Info */}
-          <div className="space-y-4 border-t pt-6">
-            <div className="flex items-center space-x-3">
-              <Truck className="text-primary h-5 w-5" />
-              <div>
-                <p className="font-medium">Free Shipping</p>
-                <p className="text-muted-foreground text-sm">On orders over $100</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <RotateCcw className="text-primary h-5 w-5" />
-              <div>
-                <p className="font-medium">30-Day Returns</p>
-                <p className="text-muted-foreground text-sm">Free returns within 30 days</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Features */}
-          {product.features && product.features.length > 0 && (
-            <div className="border-t pt-6">
-              <h3 className="mb-3 font-semibold text-gray-900">Key Features</h3>
-              <ul className="space-y-2">
-                {product.features.map((feature, index) => (
-                  <li key={index} className="flex items-center space-x-2">
-                    <div className="bg-primary h-2 w-2 rounded-full" />
-                    <span className="text-muted-foreground">{feature}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
         </div>
       </div>
+
+      {/* Description and Specifications Section */}
+      <div className="mt-12 grid grid-cols-1 gap-8 lg:grid-cols-2">
+        {/* Description */}
+        <div>
+          <h2 className="mb-4 text-2xl font-bold text-gray-900">Description</h2>
+          {product.description && (
+            <p className="text-muted-foreground leading-relaxed">{product.description}</p>
+          )}
+          {product.features && product.features.length > 0 && (
+            <ul className="mt-4 space-y-2">
+              {product.features.map((feature, index) => (
+                <li key={index} className="flex items-center space-x-2">
+                  <div className="bg-primary h-2 w-2 rounded-full" />
+                  <span className="text-muted-foreground">{feature}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* Specifications */}
+        {product.specifications && product.specifications.length > 0 && (
+          <div>
+            <h2 className="mb-4 text-2xl font-bold text-gray-900">Specification</h2>
+            <div className="grid grid-cols-2 gap-6">
+              {product.specifications.map((spec, index) => {
+                const IconComponent = getSpecIcon(spec.label);
+                return (
+                  <div key={index} className="flex items-start space-x-3">
+                    <IconComponent className="mt-1 h-5 w-5 text-gray-400" />
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 uppercase">{spec.label}</p>
+                      <p className="mt-1 font-medium text-gray-900">{spec.value}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Reviews Section */}
+      <ReviewsSection productId={product.id} averageRating={product.rating} reviews={[]} />
 
       {/* Related Products */}
       {relatedProducts.length > 0 && (
         <div className="mt-16">
           <h2 className="mb-8 text-2xl font-bold text-gray-900">Related Products</h2>
-          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {relatedProducts.map((product) => (
               <ProductCard key={product.id} product={product} />
             ))}

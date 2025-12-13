@@ -1,28 +1,32 @@
 import { API_CONFIG } from "./config";
 import { ApiProductResponse, Product, ProductsApiResponse } from "@/types/product";
 
+// Add new interface for single product response
+interface SingleProductResponse {
+  success: number;
+  error: string[];
+  data: ApiProductResponse;
+}
+
 class ApiClient {
   private baseUrl: string;
   private accessToken: string | null = null;
   private tokenExpiry: number | null = null;
-  private readonly credentials = "apiuser:2024?08X^sausage"; // Basic auth credentials
+  private readonly credentials = "apiuser:2024?08X^sausage";
 
   constructor() {
     this.baseUrl = API_CONFIG.BASE_URL;
   }
 
-  // Get valid access token (reuse if not expired, otherwise fetch new)
   private async getValidToken(): Promise<string | null> {
     const now = Date.now();
 
-    // If token exists and hasn't expired, reuse it
     if (this.accessToken && this.tokenExpiry && now < this.tokenExpiry) {
       return this.accessToken;
     }
 
-    // Otherwise, fetch a new token using Basic Auth
     try {
-      const credentials = btoa(this.credentials); // Base64 encode
+      const credentials = btoa(this.credentials);
 
       const response = await fetch(
         `${this.baseUrl}/index.php?route=feed/rest_api/gettoken&grant_type=client_credentials`,
@@ -38,7 +42,6 @@ class ApiClient {
 
       if (data.success && data.data?.access_token) {
         this.accessToken = data.data.access_token;
-        // Set expiry time (expires_in is in seconds, subtract 60s for safety margin)
         const expiresIn = data.data.expires_in || 3600;
         this.tokenExpiry = now + (expiresIn - 60) * 1000;
         return this.accessToken;
@@ -64,7 +67,7 @@ class ApiClient {
           ...(token && { Authorization: `Bearer ${token}` }),
           ...options?.headers
         },
-        cache: "no-store" // Disable Next.js caching
+        cache: "no-store"
       });
 
       if (!response.ok) {
@@ -73,7 +76,6 @@ class ApiClient {
 
       const data = await response.json();
 
-      // If token expired, clear it and retry once
       if (
         data.error &&
         typeof data.error === "string" &&
@@ -109,7 +111,6 @@ class ApiClient {
     }
   }
 
-  // Transform API response to match frontend Product interface
   private transformProduct(apiProduct: ApiProductResponse): Product {
     const price = Number(apiProduct.price) || 0;
 
@@ -118,28 +119,69 @@ class ApiClient {
         ? Number(apiProduct.special.replace(" AED", ""))
         : undefined;
 
-    // Build images array properly - no duplicates
+    // Build images array from the response
     const images: string[] = [];
     if (apiProduct.image) images.push(apiProduct.image);
-    if (apiProduct.thumb && apiProduct.thumb !== apiProduct.image) {
-      images.push(apiProduct.thumb);
+
+    // Add additional images from images array if they exist
+    if (apiProduct.images && Array.isArray(apiProduct.images)) {
+      apiProduct.images.forEach((img) => {
+        if (img && !images.includes(img)) {
+          images.push(img);
+        }
+      });
+    }
+
+    // Extract attribute details
+    const attributes: Record<string, string> = {};
+    const specifications: Array<{ label: string; value: string; icon?: string }> = [];
+    let category = "All Products";
+
+    if (apiProduct.attribute_groups && Array.isArray(apiProduct.attribute_groups)) {
+      apiProduct.attribute_groups.forEach((group) => {
+        if (group.attribute && Array.isArray(group.attribute)) {
+          group.attribute.forEach((attr) => {
+            attributes[attr.name] = attr.text;
+
+            // Build specifications array for display
+            specifications.push({
+              label: attr.name.toUpperCase(),
+              value: attr.text,
+              icon: attr.icon
+            });
+          });
+        }
+      });
+    }
+
+    // Extract brand for category if available
+    if (attributes.Brand) {
+      category = attributes.Brand;
     }
 
     return {
-      id: apiProduct.product_id,
+      id: String(apiProduct.product_id || apiProduct.id),
       name: apiProduct.name,
       description: apiProduct.description,
-      price: special || price, // Use special price if available
-      originalPrice: special ? price : undefined, // Set original price if there's a special price
-      image: apiProduct.image || apiProduct.thumb || "",
+      price: special || price,
+      originalPrice: special ? price : undefined,
+      image: apiProduct.image || "/placeholder.svg",
       images: images.length > 0 ? images : [apiProduct.image || "/placeholder.svg"],
       rating: apiProduct.rating || 0,
-      reviews: 0, // API doesn't provide reviews count
+      reviews: 0,
       badge: special ? "Sale" : undefined,
-      quantity: apiProduct.quantity ? parseInt(apiProduct.quantity, 10) : 0,
-      model: apiProduct.model,
-      manufacturer: apiProduct.manufacturer,
-      stock_status: apiProduct.stock_status
+      quantity: apiProduct.quantity ? parseInt(String(apiProduct.quantity), 10) : 0,
+      model: apiProduct.model || apiProduct.product_code,
+      manufacturer: apiProduct.manufacturer || attributes.Brand,
+      stock_status: apiProduct.availability || apiProduct.stock_status,
+      category: category,
+      // Add individual attributes
+      size: attributes.Size,
+      brand: attributes.Brand,
+      country: attributes.Country,
+      abv: attributes.ABV || attributes.Alcohol,
+      // Add structured specifications
+      specifications: specifications.length > 0 ? specifications : undefined
     };
   }
 
@@ -165,7 +207,6 @@ class ApiClient {
       );
 
       if (response.success && response.data) {
-        // Return first 4 products for featured section
         return response.data.map((p) => this.transformProduct(p));
       }
 
@@ -178,14 +219,22 @@ class ApiClient {
 
   async getProductById(id: string): Promise<Product | null> {
     try {
-      const response = await this.request<ProductsApiResponse>(
-        `${API_CONFIG.ENDPOINTS.PRODUCTS}&product_id=${id}`
+      console.log("Fetching product with ID:", id);
+
+      // Use the correct endpoint format for single product
+      const response = await this.request<SingleProductResponse>(
+        `${API_CONFIG.ENDPOINTS.PRODUCTS}&id=${id}`
       );
 
-      if (response.success && response.data && response.data.length > 0) {
-        return this.transformProduct(response.data[0]);
+      console.log("Single product response:", response);
+
+      // Check if response is successful and data exists
+      if (response.success && response.data) {
+        // The response.data is a single object, not an array
+        return this.transformProduct(response.data);
       }
 
+      console.error("Product not found or invalid response");
       return null;
     } catch (error) {
       console.error("Failed to fetch product:", error);

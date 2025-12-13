@@ -4,6 +4,7 @@ import Categories from "@/components/sections/Categories";
 import Testimonials from "@/components/sections/Testimonials";
 import Newsletter from "@/components/sections/Newsletter";
 import Services from "@/components/sections/Services";
+import { AppStore } from "@/components/sections/AppStore";
 
 export default function HomePage() {
   return (
@@ -11,9 +12,10 @@ export default function HomePage() {
       <Hero />
       <Services />
       <FeaturedProducts />
-      <Categories />
+      <AppStore />
+      {/* <Categories />
       <Testimonials />
-      <Newsletter />
+      <Newsletter /> */}
     </main>
   );
 }

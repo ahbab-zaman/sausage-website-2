@@ -1,37 +1,54 @@
 import { z } from "zod";
 
-// Product schema - types will be inferred from this
+// Color schema
+export const ColorSchema = z.object({
+  name: z.string(),
+  value: z.string()
+});
+
+// Product Specification schema
+export const ProductSpecificationSchema = z.object({
+  label: z.string(),
+  value: z.string(),
+  icon: z.string().optional()
+});
+
+// Product schema
 export const ProductSchema = z.object({
   id: z.string(),
   name: z.string(),
-  price: z.number().positive(),
-  originalPrice: z.number().positive().optional(),
+  price: z.number(),
   image: z.string(),
-  rating: z.number().min(0).max(5),
-  reviews: z.number().min(0),
+  rating: z.number().default(0),
+  reviews: z.number().default(0),
+  originalPrice: z.number().optional(),
   category: z.string().optional(),
   badge: z.string().optional(),
   description: z.string().optional(),
   images: z.array(z.string()).optional(),
-  colors: z
-    .array(
-      z.object({
-        name: z.string(),
-        value: z.string()
-      })
-    )
-    .optional(),
+  colors: z.array(ColorSchema).optional(),
   sizes: z.array(z.string()).optional(),
-  features: z.array(z.string()).optional()
+  features: z.array(z.string()).optional(),
+  quantity: z.number().optional(),
+  model: z.string().optional(),
+  manufacturer: z.string().optional(),
+  stock_status: z.string().optional(),
+  // Specification fields
+  size: z.string().optional(),
+  brand: z.string().optional(),
+  country: z.string().optional(),
+  abv: z.string().optional(),
+  specifications: z.array(ProductSpecificationSchema).optional()
 });
 
 // Cart item schema
 export const CartItemSchema = z.object({
   id: z.string(),
   name: z.string(),
-  price: z.number().positive(),
+  price: z.number(),
   image: z.string(),
-  quantity: z.number().min(1)
+  quantity: z.number(),
+  color: z.string().optional()
 });
 
 // User schema
@@ -94,8 +111,10 @@ export const ContactSchema = z.object({
   orderNumber: z.string().optional()
 });
 
-// Infer types from schemas
+// Type exports
 export type Product = z.infer<typeof ProductSchema>;
+export type Color = z.infer<typeof ColorSchema>;
+export type ProductSpecification = z.infer<typeof ProductSpecificationSchema>;
 export type CartItem = z.infer<typeof CartItemSchema>;
 export type User = z.infer<typeof UserSchema>;
 export type SignInForm = z.infer<typeof SignInSchema>;

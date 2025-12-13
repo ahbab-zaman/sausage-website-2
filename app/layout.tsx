@@ -12,7 +12,10 @@ export const metadata: Metadata = {
     "The Bottle Store Abu Dhabi | Alcohol Delivery Abu Dhabi | 90 Min Home Delivery of Beer and Wine",
   description:
     "The Bottle Store - Experience fast and reliable alcohol home delivery in Abu Dhabi with The Bottle Store. We deliver top beer, wine, and spirit brands in under 90 minutes.",
-  generator: "v0.dev"
+  generator: "v0.dev",
+  icons: {
+    icon: "./logo.png"
+  }
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
