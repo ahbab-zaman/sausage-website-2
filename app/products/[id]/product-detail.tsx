@@ -12,12 +12,14 @@ import {
   Ruler,
   Building2,
   Globe,
-  Share
+  Share,
+  Loader2,
+  CheckCircle2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/stores/cartStore";
 import ProductCard from "@/components/ProductCard";
-import { Product } from "@/types/product"; // Updated import path
+import { Product } from "@/types/product";
 import Image from "next/image";
 import Link from "next/link";
 import ReviewsSection from "@/components/Review";
@@ -31,16 +33,18 @@ const getSpecIcon = (label: string) => {
   if (lowerLabel.includes("size")) return Ruler;
   if (lowerLabel.includes("brand")) return Building2;
   if (lowerLabel.includes("country")) return Globe;
-  return Ruler; // default icon
+  return Ruler;
 };
 
 export default function ProductDetailPage({ product, relatedProducts }: Props) {
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedColor, setSelectedColor] = useState(product?.colors?.[0]);
   const [quantity, setQuantity] = useState(1);
-  const addItem = useCartStore((state) => state.addItem);
+  const [showSuccess, setShowSuccess] = useState(false);
 
-  // Memoize product images to ensure consistent array
+  const { addItem, loading, error, resetError } = useCartStore();
+
+  // Memoize product images
   const productImages = useMemo(() => {
     if (product.images && product.images.length > 0) {
       return product.images;
@@ -48,14 +52,16 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
     return product.image ? [product.image] : ["/placeholder.svg"];
   }, [product.images, product.image]);
 
-  // Reset ALL states when product changes
+  // Reset states when product changes
   useEffect(() => {
     setSelectedImage(0);
     setSelectedColor(product?.colors?.[0]);
     setQuantity(1);
-  }, [product.id, product?.colors]);
+    setShowSuccess(false);
+    resetError();
+  }, [product.id, product?.colors, resetError]);
 
-  // Safety check: if selectedImage is out of bounds, reset it
+  // Safety check for selected image
   useEffect(() => {
     if (selectedImage >= productImages.length) {
       setSelectedImage(0);
@@ -70,27 +76,52 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
     );
   }
 
-  const handleAddToCart = () => {
-    addItem({
-      id: product.id,
-      name: product.name,
-      price: product.price,
-      image: productImages[0],
-      quantity: quantity
-    });
+  const handleAddToCart = async () => {
+    try {
+      await addItem(product.id, quantity, {
+        name: product.name,
+        price: product.price,
+        image: productImages[0]
+      });
+
+      // Show success message
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+
+      // Reset quantity after adding
+      setQuantity(1);
+    } catch (err) {
+      console.error("Failed to add to cart:", err);
+    }
   };
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      {/* Success Message */}
+      {showSuccess && (
+        <div className="fixed top-4 right-4 z-50 flex items-center gap-2 rounded-lg bg-green-500 px-6 py-3 text-white shadow-lg">
+          <CheckCircle2 className="h-5 w-5" />
+          <span>Added to cart successfully!</span>
+        </div>
+      )}
+
+      {/* Error Message */}
+      {error && (
+        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+          <p className="text-red-600">{error}</p>
+          <button onClick={resetError} className="mt-2 text-sm text-red-800 underline">
+            Dismiss
+          </button>
+        </div>
+      )}
+
       {/* Breadcrumb */}
       <div className="mb-6 flex items-center text-sm text-gray-600">
         <Link href="/" className="transition-colors hover:text-gray-900">
           Home
         </Link>
         <span className="mx-2">›</span>
-        <Link
-          href={`/products`}
-          className="transition-colors hover:text-gray-900">
+        <Link href={`/products`} className="transition-colors hover:text-gray-900">
           All Products
         </Link>
         <span className="mx-2">›</span>
@@ -196,22 +227,32 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
             <div className="flex items-center rounded-md bg-[#f2f2f2] p-[6px]">
               <button
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300 transition-colors hover:bg-gray-50">
+                disabled={loading}
+                className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50">
                 <Minus className="h-4 w-4" />
               </button>
               <span className="w-12 text-center font-semibold">{quantity}</span>
               <button
                 onClick={() => setQuantity(quantity + 1)}
-                className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300 transition-colors hover:bg-gray-50">
+                disabled={loading}
+                className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50">
                 <Plus className="h-4 w-4" />
               </button>
             </div>
             <div className="w-full">
               <Button
                 onClick={handleAddToCart}
-                className="w-full bg-gray-800 hover:bg-gray-900 py-[6px]"
+                disabled={loading}
+                className="w-full bg-gray-800 py-[6px] hover:bg-gray-900"
                 size="lg">
-                ADD TO CART
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ADDING...
+                  </>
+                ) : (
+                  "ADD TO CART"
+                )}
               </Button>
             </div>
           </div>
@@ -219,7 +260,7 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
           {/* Action Buttons */}
           <div className="flex flex-col gap-4 sm:flex-row">
             <Button variant="outline" size="lg" className="border-gray-300">
-              <Heart className="w-9 h-9 " />
+              <Heart className="h-9 w-9" />
             </Button>
             <Button variant="outline" size="lg" className="border-gray-300">
               <Share />

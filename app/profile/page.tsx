@@ -38,21 +38,23 @@ export default function AccountPage() {
   const [editMode, setEditMode] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showErrorModal, setShowErrorModal] = useState(false);
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const [form, setForm] = useState({
     firstname: "",
     lastname: "",
     email: "",
     telephone: "",
-    country_code: "",
+    country_code: "+880",
     dob: ""
   });
 
+  // Fetch user info on mount
   useEffect(() => {
     fetchAccountInfo();
   }, [fetchAccountInfo]);
 
+  // Populate form when user is loaded
   useEffect(() => {
     if (user) {
       setForm({
@@ -67,18 +69,17 @@ export default function AccountPage() {
   }, [user]);
 
   const validateForm = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!form.firstname.trim()) newErrors.firstname = "First name is required";
-    if (!form.lastname.trim()) newErrors.lastname = "Last name is required";
-    if (!form.email.trim()) newErrors.email = "Email is required";
-    else if (!/\S+@\S+\.\S+/.test(form.email)) newErrors.email = "Invalid email format";
-    if (!form.telephone.trim()) newErrors.telephone = "Phone number is required";
+    const errors: Record<string, string> = {};
+    if (!form.firstname.trim()) errors.firstname = "First name is required";
+    if (!form.lastname.trim()) errors.lastname = "Last name is required";
+    if (!form.email.trim()) errors.email = "Email is required";
+    else if (!/\S+@\S+\.\S+/.test(form.email)) errors.email = "Invalid email format";
+    if (!form.telephone.trim()) errors.telephone = "Phone number is required";
     else if (form.telephone.length < 10)
-      newErrors.telephone = "Phone number must be at least 10 digits";
+      errors.telephone = "Phone number must be at least 10 digits";
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
   const handleUpdate = async () => {
@@ -107,7 +108,7 @@ export default function AccountPage() {
       });
     }
     setEditMode(false);
-    setErrors({});
+    setFormErrors({});
   };
 
   const getInitials = () => {
@@ -150,7 +151,7 @@ export default function AccountPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-gray-100">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-        {/* Header Section */}
+        {/* Header */}
         <div className="mb-8">
           <Card className="overflow-hidden border-0 shadow-xl">
             <div className="relative h-32 bg-[#f2f2f2]">
@@ -201,6 +202,7 @@ export default function AccountPage() {
           </Card>
         </div>
 
+        {/* Body */}
         <div className="grid gap-8 lg:grid-cols-4">
           {/* Sidebar */}
           <div className="lg:col-span-1">
@@ -230,6 +232,7 @@ export default function AccountPage() {
 
           {/* Main Content */}
           <div className="lg:col-span-3">
+            {/* Profile Tab */}
             {activeTab === "profile" && (
               <Card className="border-0 shadow-lg">
                 <CardContent className="p-6 sm:p-8">
@@ -238,53 +241,51 @@ export default function AccountPage() {
                   </h2>
 
                   <div className="space-y-6">
-                    {/* Name Row */}
+                    {/* Name */}
                     <div className="grid gap-6 sm:grid-cols-2">
                       <div className="group">
                         <label className="mb-2 flex items-center text-sm font-medium text-gray-700">
-                          <User className="mr-2 h-4 w-4" />
-                          First Name
+                          <User className="mr-2 h-4 w-4" /> First Name
                         </label>
                         <Input
                           disabled={!editMode}
                           value={form.firstname}
                           onChange={(e) => {
                             setForm({ ...form, firstname: e.target.value });
-                            setErrors({ ...errors, firstname: "" });
+                            setFormErrors({ ...formErrors, firstname: "" });
                           }}
                           className={`transition-all duration-300 ${
                             editMode
                               ? "border-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                               : "bg-gray-50"
-                          } ${errors.firstname ? "border-red-500" : ""}`}
+                          } ${formErrors.firstname ? "border-red-500" : ""}`}
                           placeholder="Enter first name"
                         />
-                        {errors.firstname && (
-                          <p className="mt-1 text-sm text-red-600">{errors.firstname}</p>
+                        {formErrors.firstname && (
+                          <p className="mt-1 text-sm text-red-600">{formErrors.firstname}</p>
                         )}
                       </div>
 
                       <div className="group">
                         <label className="mb-2 flex items-center text-sm font-medium text-gray-700">
-                          <User className="mr-2 h-4 w-4" />
-                          Last Name
+                          <User className="mr-2 h-4 w-4" /> Last Name
                         </label>
                         <Input
                           disabled={!editMode}
                           value={form.lastname}
                           onChange={(e) => {
                             setForm({ ...form, lastname: e.target.value });
-                            setErrors({ ...errors, lastname: "" });
+                            setFormErrors({ ...formErrors, lastname: "" });
                           }}
                           className={`transition-all duration-300 ${
                             editMode
                               ? "border-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                               : "bg-gray-50"
-                          } ${errors.lastname ? "border-red-500" : ""}`}
+                          } ${formErrors.lastname ? "border-red-500" : ""}`}
                           placeholder="Enter last name"
                         />
-                        {errors.lastname && (
-                          <p className="mt-1 text-sm text-red-600">{errors.lastname}</p>
+                        {formErrors.lastname && (
+                          <p className="mt-1 text-sm text-red-600">{formErrors.lastname}</p>
                         )}
                       </div>
                     </div>
@@ -292,8 +293,7 @@ export default function AccountPage() {
                     {/* Email */}
                     <div className="group">
                       <label className="mb-2 flex items-center text-sm font-medium text-gray-700">
-                        <Mail className="mr-2 h-4 w-4" />
-                        Email Address
+                        <Mail className="mr-2 h-4 w-4" /> Email Address
                       </label>
                       <Input
                         disabled={!editMode}
@@ -301,24 +301,25 @@ export default function AccountPage() {
                         value={form.email}
                         onChange={(e) => {
                           setForm({ ...form, email: e.target.value });
-                          setErrors({ ...errors, email: "" });
+                          setFormErrors({ ...formErrors, email: "" });
                         }}
                         className={`transition-all duration-300 ${
                           editMode
                             ? "border-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                             : "bg-gray-50"
-                        } ${errors.email ? "border-red-500" : ""}`}
+                        } ${formErrors.email ? "border-red-500" : ""}`}
                         placeholder="Enter email address"
                       />
-                      {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
+                      {formErrors.email && (
+                        <p className="mt-1 text-sm text-red-600">{formErrors.email}</p>
+                      )}
                     </div>
 
-                    {/* Phone Row */}
+                    {/* Phone */}
                     <div className="grid gap-6 sm:grid-cols-3">
                       <div className="group">
                         <label className="mb-2 flex items-center text-sm font-medium text-gray-700">
-                          <MapPin className="mr-2 h-4 w-4" />
-                          Country Code
+                          <MapPin className="mr-2 h-4 w-4" /> Country Code
                         </label>
                         <Input
                           disabled={!editMode}
@@ -335,34 +336,32 @@ export default function AccountPage() {
 
                       <div className="group sm:col-span-2">
                         <label className="mb-2 flex items-center text-sm font-medium text-gray-700">
-                          <Phone className="mr-2 h-4 w-4" />
-                          Phone Number
+                          <Phone className="mr-2 h-4 w-4" /> Phone Number
                         </label>
                         <Input
                           disabled={!editMode}
                           value={form.telephone}
                           onChange={(e) => {
                             setForm({ ...form, telephone: e.target.value });
-                            setErrors({ ...errors, telephone: "" });
+                            setFormErrors({ ...formErrors, telephone: "" });
                           }}
                           className={`transition-all duration-300 ${
                             editMode
                               ? "border-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
                               : "bg-gray-50"
-                          } ${errors.telephone ? "border-red-500" : ""}`}
+                          } ${formErrors.telephone ? "border-red-500" : ""}`}
                           placeholder="Enter phone number"
                         />
-                        {errors.telephone && (
-                          <p className="mt-1 text-sm text-red-600">{errors.telephone}</p>
+                        {formErrors.telephone && (
+                          <p className="mt-1 text-sm text-red-600">{formErrors.telephone}</p>
                         )}
                       </div>
                     </div>
 
-                    {/* Date of Birth */}
+                    {/* DOB */}
                     <div className="group">
                       <label className="mb-2 flex items-center text-sm font-medium text-gray-700">
-                        <Calendar className="mr-2 h-4 w-4" />
-                        Date of Birth
+                        <Calendar className="mr-2 h-4 w-4" /> Date of Birth
                       </label>
                       <Input
                         disabled={!editMode}
@@ -409,6 +408,7 @@ export default function AccountPage() {
               </Card>
             )}
 
+            {/* Security, Notifications, Activity Tabs */}
             {activeTab === "security" && (
               <Card className="border-0 shadow-lg">
                 <CardContent className="p-6 sm:p-8">

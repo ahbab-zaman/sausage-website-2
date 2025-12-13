@@ -21,7 +21,7 @@ interface OTPModalProps {
 
 export function OTPModal({ isOpen, onClose, email }: OTPModalProps) {
   const router = useRouter();
-  const { verifyOTP, isLoading, error, clearError, pendingOTP } = useAuthStore();
+  const { verifyOTP, isLoading, error, clearError, pendingEmail, pendingOTP } = useAuthStore();
   const [otp, setOtp] = useState("");
   const [localError, setLocalError] = useState<string | null>(null);
 
@@ -35,13 +35,13 @@ export function OTPModal({ isOpen, onClose, email }: OTPModalProps) {
       return;
     }
 
-    const { success, error: verifyError } = await verifyOTP(otp);
+    const result = await verifyOTP(otp);
 
-    if (success) {
+    if (result.success) {
       onClose();
       router.push("/auth/signin");
     } else {
-      setLocalError(verifyError || "OTP verification failed");
+      setLocalError(result.error || "OTP verification failed");
     }
   };
 
@@ -107,10 +107,7 @@ export function OTPModal({ isOpen, onClose, email }: OTPModalProps) {
             <button
               type="button"
               className="text-primary hover:text-primary/80 font-medium"
-              onClick={() => {
-                // Implement resend OTP logic here if needed
-                console.log("Resend OTP");
-              }}>
+              onClick={() => console.log("Resend OTP")}>
               Resend
             </button>
           </p>

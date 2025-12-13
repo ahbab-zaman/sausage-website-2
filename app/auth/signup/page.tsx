@@ -18,8 +18,7 @@ export default function SignUpPage() {
   const [registeredEmail, setRegisteredEmail] = useState("");
 
   const onSubmit = async (formData: SignUpForm) => {
-    // Pass all data as a single object
-    const { success, error } = await signup({
+    const result = await signup({
       email: formData.email,
       password: formData.password,
       firstname: formData.firstName,
@@ -29,11 +28,11 @@ export default function SignUpPage() {
       dob: formData.dob
     });
 
-    if (success) {
+    if (result.success) {
       setRegisteredEmail(formData.email);
       setShowOTPModal(true);
     } else {
-      console.error("Signup failed:", error);
+      console.error("Signup failed:", result.error);
     }
   };
 
