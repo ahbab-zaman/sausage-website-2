@@ -35,7 +35,7 @@ export const useAuthStore = create<AuthStore>()(
       login: async (data) => {
         set({ isLoading: true, error: null });
         const res = await authApiClient.login(data);
-        if (res.user) set({ user: res.user });
+        if (res.user) set({ user: res.user }); // user.token included
         set({ isLoading: false, error: res.error ?? null });
         return { success: !!res.user, error: res.error ?? null };
       },
@@ -76,7 +76,8 @@ export const useAuthStore = create<AuthStore>()(
 
       fetchAccountInfo: async () => {
         set({ isLoading: true, error: null });
-        const res = await authApiClient.getAccountInfo();
+        const userToken = get().user?.token; // pass token for authenticated request
+        const res = await authApiClient.getAccountInfo(userToken);
         if (res.success && res.data) set({ user: res.data });
         set({ isLoading: false, error: res.error ?? null });
         return { success: res.success, error: res.error ?? null };
@@ -84,7 +85,8 @@ export const useAuthStore = create<AuthStore>()(
 
       updateAccountInfo: async (data) => {
         set({ isLoading: true, error: null });
-        const res = await authApiClient.updateAccount(data);
+        const userToken = get().user?.token;
+        const res = await authApiClient.updateAccount(data, userToken);
         if (res.success) await get().fetchAccountInfo();
         set({ isLoading: false, error: res.error ?? null });
         return { success: res.success, error: res.error ?? null };

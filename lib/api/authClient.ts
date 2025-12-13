@@ -1,230 +1,3 @@
-// import { API_CONFIG } from "./config";
-// import {
-//   LoginRequest,
-//   User,
-//   RegisterRequest,
-//   VerifyOTPRequest,
-//   UpdateAccountRequest,
-//   ApiResponse,
-//   BackendUser,
-// } from "@/types/auth";
-
-// // Helper to join error array into string
-// function getErrorMessage<T>(response: ApiResponse<T>): string {
-//   if (Array.isArray(response.error) && response.error.length > 0) {
-//     return response.error.join(", ");
-//   }
-//   return response.message ?? "Unknown error";
-// }
-
-// export class AuthApiClient {
-//   private baseUrl: string;
-//   private accessToken: string | null = null;
-//   private tokenExpiry: number | null = null;
-//   private readonly credentials = "apiuser:2024?08X^sausage";
-
-//   constructor() {
-//     this.baseUrl = API_CONFIG.BASE_URL;
-//   }
-
-//   private async getValidToken(): Promise<string | null> {
-//     const now = Date.now();
-//     if (this.accessToken && this.tokenExpiry && now < this.tokenExpiry) return this.accessToken;
-
-//     try {
-//       const credentials = btoa(this.credentials);
-//       const res = await fetch(
-//         `${this.baseUrl}/index.php?route=feed/rest_api/gettoken&grant_type=client_credentials`,
-//         { method: "POST", headers: { Authorization: `Basic ${credentials}` } }
-//       );
-
-//       const data = await res.json();
-//       if (data.success && data.data?.access_token) {
-//         this.accessToken = data.data.access_token;
-//         const expiresIn = data.data.expires_in || 3600;
-//         this.tokenExpiry = now + (expiresIn - 60) * 1000;
-//         return this.accessToken;
-//       }
-
-//       console.error("Token fetch failed:", data);
-//       return null;
-//     } catch (err) {
-//       console.error("Token error:", err);
-//       return null;
-//     }
-//   }
-
-//   private async request<T>(endpoint: string, options?: RequestInit): Promise<T> {
-//     const url = `${this.baseUrl}${endpoint}`;
-//     const token = await this.getValidToken();
-
-//     try {
-//       const res = await fetch(url, {
-//         ...options,
-//         headers: {
-//           "Content-Type": "application/json",
-//           ...(token ? { Authorization: `Bearer ${token}` } : {}),
-//           ...options?.headers
-//         },
-//         mode: "cors",
-//         credentials: "omit"
-//       });
-//       const data = await res.json();
-//       return data;
-//     } catch (err) {
-//       console.error("Request error:", err);
-//       throw err;
-//     }
-//   }
-
-//   private async requestFormData<T>(endpoint: string, formData: FormData): Promise<T> {
-//     const url = `${this.baseUrl}${endpoint}`;
-//     const token = await this.getValidToken();
-//     try {
-//       const res = await fetch(url, {
-//         method: "POST",
-//         body: formData,
-//         headers: { ...(token ? { Authorization: `Bearer ${token}` } : {}) },
-//         mode: "cors",
-//         credentials: "omit"
-//       });
-//       const data = await res.json();
-//       return data;
-//     } catch (err) {
-//       console.error("FormData request error:", err);
-//       throw err;
-//     }
-//   }
-
-//   // ------------------- REGISTER -------------------
-//   async register(
-//     data: RegisterRequest
-//   ): Promise<{
-//     success: boolean;
-//     error: string | null;
-//     data?: { customer_id: string; otp?: string };
-//   }> {
-//     try {
-//       const formData = new FormData();
-//       Object.entries(data).forEach(([key, value]) => {
-//         if (value) formData.append(key, value as any);
-//       });
-//       const response = await this.requestFormData<
-//         ApiResponse<{ customer_id: string; otp?: string }>
-//       >("/index.php?route=rest/register_mobile", formData);
-//       return {
-//         success: response.success === 1,
-//         error: response.success === 1 ? null : getErrorMessage(response),
-//         data: response.data
-//       };
-//     } catch (err) {
-//       return { success: false, error: err instanceof Error ? err.message : "Registration failed" };
-//     }
-//   }
-
-//   // ------------------- VERIFY OTP -------------------
-//   async verifyOTP(data: VerifyOTPRequest): Promise<{ success: boolean; error: string | null }> {
-//     try {
-//       const formData = new FormData();
-//       formData.append("customer_id", data.customer_id);
-//       formData.append("otp", data.otp);
-//       const response = await this.requestFormData<ApiResponse<{ verified: boolean }>>(
-//         "/index.php?route=rest/register_mobile/verify_otp",
-//         formData
-//       );
-//       return {
-//         success: response.success === 1 && response.data?.verified === true,
-//         error: response.success === 1 ? null : getErrorMessage(response)
-//       };
-//     } catch (err) {
-//       return {
-//         success: false,
-//         error: err instanceof Error ? err.message : "OTP verification failed"
-//       };
-//     }
-//   }
-
-//   // ------------------- LOGIN -------------------
-//   async login(credentials: LoginRequest): Promise<{ user: User | null; error: string | null }> {
-//     try {
-//       const formData = new FormData();
-//       formData.append("email", credentials.email);
-//       formData.append("password", credentials.password);
-
-//       const response = await this.requestFormData<ApiResponse<BackendUser>>(
-//         "/index.php?route=rest/login/login",
-//         formData
-//       );
-
-//       if (response.success === 1 && response.data) {
-//         const user: User = { ...response.data };
-//         return { user, error: null };
-//       }
-
-//       return { user: null, error: getErrorMessage(response) };
-//     } catch (err) {
-//       return { user: null, error: err instanceof Error ? err.message : "Login failed" };
-//     }
-//   }
-
-//   // ------------------- LOGOUT -------------------
-//   async logout(): Promise<{ success: boolean; error: string | null }> {
-//     try {
-//       const response = await this.request<ApiResponse<any>>("/index.php?route=rest/logout/logout", {
-//         method: "POST"
-//       });
-//       return {
-//         success: response.success === 1,
-//         error: response.success === 1 ? null : getErrorMessage(response)
-//       };
-//     } catch (err) {
-//       return { success: false, error: err instanceof Error ? err.message : "Logout failed" };
-//     }
-//   }
-
-//   // ------------------- GET ACCOUNT INFO -------------------
-//   async getAccountInfo(): Promise<{ success: boolean; data?: User; error?: string | null }> {
-//     try {
-//       const response = await this.request<ApiResponse<BackendUser>>(
-//         "/index.php?route=rest/account/account",
-//         { method: "GET" }
-//       );
-//       if (response.success === 1 && response.data)
-//         return { success: true, data: { ...response.data } };
-//       return { success: false, error: getErrorMessage(response) };
-//     } catch (err) {
-//       return { success: false, error: err instanceof Error ? err.message : "Fetch account failed" };
-//     }
-//   }
-
-//   // ------------------- UPDATE ACCOUNT -------------------
-//   async updateAccount(
-//     data: UpdateAccountRequest
-//   ): Promise<{ success: boolean; error: string | null }> {
-//     try {
-//       const formData = new FormData();
-//       Object.entries(data).forEach(([key, value]) => {
-//         if (value) formData.append(key, value as any);
-//       });
-//       const response = await this.requestFormData<ApiResponse<BackendUser>>(
-//         "/index.php?route=rest/account/account",
-//         formData
-//       );
-//       return {
-//         success: response.success === 1,
-//         error: response.success === 1 ? null : getErrorMessage(response)
-//       };
-//     } catch (err) {
-//       return {
-//         success: false,
-//         error: err instanceof Error ? err.message : "Update account failed"
-//       };
-//     }
-//   }
-// }
-
-// export const authApiClient = new AuthApiClient();
-
 import { API_CONFIG } from "./config";
 import {
   LoginRequest,
@@ -256,7 +29,7 @@ class AuthApiClient {
     this.baseUrl = API_CONFIG.BASE_URL;
   }
 
-  // Get valid access token
+  // Get valid access token (client credential)
   private async getValidToken(): Promise<string | null> {
     const now = Date.now();
 
@@ -292,10 +65,14 @@ class AuthApiClient {
     }
   }
 
-  // Generic JSON request
-  private async request<T>(endpoint: string, options?: RequestInit): Promise<ApiResponse<T>> {
+  // Generic JSON request, supports user token
+  private async request<T>(
+    endpoint: string,
+    options?: RequestInit,
+    userToken?: string
+  ): Promise<ApiResponse<T>> {
     const url = `${this.baseUrl}${endpoint}`;
-    const token = await this.getValidToken();
+    const token = userToken || (await this.getValidToken());
 
     try {
       const response = await fetch(url, {
@@ -306,28 +83,29 @@ class AuthApiClient {
           ...options?.headers
         },
         mode: "cors",
-        credentials: "omit"
+        credentials: "include" // send cookies if backend relies on session
       });
 
       const data: ApiResponse<T> = await response.json();
 
-      if (data.error?.toLowerCase().includes("token")) {
-        this.accessToken = null;
-        this.tokenExpiry = null;
-        const newToken = await this.getValidToken();
-
-        if (newToken) {
-          const retryResponse = await fetch(url, {
-            ...options,
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${newToken}`,
-              ...options?.headers
-            },
-            mode: "cors",
-            credentials: "omit"
-          });
-          return await retryResponse.json();
+      if (data.error?.includes("token")) {
+        if (!userToken) {
+          this.accessToken = null;
+          this.tokenExpiry = null;
+          const newToken = await this.getValidToken();
+          if (newToken) {
+            const retryResponse = await fetch(url, {
+              ...options,
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${newToken}`,
+                ...options?.headers
+              },
+              mode: "cors",
+              credentials: "include"
+            });
+            return await retryResponse.json();
+          }
         }
       }
 
@@ -338,10 +116,14 @@ class AuthApiClient {
     }
   }
 
-  // Generic FormData request
-  private async requestFormData<T>(endpoint: string, formData: FormData): Promise<ApiResponse<T>> {
+  // Generic FormData request, supports user token
+  private async requestFormData<T>(
+    endpoint: string,
+    formData: FormData,
+    userToken?: string
+  ): Promise<ApiResponse<T>> {
     const url = `${this.baseUrl}${endpoint}`;
-    const token = await this.getValidToken();
+    const token = userToken || (await this.getValidToken());
 
     try {
       const response = await fetch(url, {
@@ -349,25 +131,26 @@ class AuthApiClient {
         body: formData,
         headers: { ...(token && { Authorization: `Bearer ${token}` }) },
         mode: "cors",
-        credentials: "omit"
+        credentials: "include"
       });
 
       const data: ApiResponse<T> = await response.json();
 
-      if (data.error?.toLowerCase().includes("token")) {
-        this.accessToken = null;
-        this.tokenExpiry = null;
-        const newToken = await this.getValidToken();
-
-        if (newToken) {
-          const retryResponse = await fetch(url, {
-            method: "POST",
-            body: formData,
-            headers: { Authorization: `Bearer ${newToken}` },
-            mode: "cors",
-            credentials: "omit"
-          });
-          return await retryResponse.json();
+      if (data.error?.includes("token")) {
+        if (!userToken) {
+          this.accessToken = null;
+          this.tokenExpiry = null;
+          const newToken = await this.getValidToken();
+          if (newToken) {
+            const retryResponse = await fetch(url, {
+              method: "POST",
+              body: formData,
+              headers: { Authorization: `Bearer ${newToken}` },
+              mode: "cors",
+              credentials: "include"
+            });
+            return await retryResponse.json();
+          }
         }
       }
 
@@ -492,7 +275,7 @@ class AuthApiClient {
           telephone: response.data.telephone,
           country_code: response.data.country_code,
           dob: response.data.dob,
-          token: response.data.token
+          token: response.data.token || "" // store login token
         };
         return { user, error: null };
       }
@@ -504,11 +287,15 @@ class AuthApiClient {
   }
 
   // Get account info
-  async getAccountInfo(): Promise<{ success: boolean; data?: User; error?: string | null }> {
+  async getAccountInfo(
+    userToken?: string
+  ): Promise<{ success: boolean; data?: User; error?: string | null }> {
     try {
-      const response = await this.request<User>("/index.php?route=rest/account/account", {
-        method: "GET"
-      });
+      const response = await this.request<User>(
+        "/index.php?route=rest/account/account",
+        { method: "GET" },
+        userToken // use user login token
+      );
 
       if (response.success && response.data) return { success: true, data: response.data };
       return {
@@ -525,7 +312,8 @@ class AuthApiClient {
 
   // Update account
   async updateAccount(
-    data: UpdateAccountRequest
+    data: UpdateAccountRequest,
+    userToken?: string
   ): Promise<{ success: boolean; error: string | null }> {
     try {
       const formData = new FormData();
@@ -538,7 +326,8 @@ class AuthApiClient {
 
       const response = await this.requestFormData<User>(
         "/index.php?route=rest/account/account",
-        formData
+        formData,
+        userToken // include user token
       );
 
       if (response.success) return { success: true, error: null };
