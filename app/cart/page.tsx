@@ -1,20 +1,48 @@
 "use client";
 
-import { useEffect } from "react";
-import { Minus, Plus, Trash2, Loader2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Minus, Plus, Trash2, Loader2, Home, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/stores/cartStore";
+import { useAuthStore } from "@/stores/authStore";
 import Link from "next/link";
 import Image from "next/image";
 
 export default function CartPage() {
-  const { items, loading, error, updateQuantity, removeItem, getTotal, fetchCart, resetError } =
-    useCartStore();
+  const {
+    items,
+    loading,
+    error,
+    updateQuantity,
+    removeItem,
+    getTotal,
+    fetchCart,
+    resetError,
+    clearCart
+  } = useCartStore();
+  const { isAuthenticated } = useAuthStore();
+  const [couponCode, setCouponCode] = useState("");
+  const [discount, setDiscount] = useState(0);
 
-  // Fetch cart on mount
+  // Fetch cart on mount if authenticated
   useEffect(() => {
-    fetchCart();
-  }, [fetchCart]);
+    if (isAuthenticated()) {
+      fetchCart();
+    }
+  }, [fetchCart, isAuthenticated]);
+
+  // Not authenticated
+  if (!isAuthenticated()) {
+    return (
+      <div className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 lg:px-8">
+        <h1 className="mb-4 text-3xl font-bold text-gray-900">Please Login</h1>
+        <p className="mb-8 text-gray-600">You need to be logged in to view your cart.</p>
+        <Link href="/login">
+          <Button size="lg">Login</Button>
+        </Link>
+      </div>
+    );
+  }
 
   // Show loading state
   if (loading && items.length === 0) {
@@ -48,96 +76,238 @@ export default function CartPage() {
   // Empty cart state
   if (items.length === 0) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 lg:px-8">
-        <h1 className="mb-4 text-3xl font-bold text-gray-900">Your Cart is Empty</h1>
-        <p className="text-muted-foreground mb-8">
-          Looks like you haven't added anything to your cart yet.
-        </p>
-        <Link href="/products">
-          <Button size="lg">Continue Shopping</Button>
-        </Link>
-      </div>
+      <>
+        {/* Breadcrumb */}
+        <div className="bg-[#f2f2f2]">
+          <div className="mx-auto mb-6 flex w-[90%] items-center py-1 text-sm text-gray-600">
+            <Link href="/" className="hover:text-gray-900">
+              Home
+            </Link>
+            <ChevronRight className="mx-2 h-4 w-4" />
+            <span className="font-medium text-gray-900">Shopping Cart</span>
+          </div>
+        </div>
+        <div className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 lg:px-8">
+          <h1 className="mb-4 text-3xl font-bold text-gray-900">Your Shopping Cart is Empty</h1>
+          <p className="mb-8 text-gray-600">You have no items in your shopping cart</p>
+          <Link href="/products">
+            <Button className="rounded-full bg-black font-bold hover:bg-black" size="lg">
+              Shop More
+            </Button>
+          </Link>
+        </div>
+      </>
     );
   }
 
+  // Helper function to safely format price
+  const formatPrice = (price: number) => {
+    return isNaN(price) ? "0.00" : price.toFixed(2);
+  };
+
+  const subtotal = getTotal();
+  const total = subtotal - discount;
+
+  const handleApplyCoupon = () => {
+    // Simple coupon logic - you can replace with actual API call
+    if (couponCode.toLowerCase() === "save10") {
+      setDiscount(subtotal * 0.1);
+    } else if (couponCode.toLowerCase() === "save20") {
+      setDiscount(subtotal * 0.2);
+    } else {
+      setDiscount(0);
+    }
+  };
+
   return (
-    <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 lg:px-8">
-      <h1 className="mb-8 text-3xl font-bold text-gray-900">Shopping Cart</h1>
-
-      <div className="overflow-hidden rounded-xl bg-white shadow-sm">
-        <div className="divide-y divide-gray-200">
-          {items.map((item) => (
-            <div key={item.key} className="flex items-center space-x-4 p-6">
-              <Image
-                width={80}
-                height={80}
-                src={item.image || "/placeholder.svg"}
-                alt={item.name}
-                className="h-20 w-20 rounded-lg object-cover"
-              />
-
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-900">{item.name}</h3>
-                <p className="text-muted-foreground">{item.price.toFixed(2)} AED</p>
-                {item.model && <p className="text-sm text-gray-500">Model: {item.model}</p>}
-              </div>
-
-              <div className="flex items-center space-x-3">
-                <button
-                  onClick={() => updateQuantity(item.key, Math.max(0, item.quantity - 1))}
-                  disabled={loading}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50">
-                  <Minus className="h-4 w-4" />
-                </button>
-                <span className="w-8 text-center font-semibold">{item.quantity}</span>
-                <button
-                  onClick={() => updateQuantity(item.key, item.quantity + 1)}
-                  disabled={loading}
-                  className="flex h-8 w-8 items-center justify-center rounded-lg border border-gray-300 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50">
-                  <Plus className="h-4 w-4" />
-                </button>
-              </div>
-
-              <div className="text-right">
-                <p className="font-semibold text-gray-900">
-                  {(item.price * item.quantity).toFixed(2)} AED
-                </p>
-              </div>
-
-              <button
-                onClick={() => removeItem(item.key)}
-                disabled={loading}
-                className="p-2 text-red-500 hover:text-red-700 disabled:cursor-not-allowed disabled:opacity-50">
-                <Trash2 className="h-5 w-5" />
-              </button>
-            </div>
-          ))}
+    <div className="min-h-screen bg-gray-50">
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+        {/* Breadcrumb */}
+        <div className="mb-6 flex items-center text-sm text-gray-600">
+          <Link href="/" className="hover:text-gray-900">
+            Home
+          </Link>
+          <ChevronRight className="mx-2 h-4 w-4" />
+          <span className="font-medium text-gray-900">Shopping Cart</span>
         </div>
 
-        <div className="bg-gray-50 p-6">
-          <div className="mb-4 flex items-center justify-between">
-            <span className="text-lg font-semibold">Total:</span>
-            <span className="text-primary text-2xl font-bold">{getTotal().toFixed(2)} AED</span>
+        {/* Header with Clear All */}
+        <div className="mb-6 flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-gray-900">Shopping Cart</h1>
+          <button
+            onClick={clearCart}
+            disabled={loading}
+            className="flex items-center text-sm font-medium text-gray-700 hover:text-gray-900 disabled:opacity-50">
+            <Trash2 className="mr-1 h-4 w-4" />
+            Clear All
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {/* Cart Items Section */}
+          <div className="lg:col-span-2">
+            <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+              {/* Table Header */}
+              <div className="grid grid-cols-12 gap-4 border-b border-gray-200 bg-gray-50 px-6 py-4 text-sm font-semibold text-gray-900">
+                <div className="col-span-5">Product Name</div>
+                <div className="col-span-3 text-center">Quantity</div>
+                <div className="col-span-3 text-right">Total</div>
+                <div className="col-span-1"></div>
+              </div>
+
+              {/* Cart Items */}
+              <div className="divide-y divide-gray-200">
+                {items.map((item) => {
+                  const itemTotal = item.price * item.quantity;
+                  const originalPrice = item.price * 1.18; // Assuming 15% discount shown in image
+
+                  return (
+                    <div key={item.key} className="grid grid-cols-12 gap-4 px-6 py-6">
+                      {/* Product Info */}
+                      <div className="col-span-5 flex space-x-4">
+                        <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg border border-gray-200">
+                          <Image
+                            width={96}
+                            height={96}
+                            src={item.image || "/placeholder.svg"}
+                            alt={item.name}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                        <div className="flex flex-col justify-center">
+                          <p className="mb-1 text-xs font-medium text-red-600">
+                            Only {Math.floor(Math.random() * 5) + 3} products left
+                          </p>
+                          <div className="mb-2 flex items-center space-x-2">
+                            <span className="text-lg font-bold text-gray-900">
+                              {formatPrice(item.price)} AED
+                            </span>
+                            <span className="text-sm text-gray-400 line-through">
+                              {formatPrice(originalPrice)} AED
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-700">{item.name}</p>
+                          {item.model && (
+                            <p className="text-xs text-gray-500">Model: {item.model}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Quantity Controls */}
+                      <div className="col-span-3 flex items-center justify-center">
+                        <div className="flex items-center space-x-3">
+                          <button
+                            onClick={() => updateQuantity(item.key, Math.max(1, item.quantity - 1))}
+                            disabled={loading || item.quantity <= 1}
+                            className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50">
+                            <Minus className="h-4 w-4" />
+                          </button>
+                          <span className="w-8 text-center font-semibold">{item.quantity}</span>
+                          <button
+                            onClick={() => updateQuantity(item.key, item.quantity + 1)}
+                            disabled={loading}
+                            className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-300 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50">
+                            <Plus className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Item Total */}
+                      <div className="col-span-3 flex items-center justify-end">
+                        <span className="text-lg font-bold text-gray-900">
+                          {formatPrice(itemTotal)} AED
+                        </span>
+                      </div>
+
+                      {/* Remove Button */}
+                      <div className="col-span-1 flex items-center justify-end">
+                        <button
+                          onClick={() => removeItem(item.key)}
+                          disabled={loading}
+                          className="text-gray-400 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50">
+                          <Trash2 className="h-5 w-5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
 
-          <div className="flex flex-col gap-4 sm:flex-row">
-            <Link href="/products" className="flex-1">
-              <Button variant="outline" className="w-full bg-transparent">
-                Continue Shopping
-              </Button>
-            </Link>
-            <Link href="/checkout" className="flex-1">
-              <Button className="w-full" size="lg" disabled={loading}>
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  "Proceed to Checkout"
-                )}
-              </Button>
-            </Link>
+          {/* Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="space-y-6">
+              {/* Coupon Code Section */}
+              <div className="rounded-lg border border-gray-200 bg-white p-6">
+                <h2 className="mb-4 text-base font-semibold text-gray-900">Use Coupon Code</h2>
+                <div className="flex space-x-2">
+                  <input
+                    type="text"
+                    value={couponCode}
+                    onChange={(e) => setCouponCode(e.target.value)}
+                    placeholder="Enter your coupon here"
+                    className="flex-1 rounded-md border border-gray-300 px-4 py-2 text-sm focus:border-black focus:ring-1 focus:ring-black focus:outline-none"
+                  />
+                  <button
+                    onClick={handleApplyCoupon}
+                    className="rounded-md bg-black px-6 py-2 text-sm font-medium text-white hover:bg-gray-800">
+                    Submit
+                  </button>
+                </div>
+              </div>
+
+              {/* Summary Section */}
+              <div className="rounded-lg border border-gray-200 bg-white p-6">
+                <h2 className="mb-4 text-base font-semibold text-gray-900">Summary</h2>
+                <div className="space-y-3 border-b border-gray-200 pb-4">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Sub-Total</span>
+                    <span className="font-semibold text-gray-900">{formatPrice(subtotal)} AED</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Discount</span>
+                    <span className="font-semibold text-gray-900">{formatPrice(discount)} AED</span>
+                  </div>
+                </div>
+                <div className="mt-4 flex justify-between">
+                  <span className="text-base font-semibold text-gray-900">Total</span>
+                  <span className="text-xl font-bold text-gray-900">{formatPrice(total)} AED</span>
+                </div>
+
+                {/* Checkout Button */}
+                <Link href="/checkout" className="mt-6 block">
+                  <button
+                    disabled={loading}
+                    className="w-full rounded-full bg-black py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50">
+                    {loading ? (
+                      <span className="flex items-center justify-center">
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Processing...
+                      </span>
+                    ) : (
+                      "Checkout"
+                    )}
+                  </button>
+                </Link>
+
+                {/* Payment Methods */}
+                <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                  <div className="text-2xl font-bold text-blue-600">VISA</div>
+                  <div className="rounded border border-gray-300 px-2 py-1 text-xs font-semibold">
+                    Apple Pay
+                  </div>
+                  <div className="text-xl text-pink-400">💳</div>
+                  <div className="text-xl font-bold text-blue-600">JCB</div>
+                  <div className="text-xs font-bold text-blue-600">AMEX</div>
+                  <div className="rounded border border-gray-300 px-2 py-1 text-xs">CEDB</div>
+                  <div className="flex h-6 w-8 items-center justify-center rounded-full bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500">
+                    <div className="h-4 w-6 rounded-full bg-gradient-to-r from-orange-500 to-red-500"></div>
+                  </div>
+                  <div className="text-xs font-bold text-teal-500">PayGCC</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

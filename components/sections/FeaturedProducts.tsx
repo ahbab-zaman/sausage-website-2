@@ -74,7 +74,7 @@ export default function FeaturedProducts() {
 
   return (
     <section className="bg-white py-16">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto w-[90%]">
         <div className="mb-12 flex items-center justify-between">
           <div className="flex-1 text-center">
             <h2 className="mb-4 text-3xl font-bold text-gray-900 md:text-4xl">Featured Products</h2>
@@ -85,17 +85,17 @@ export default function FeaturedProducts() {
           </div>
         </div>
 
-        <div className="mb-8 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mb-8 grid grid-cols-1 justify-center sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {featuredProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
 
         <div className="mt-8 flex justify-center">
-          <Button size="lg" onClick={() => router.push("/products")} className="bg-[#3A3938]">
+          <button  onClick={() => router.push("/products")} className="bg-[#3A3938] text-white py-2 px-4 rounded-lg flex justify-center items-center cursor-pointer">
             View All Products
             <ArrowRight className="ml-2 h-4 w-4 transition-transform" />
-          </Button>
+          </button>
         </div>
       </div>
     </section>
