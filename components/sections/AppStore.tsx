@@ -2,25 +2,24 @@ import Image from "next/image";
 import appStore from "@/public/app-store-full.png";
 import googleStore from "@/public/gplay-store-full.png";
 import mobile from "@/public/app-device.png";
+import Link from "next/link";
 
 export const AppStore = () => {
   return (
-    <section className="py-24">
-      <div className="w-[65rem] mx-auto px-4">
-        <div className="h-[300px] rounded-2xl bg-[#3b3b3b]">
-          <div className="grid grid-cols-1 items-stretch lg:grid-cols-2">
-            {" "}
-            {/* Added items-stretch here */}
+    <section className="py-16 lg:py-24">
+      <div className="mx-auto max-w-5xl px-4">
+        <div className="relative rounded-2xl bg-[#3b3b3b]">
+          <div className="grid lg:grid-cols-2 grid-cols-1 lg:h-[300px] h-auto">
             {/* LEFT CONTENT */}
-            <div className="px-8 py-16 text-white lg:px-16">
-              <h1 className="mb-4 text-3xl font-bold lg:text-4xl">The Bottle Store</h1>
+            <div className="px-6 py-10 text-white sm:px-10 lg:py-12">
+              <h1 className="mb-4 text-2xl font-bold sm:text-3xl lg:text-4xl">The Bottle Store</h1>
 
-              <p className="mb-8 max-w-md text-gray-200">
+              <p className="mb-8 max-w-md text-sm text-gray-200 sm:text-base">
                 Ready to take your shopping to the next level? Download our app!
               </p>
 
-              <div className="flex gap-4">
-                <a
+              <div className="flex flex-wrap gap-4">
+                <Link
                   href="https://apps.apple.com/bh/app/the-bottle-store/id6447305367"
                   target="_blank"
                   rel="noopener noreferrer">
@@ -31,9 +30,9 @@ export const AppStore = () => {
                     height={54}
                     className="transition hover:scale-105"
                   />
-                </a>
+                </Link>
 
-                <a
+                <Link
                   href="https://play.google.com/store/apps/details?id=com.bottleStore"
                   target="_blank"
                   rel="noopener noreferrer">
@@ -44,12 +43,13 @@ export const AppStore = () => {
                     height={54}
                     className="transition hover:scale-105"
                   />
-                </a>
+                </Link>
               </div>
             </div>
+
             {/* RIGHT IMAGE */}
-            <div className="r-0 relative -top-[99px] left-[124px] flex h-[450px] w-full justify-end pr-8 lg:pr-16">
-              <Image src={mobile} alt="App preview" fill className="object-contain" />
+            <div className="relative flex h-[260px] justify-center sm:h-[320px] lg:-top-[90px] lg:left-[124px] lg:h-[450px] lg:justify-end lg:pr-16">
+              <Image src={mobile} alt="App preview" fill className="object-contain" priority />
             </div>
           </div>
         </div>

@@ -1,16 +1,17 @@
-// app/auth/signin/page.tsx
-
 "use client";
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/stores/authStore";
 import { useForm } from "@/hooks/useForm";
 import { SignInSchema, type SignInForm } from "@/lib/schemas";
 import { useRouter } from "next/navigation";
+import { ChevronRight } from "lucide-react";
+import { AiFillExclamationCircle } from "react-icons/ai";
 
-export default function SignInPage() {
+export default function LoginPage() {
   const router = useRouter();
   const { login, isLoading, error: authError } = useAuthStore();
   const { data, errors, isSubmitting, setValue, handleSubmit } = useForm(SignInSchema);
@@ -20,92 +21,113 @@ export default function SignInPage() {
       email: formData.email,
       password: formData.password
     });
-
     if (result.success) {
       router.push("/");
-    } else {
-      console.error("Login failed:", result.error);
     }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-bold text-gray-900">
-            Sign in to your account
-          </h2>
-          <p className="text-muted-foreground mt-2 text-center text-sm">
-            Or{" "}
-            <Link href="/auth/signup" className="text-primary hover:text-primary/80 font-medium">
-              create a new account
+    <>
+      {/* Breadcrumb */}
+      <div className="bg-[#f2f2f2] py-3">
+        <div className="mx-auto flex max-w-7xl items-center px-4 text-sm text-gray-600">
+          <Link href="/" className="hover:text-gray-900">
+            Home
+          </Link>
+          <ChevronRight className="mx-3 h-4 w-4" />
+          <Link href="/auth/account" className="hover:text-gray-900">
+            Account
+          </Link>
+          <ChevronRight className="mx-3 h-4 w-4" />
+          <span className="font-medium text-gray-900">Login</span>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex min-h-screen items-start justify-center bg-white px-4 pt-12 pb-20 sm:pt-20">
+        <div className="w-full max-w-md">
+          {/* Title */}
+          <h1 className="mb-2 text-center text-4xl font-bold text-gray-900">Login</h1>
+          <p className="mb-8 text-center text-sm text-gray-600">
+            Don't have an account?{" "}
+            <Link href="/auth/signup" className="font-medium text-red-600 hover:text-red-500">
+              Register Now
             </Link>
           </p>
+
+          {authError && (
+            <div className="mb-6 rounded-md bg-[#BF3334] p-4 font-semibold text-white">
+              <div className="flex items-center gap-4">
+                <AiFillExclamationCircle />
+                <p className="text-sm text-white">{authError}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Form Card */}
+          <div className="rounded-lg border border-gray-200 bg-white p-8 shadow-sm">
+            <form
+              className="space-y-6"
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSubmit(onSubmit);
+              }}>
+              <div className="space-y-2">
+                <Label htmlFor="email" className="sr-only">
+                  E-Mail Address
+                </Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="E-Mail Address"
+                  value={data.email || ""}
+                  onChange={(e) => setValue("email", e.target.value)}
+                  className="h-12 border-gray-300 text-base placeholder:text-gray-400 focus-visible:ring-1"
+                />
+                {errors.email && <p className="text-sm text-red-600">{errors.email}</p>}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="password" className="sr-only">
+                  Password
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Password"
+                  value={data.password || ""}
+                  onChange={(e) => setValue("password", e.target.value)}
+                  className="h-12 border-gray-300 text-base placeholder:text-gray-400 focus-visible:ring-1"
+                />
+                {errors.password && <p className="text-sm text-red-600">{errors.password}</p>}
+              </div>
+
+              <Button
+                type="submit"
+                className="h-12 w-full rounded-full bg-gray-900 text-base font-medium hover:bg-gray-800"
+                disabled={isSubmitting || isLoading}>
+                {isSubmitting || isLoading ? "Signing in..." : "Sign In"}
+              </Button>
+
+              <div className="pt-4 text-center">
+                <Link
+                  href="/auth/forgot-password"
+                  className="text-sm text-gray-600 underline hover:text-gray-900">
+                  Forgotten Password
+                </Link>
+              </div>
+
+              <div className="pt-2 text-center">
+                <Link
+                  href="/auth/signup"
+                  className="text-sm text-gray-600 underline hover:text-gray-900">
+                  Create Account
+                </Link>
+              </div>
+            </form>
+          </div>
         </div>
-
-        {authError && (
-          <div className="rounded-md bg-red-50 p-4">
-            <p className="text-sm text-red-800">{authError}</p>
-          </div>
-        )}
-
-        <form
-          className="mt-8 space-y-6"
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSubmit(onSubmit);
-          }}>
-          <div className="space-y-4">
-            <div>
-              <Input
-                type="email"
-                placeholder="Email address"
-                value={data.email || ""}
-                onChange={(e) => setValue("email", e.target.value)}
-                className={errors.email ? "border-red-500" : ""}
-              />
-              {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
-            </div>
-
-            <div>
-              <Input
-                type="password"
-                placeholder="Password"
-                value={data.password || ""}
-                onChange={(e) => setValue("password", e.target.value)}
-                className={errors.password ? "border-red-500" : ""}
-              />
-              {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div className="flex items-center">
-              <input
-                id="remember-me"
-                name="remember-me"
-                type="checkbox"
-                className="text-primary focus:ring-primary h-4 w-4 rounded border-gray-300"
-              />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                Remember me
-              </label>
-            </div>
-
-            <div className="text-sm">
-              <Link
-                href="/auth/forgot-password"
-                className="text-primary hover:text-primary/80 font-medium">
-                Forgot your password?
-              </Link>
-            </div>
-          </div>
-
-          <Button type="submit" className="w-full" size="lg" disabled={isSubmitting || isLoading}>
-            {isSubmitting || isLoading ? "Signing in..." : "Sign in"}
-          </Button>
-        </form>
       </div>
-    </div>
+    </>
   );
 }

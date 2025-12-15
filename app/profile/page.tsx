@@ -11,50 +11,35 @@ import {
   Mail,
   Phone,
   Calendar,
-  MapPin,
+  CreditCard,
+  Wallet,
+  Bell,
+  Shield,
+  Monitor,
+  Globe,
+  CheckCircle2,
   Edit2,
   Save,
-  X,
-  Camera,
-  Shield,
-  Bell,
-  Activity,
-  CheckCircle2
+  X
 } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle
-} from "@/components/ui/dialog";
-
-type TabType = "profile" | "security" | "notifications" | "activity";
 
 export default function AccountPage() {
-  const { user, fetchAccountInfo, updateAccountInfo, isLoading, error } = useAuthStore();
-
-  const [activeTab, setActiveTab] = useState<TabType>("profile");
+  const { user, fetchAccountInfo, updateAccountInfo, isLoading } = useAuthStore();
   const [editMode, setEditMode] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [showErrorModal, setShowErrorModal] = useState(false);
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const [form, setForm] = useState({
     firstname: "",
     lastname: "",
     email: "",
     telephone: "",
-    country_code: "+880",
+    country_code: "",
     dob: ""
   });
 
-  // Fetch user info on mount
   useEffect(() => {
     fetchAccountInfo();
   }, [fetchAccountInfo]);
 
-  // Populate form when user is loaded
   useEffect(() => {
     if (user) {
       setForm({
@@ -62,460 +47,188 @@ export default function AccountPage() {
         lastname: user.lastname || "",
         email: user.email || "",
         telephone: user.telephone || "",
-        country_code: user.country_code || "+880",
+        country_code: user.country_code || "",
         dob: user.dob || ""
       });
     }
   }, [user]);
 
-  const validateForm = () => {
-    const errors: Record<string, string> = {};
-    if (!form.firstname.trim()) errors.firstname = "First name is required";
-    if (!form.lastname.trim()) errors.lastname = "Last name is required";
-    if (!form.email.trim()) errors.email = "Email is required";
-    else if (!/\S+@\S+\.\S+/.test(form.email)) errors.email = "Invalid email format";
-    if (!form.telephone.trim()) errors.telephone = "Phone number is required";
-    else if (form.telephone.length < 10)
-      errors.telephone = "Phone number must be at least 10 digits";
-
-    setFormErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
-
-  const handleUpdate = async () => {
-    if (!validateForm()) return;
-
-    const res = await updateAccountInfo(form);
-    if (res.success) {
-      setEditMode(false);
-      setShowSuccessModal(true);
-      setTimeout(() => setShowSuccessModal(false), 3000);
-    } else {
-      setShowErrorModal(true);
-      setTimeout(() => setShowErrorModal(false), 3000);
-    }
-  };
-
-  const handleCancel = () => {
-    if (user) {
-      setForm({
-        firstname: user.firstname || "",
-        lastname: user.lastname || "",
-        email: user.email || "",
-        telephone: user.telephone || "",
-        country_code: user.country_code || "+880",
-        dob: user.dob || ""
-      });
-    }
-    setEditMode(false);
-    setFormErrors({});
-  };
-
-  const getInitials = () => {
-    const first = form.firstname || user?.firstname || "";
-    const last = form.lastname || user?.lastname || "";
-    return `${first.charAt(0)}${last.charAt(0)}`.toUpperCase();
-  };
-
   if (!user && isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
-        <div className="text-center">
-          <Loader2 className="mx-auto h-12 w-12 animate-spin text-[#2222]" />
-          <p className="mt-4 text-gray-600">Loading your profile...</p>
-        </div>
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+        <Loader2 className="h-12 w-12 animate-spin text-slate-400" />
       </div>
     );
   }
 
-  if (!user) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
-        <Card className="p-8 text-center">
-          <p className="text-gray-600">Please log in to view your profile.</p>
-          <Button className="mt-4" onClick={() => (window.location.href = "/auth/signin")}>
-            Go to Login
-          </Button>
-        </Card>
-      </div>
-    );
-  }
+  if (!user) return null;
 
-  const tabs = [
-    { id: "profile", label: "Profile", icon: User },
-    { id: "security", label: "Security", icon: Shield },
-    { id: "notifications", label: "Notifications", icon: Bell },
-    { id: "activity", label: "Activity", icon: Activity }
-  ];
+  const ReadOnly = !editMode;
+
+  const Field = ({ label, icon: Icon, value, onChange, type = "text" }: any) => (
+    <div className="space-y-1">
+      <label className="flex items-center gap-2 text-sm font-medium text-slate-600">
+        <Icon className="h-4 w-4" /> {label}
+      </label>
+      <Input
+        type={type}
+        disabled={ReadOnly}
+        value={value}
+        onChange={onChange}
+        className={ReadOnly ? "bg-slate-50" : ""}
+      />
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-gray-100">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-slate-100">
+      <div className="mx-auto max-w-6xl space-y-8 px-4 py-10">
         {/* Header */}
-        <div className="mb-8">
-          <Card className="overflow-hidden border-0 shadow-xl">
-            <div className="relative h-32 bg-[#f2f2f2]">
-              <div className="absolute -bottom-16 left-8">
-                <div className="group relative">
-                  <div className="flex h-32 w-32 items-center justify-center rounded-full border-4 border-white bg-[#f2f2f2] text-4xl font-bold text-white shadow-xl transition-transform duration-300 hover:scale-105">
-                    {getInitials()}
-                  </div>
-                  <button className="absolute right-0 bottom-0 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-lg transition-all duration-300 hover:bg-blue-50 hover:shadow-xl">
-                    <Camera className="h-5 w-5 text-gray-700" />
-                  </button>
-                </div>
-              </div>
+        <Card className="border-0 shadow-sm">
+          <CardContent className="flex flex-col gap-2 p-6 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h1 className="text-2xl font-semibold text-slate-900">
+                {user.firstname} {user.lastname}
+              </h1>
+              <p className="flex items-center gap-2 text-sm text-slate-600">
+                <Mail className="h-4 w-4" /> {user.email}
+              </p>
+              <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-600">
+                <CheckCircle2 className="h-3 w-3" /> {user.status || "Active"}
+              </p>
             </div>
+            <Button
+              onClick={() => setEditMode(!editMode)}
+              variant={editMode ? "outline" : "default"}>
+              {editMode ? <X className="mr-2 h-4 w-4" /> : <Edit2 className="mr-2 h-4 w-4" />}
+              {editMode ? "Cancel" : "Edit Profile"}
+            </Button>
+          </CardContent>
+        </Card>
 
-            <div className="pt-20 pr-8 pb-6 pl-8 sm:pl-48">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">
-                    {form.firstname} {form.lastname}
-                  </h1>
-                  <p className="mt-1 flex items-center text-sm text-gray-600 sm:text-base">
-                    <Mail className="mr-2 h-4 w-4" />
-                    {form.email}
-                  </p>
-                </div>
-                {activeTab === "profile" && (
-                  <Button
-                    onClick={() => setEditMode(!editMode)}
-                    variant={editMode ? "outline" : "default"}
-                    className="transition-all duration-300"
-                    size="sm">
-                    {editMode ? (
-                      <>
-                        <X className="mr-2 h-4 w-4" />
-                        Cancel
-                      </>
-                    ) : (
-                      <>
-                        <Edit2 className="mr-2 h-4 w-4" />
-                        Edit Profile
-                      </>
-                    )}
-                  </Button>
-                )}
+        {/* Grid */}
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Personal Info */}
+          <Card className="shadow-sm">
+            <CardContent className="space-y-4 p-6">
+              <h2 className="text-lg font-semibold text-slate-800">Personal Information</h2>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field
+                  label="First Name"
+                  icon={User}
+                  value={form.firstname}
+                  onChange={(e: any) => setForm({ ...form, firstname: e.target.value })}
+                />
+                <Field
+                  label="Last Name"
+                  icon={User}
+                  value={form.lastname}
+                  onChange={(e: any) => setForm({ ...form, lastname: e.target.value })}
+                />
               </div>
-            </div>
+              <Field
+                label="Date of Birth"
+                type="date"
+                icon={Calendar}
+                value={form.dob}
+                onChange={(e: any) => setForm({ ...form, dob: e.target.value })}
+              />
+            </CardContent>
+          </Card>
+
+          {/* Contact */}
+          <Card className="shadow-sm">
+            <CardContent className="space-y-4 p-6">
+              <h2 className="text-lg font-semibold text-slate-800">Contact Details</h2>
+              <Field
+                label="Email"
+                icon={Mail}
+                value={form.email}
+                onChange={(e: any) => setForm({ ...form, email: e.target.value })}
+              />
+              <div className="grid gap-4 sm:grid-cols-3">
+                <Field
+                  label="Country Code"
+                  icon={Globe}
+                  value={form.country_code}
+                  onChange={(e: any) => setForm({ ...form, country_code: e.target.value })}
+                />
+                <div className="sm:col-span-2">
+                  <Field
+                    label="Phone Number"
+                    icon={Phone}
+                    value={form.telephone}
+                    onChange={(e: any) => setForm({ ...form, telephone: e.target.value })}
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Account */}
+          <Card className="shadow-sm">
+            <CardContent className="space-y-3 p-6">
+              <h2 className="text-lg font-semibold text-slate-800">Account Details</h2>
+              <p className="flex items-center gap-2 text-sm">
+                <CreditCard className="h-4 w-4" /> Customer ID:{" "}
+                <span className="font-medium">{user.customer_id}</span>
+              </p>
+              <p className="flex items-center gap-2 text-sm">
+                <Wallet className="h-4 w-4" /> Balance:{" "}
+                <span className="font-medium">{user.balance}</span>
+              </p>
+              <p className="flex items-center gap-2 text-sm">
+                <Wallet className="h-4 w-4" /> Rewards:{" "}
+                <span className="font-medium">{user.reward_total}</span>
+              </p>
+              <p className="text-sm">Account Created: {user.date_added}</p>
+            </CardContent>
+          </Card>
+
+          {/* Preferences */}
+          <Card className="shadow-sm">
+            <CardContent className="space-y-3 p-6">
+              <h2 className="text-lg font-semibold text-slate-800">Preferences</h2>
+              <p className="flex items-center gap-2 text-sm">
+                <Bell className="h-4 w-4" /> Notifications:{" "}
+                {user.notification_status ? "Enabled" : "Disabled"}
+              </p>
+              <p className="flex items-center gap-2 text-sm">
+                <Mail className="h-4 w-4" /> Newsletter:{" "}
+                {user.newsletter ? "Subscribed" : "Unsubscribed"}
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Security */}
+          <Card className="shadow-sm md:col-span-2">
+            <CardContent className="space-y-3 p-6">
+              <h2 className="text-lg font-semibold text-slate-800">Security & System Info</h2>
+              <p className="flex items-center gap-2 text-sm">
+                <Shield className="h-4 w-4" /> Status: {user.status}
+              </p>
+              <p className="flex items-center gap-2 text-sm">
+                <Monitor className="h-4 w-4" /> Device: {user.device || "Unknown"}
+              </p>
+              <p className="flex items-center gap-2 text-sm">
+                <Globe className="h-4 w-4" /> IP Address: {user.ip}
+              </p>
+            </CardContent>
           </Card>
         </div>
 
-        {/* Body */}
-        <div className="grid gap-8 lg:grid-cols-4">
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <Card className="border-0 shadow-lg">
-              <CardContent className="p-4">
-                <nav className="space-y-2">
-                  {tabs.map((tab) => {
-                    const Icon = tab.icon;
-                    return (
-                      <button
-                        key={tab.id}
-                        onClick={() => setActiveTab(tab.id as TabType)}
-                        className={`flex w-full items-center rounded-lg px-4 py-3 text-left transition-all duration-300 ${
-                          activeTab === tab.id
-                            ? "bg-[#28AA5A] text-white shadow-md"
-                            : "text-gray-700 hover:bg-[#28AA5A]"
-                        }`}>
-                        <Icon className="mr-3 h-5 w-5" />
-                        <span className="font-medium">{tab.label}</span>
-                      </button>
-                    );
-                  })}
-                </nav>
-              </CardContent>
-            </Card>
+        {editMode && (
+          <div className="flex justify-end gap-4">
+            <Button
+              onClick={async () => {
+                await updateAccountInfo(form);
+                setEditMode(false);
+              }}>
+              <Save className="mr-2 h-4 w-4" /> Save Changes
+            </Button>
           </div>
-
-          {/* Main Content */}
-          <div className="lg:col-span-3">
-            {/* Profile Tab */}
-            {activeTab === "profile" && (
-              <Card className="border-0 shadow-lg">
-                <CardContent className="p-6 sm:p-8">
-                  <h2 className="mb-6 text-xl font-bold text-gray-900 sm:text-2xl">
-                    Personal Information
-                  </h2>
-
-                  <div className="space-y-6">
-                    {/* Name */}
-                    <div className="grid gap-6 sm:grid-cols-2">
-                      <div className="group">
-                        <label className="mb-2 flex items-center text-sm font-medium text-gray-700">
-                          <User className="mr-2 h-4 w-4" /> First Name
-                        </label>
-                        <Input
-                          disabled={!editMode}
-                          value={form.firstname}
-                          onChange={(e) => {
-                            setForm({ ...form, firstname: e.target.value });
-                            setFormErrors({ ...formErrors, firstname: "" });
-                          }}
-                          className={`transition-all duration-300 ${
-                            editMode
-                              ? "border-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                              : "bg-gray-50"
-                          } ${formErrors.firstname ? "border-red-500" : ""}`}
-                          placeholder="Enter first name"
-                        />
-                        {formErrors.firstname && (
-                          <p className="mt-1 text-sm text-red-600">{formErrors.firstname}</p>
-                        )}
-                      </div>
-
-                      <div className="group">
-                        <label className="mb-2 flex items-center text-sm font-medium text-gray-700">
-                          <User className="mr-2 h-4 w-4" /> Last Name
-                        </label>
-                        <Input
-                          disabled={!editMode}
-                          value={form.lastname}
-                          onChange={(e) => {
-                            setForm({ ...form, lastname: e.target.value });
-                            setFormErrors({ ...formErrors, lastname: "" });
-                          }}
-                          className={`transition-all duration-300 ${
-                            editMode
-                              ? "border-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                              : "bg-gray-50"
-                          } ${formErrors.lastname ? "border-red-500" : ""}`}
-                          placeholder="Enter last name"
-                        />
-                        {formErrors.lastname && (
-                          <p className="mt-1 text-sm text-red-600">{formErrors.lastname}</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Email */}
-                    <div className="group">
-                      <label className="mb-2 flex items-center text-sm font-medium text-gray-700">
-                        <Mail className="mr-2 h-4 w-4" /> Email Address
-                      </label>
-                      <Input
-                        disabled={!editMode}
-                        type="email"
-                        value={form.email}
-                        onChange={(e) => {
-                          setForm({ ...form, email: e.target.value });
-                          setFormErrors({ ...formErrors, email: "" });
-                        }}
-                        className={`transition-all duration-300 ${
-                          editMode
-                            ? "border-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                            : "bg-gray-50"
-                        } ${formErrors.email ? "border-red-500" : ""}`}
-                        placeholder="Enter email address"
-                      />
-                      {formErrors.email && (
-                        <p className="mt-1 text-sm text-red-600">{formErrors.email}</p>
-                      )}
-                    </div>
-
-                    {/* Phone */}
-                    <div className="grid gap-6 sm:grid-cols-3">
-                      <div className="group">
-                        <label className="mb-2 flex items-center text-sm font-medium text-gray-700">
-                          <MapPin className="mr-2 h-4 w-4" /> Country Code
-                        </label>
-                        <Input
-                          disabled={!editMode}
-                          value={form.country_code}
-                          onChange={(e) => setForm({ ...form, country_code: e.target.value })}
-                          className={`transition-all duration-300 ${
-                            editMode
-                              ? "border-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                              : "bg-gray-50"
-                          }`}
-                          placeholder="+880"
-                        />
-                      </div>
-
-                      <div className="group sm:col-span-2">
-                        <label className="mb-2 flex items-center text-sm font-medium text-gray-700">
-                          <Phone className="mr-2 h-4 w-4" /> Phone Number
-                        </label>
-                        <Input
-                          disabled={!editMode}
-                          value={form.telephone}
-                          onChange={(e) => {
-                            setForm({ ...form, telephone: e.target.value });
-                            setFormErrors({ ...formErrors, telephone: "" });
-                          }}
-                          className={`transition-all duration-300 ${
-                            editMode
-                              ? "border-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                              : "bg-gray-50"
-                          } ${formErrors.telephone ? "border-red-500" : ""}`}
-                          placeholder="Enter phone number"
-                        />
-                        {formErrors.telephone && (
-                          <p className="mt-1 text-sm text-red-600">{formErrors.telephone}</p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* DOB */}
-                    <div className="group">
-                      <label className="mb-2 flex items-center text-sm font-medium text-gray-700">
-                        <Calendar className="mr-2 h-4 w-4" /> Date of Birth
-                      </label>
-                      <Input
-                        disabled={!editMode}
-                        type="date"
-                        value={form.dob}
-                        onChange={(e) => setForm({ ...form, dob: e.target.value })}
-                        className={`transition-all duration-300 ${
-                          editMode
-                            ? "border-blue-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-                            : "bg-gray-50"
-                        }`}
-                      />
-                    </div>
-
-                    {/* Action Buttons */}
-                    {editMode && (
-                      <div className="flex flex-col gap-4 border-t pt-6 sm:flex-row">
-                        <Button
-                          onClick={handleUpdate}
-                          disabled={isLoading}
-                          className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 transition-all duration-300 hover:shadow-lg">
-                          {isLoading ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Saving Changes...
-                            </>
-                          ) : (
-                            <>
-                              <Save className="mr-2 h-4 w-4" />
-                              Save Changes
-                            </>
-                          )}
-                        </Button>
-                        <Button
-                          onClick={handleCancel}
-                          variant="outline"
-                          className="flex-1 transition-all duration-300 hover:bg-gray-100">
-                          Cancel
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Security, Notifications, Activity Tabs */}
-            {activeTab === "security" && (
-              <Card className="border-0 shadow-lg">
-                <CardContent className="p-6 sm:p-8">
-                  <h2 className="mb-6 text-xl font-bold text-gray-900 sm:text-2xl">
-                    Security Settings
-                  </h2>
-                  <div className="space-y-4">
-                    <div className="rounded-lg border border-gray-200 p-6">
-                      <h3 className="mb-2 font-semibold text-gray-900">Change Password</h3>
-                      <p className="mb-4 text-sm text-gray-600">
-                        Update your password to keep your account secure
-                      </p>
-                      <Button className="bg-gradient-to-r from-blue-600 to-purple-600">
-                        Change Password
-                      </Button>
-                    </div>
-                    <div className="rounded-lg border border-gray-200 p-6">
-                      <h3 className="mb-2 font-semibold text-gray-900">
-                        Two-Factor Authentication
-                      </h3>
-                      <p className="mb-4 text-sm text-gray-600">
-                        Add an extra layer of security to your account
-                      </p>
-                      <Button variant="outline">Enable 2FA</Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {activeTab === "notifications" && (
-              <Card className="border-0 shadow-lg">
-                <CardContent className="p-6 sm:p-8">
-                  <h2 className="mb-6 text-xl font-bold text-gray-900 sm:text-2xl">
-                    Notification Preferences
-                  </h2>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between rounded-lg border border-gray-200 p-4">
-                      <div>
-                        <h3 className="font-semibold text-gray-900">Email Notifications</h3>
-                        <p className="text-sm text-gray-600">Receive updates via email</p>
-                      </div>
-                      <input type="checkbox" className="h-5 w-5 rounded" defaultChecked />
-                    </div>
-                    <div className="flex items-center justify-between rounded-lg border border-gray-200 p-4">
-                      <div>
-                        <h3 className="font-semibold text-gray-900">SMS Notifications</h3>
-                        <p className="text-sm text-gray-600">Receive updates via SMS</p>
-                      </div>
-                      <input type="checkbox" className="h-5 w-5 rounded" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {activeTab === "activity" && (
-              <Card className="border-0 shadow-lg">
-                <CardContent className="p-6 sm:p-8">
-                  <h2 className="mb-6 text-xl font-bold text-gray-900 sm:text-2xl">
-                    Recent Activity
-                  </h2>
-                  <div className="space-y-4">
-                    <div className="rounded-lg border border-gray-200 p-4">
-                      <p className="text-sm text-gray-600">No recent activity to display</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </div>
-        </div>
+        )}
       </div>
-
-      {/* Success Modal */}
-      <Dialog open={showSuccessModal} onOpenChange={setShowSuccessModal}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-green-600">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
-                <CheckCircle2 className="h-5 w-5" />
-              </div>
-              Success!
-            </DialogTitle>
-            <DialogDescription className="pt-2">
-              Your profile has been updated successfully.
-            </DialogDescription>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
-
-      {/* Error Modal */}
-      <Dialog open={showErrorModal} onOpenChange={setShowErrorModal}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-red-100">
-                <X className="h-5 w-5" />
-              </div>
-              Error
-            </DialogTitle>
-            <DialogDescription className="pt-2">
-              {error || "Failed to update profile. Please try again."}
-            </DialogDescription>
-          </DialogHeader>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

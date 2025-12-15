@@ -167,7 +167,7 @@ export default function CheckoutPage() {
               </div>
             </div>
 
-            <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+            <Button type="submit" className="w-full bg-black text-white font-bold hover:bg-[#353434] transition-colors duration-300 hover:shadow-lg" size="lg" disabled={isSubmitting}>
               {isSubmitting ? "Processing..." : "Place Order"}
             </Button>
           </form>

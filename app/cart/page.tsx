@@ -298,15 +298,15 @@ export default function CartPage() {
                   </button>
                 </Link>
                 {/* Payment Methods */}
-                <div className="flex items-center justify-between">
-                  <div className="images flex gap-2">
+                <div className="flex items-center justify-between mt-4 px-2">
+                  <div className="flex items-center">
                     <Image src={visa} alt="visa" width={42} height={27} />
                     <Image src={apple} alt="apple-pay" width={42} height={27} />
                     <Image src={benefit} alt="benefit" width={42} height={27} />
                     <Image src={jcb} alt="jcb" width={42} height={27} />
                   </div>
 
-                  <div className="images mt-2 flex gap-2">
+                  <div className="flex items-center">
                     <Image src={payK} alt="knet" width={42} height={27} />
                     <Image src={mada} alt="mada" width={42} height={27} />
                     <Image src={master} alt="master" width={42} height={27} />

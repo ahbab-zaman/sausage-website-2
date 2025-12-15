@@ -50,13 +50,32 @@ export interface BackendUser {
 
 // --- Client-side User ---
 export interface User {
+  // Core identity
   customer_id: string;
   firstname: string;
   lastname: string;
   email: string;
+
+  // Contact
   telephone?: string;
   country_code?: string;
   dob?: string;
+
+  // Account status
+  status?: string; // Active / Inactive
+  newsletter?: string; // "0" | "1"
+  notification_status?: string; // "0" | "1"
+
+  // Financials
+  balance?: string; // keep string (backend sends string)
+  reward_total?: string;
+
+  // System / security
+  ip?: string;
+  device?: string; // normalized value (see note below)
+  date_added?: string;
+
+  // Auth
   token?: string;
 }
 
