@@ -92,6 +92,10 @@ export default function CartPage() {
               Home
             </Link>
             <ChevronRight className="mx-2 h-4 w-4" />
+            <Link href="/products" className="hover:text-gray-900">
+              All Products
+            </Link>
+            <ChevronRight className="mx-2 h-4 w-4" />
             <span className="font-medium text-gray-900">Shopping Cart</span>
           </div>
         </div>
@@ -134,6 +138,10 @@ export default function CartPage() {
         <div className="mb-6 flex items-center text-sm text-gray-600">
           <Link href="/" className="hover:text-gray-900">
             Home
+          </Link>
+          <ChevronRight className="mx-2 h-4 w-4" />
+          <Link href="/products" className="hover:text-gray-900">
+            All Products
           </Link>
           <ChevronRight className="mx-2 h-4 w-4" />
           <span className="font-medium text-gray-900">Shopping Cart</span>
@@ -298,7 +306,7 @@ export default function CartPage() {
                   </button>
                 </Link>
                 {/* Payment Methods */}
-                <div className="flex items-center justify-between mt-4 px-2">
+                <div className="mt-4 flex items-center justify-between px-2">
                   <div className="flex items-center">
                     <Image src={visa} alt="visa" width={42} height={27} />
                     <Image src={apple} alt="apple-pay" width={42} height={27} />

@@ -5,7 +5,7 @@ import { useCartStore } from "@/stores/cartStore";
 import { useProductStore } from "@/stores/productStore";
 import type { Product } from "@/lib/schemas";
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ShoppingCartIcon, X, Minus, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface ProductCardProps {
@@ -20,6 +20,8 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [modalQuantity, setModalQuantity] = useState(1);
   const [addedQuantity, setAddedQuantity] = useState(1);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [showQuantityDropdown, setShowQuantityDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   // Load products if not already loaded
   useEffect(() => {
@@ -35,6 +37,23 @@ export default function ProductCard({ product }: ProductCardProps) {
     }
   }, [showModal]);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowQuantityDropdown(false);
+      }
+    };
+
+    if (showQuantityDropdown) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showQuantityDropdown]);
+
   // Get related products (same category, different product)
   const relatedProducts = products
     .filter((p) => p.category === product.category && p.id !== product.id)
@@ -44,10 +63,15 @@ export default function ProductCard({ product }: ProductCardProps) {
   console.log("Current product category:", product.category);
   console.log("Related products found:", relatedProducts.length);
 
-  const handleAddToCart = () => {
-    addItem(product.id, 1);
-    setAddedQuantity(1);
-    setModalQuantity(1);
+  const handleCartIconClick = () => {
+    setShowQuantityDropdown(!showQuantityDropdown);
+  };
+
+  const handleQuantitySelect = (quantity: number) => {
+    addItem(product.id, quantity);
+    setAddedQuantity(quantity);
+    setModalQuantity(quantity);
+    setShowQuantityDropdown(false);
     setShowModal(true);
     document.body.style.overflow = "hidden";
   };
@@ -149,13 +173,27 @@ export default function ProductCard({ product }: ProductCardProps) {
               <span className="ml-1 text-xs text-gray-500">AED</span>
             </div>
 
-            <div className="relative flex h-[38px] w-[38px] items-center gap-2 rounded-full">
+            <div className="relative" ref={dropdownRef}>
               {/* Add to Cart Button */}
               <button
-                onClick={handleAddToCart}
-                className="flex flex-1 items-center justify-center gap-2 rounded-full bg-[#AA383A] px-3 py-3 text-white transition-colors hover:bg-[#8a2c2e]">
+                onClick={handleCartIconClick}
+                className="flex h-[38px] w-[38px] items-center justify-center rounded-full bg-[#AA383A] text-white transition-colors hover:bg-[#8a2c2e]">
                 <ShoppingCartIcon className="h-5 w-5" />
               </button>
+
+              {/* Quantity Dropdown - Goes upward */}
+              {showQuantityDropdown && (
+                <div className="absolute right-0 bottom-full z-50 mb-0 flex flex-col-reverse overflow-hidden rounded-t-lg bg-[#AA383A] shadow-lg">
+                  {[1, 2, 3, 4, 5].map((num) => (
+                    <button
+                      key={num}
+                      onClick={() => handleQuantitySelect(num)}
+                      className="flex h-[38px] w-[38px] items-center justify-center border-t border-[#8a2c2e] text-lg font-bold text-white transition-colors first:border-t-0 hover:bg-[#8a2c2e]">
+                      {num}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
