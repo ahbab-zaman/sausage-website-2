@@ -34,7 +34,7 @@ export default function CartSidebar({
       const timer = setTimeout(() => {
         router.push("/cart");
         onClose();
-      }, 3000);
+      }, 1000);
 
       return () => clearTimeout(timer);
     }
@@ -58,7 +58,7 @@ export default function CartSidebar({
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 right-0 z-50 flex h-full w-full flex-col bg-white shadow-2xl transition-transform duration-300 ease-in-out sm:w-[500px] ${
+        className={`fixed top-0 right-0 z-50 flex h-full w-full flex-col bg-white shadow-2xl transition-transform duration-500 ease-in-out sm:w-[500px] ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}>
         {/* Header */}

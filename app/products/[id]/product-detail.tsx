@@ -160,7 +160,7 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Success Message */}
       {showSuccess && (
-        <div className="fixed top-4 right-4 z-50 flex items-center gap-2 rounded-lg bg-green-500 px-6 py-3 text-white shadow-lg">
+        <div className="fixed top-4 right-4 z-50 flex items-center gap-2 rounded-lg bg-black font-bold px-6 py-3 text-white shadow-lg">
           <CheckCircle2 className="h-5 w-5" />
           <span>Added to cart successfully!</span>
         </div>

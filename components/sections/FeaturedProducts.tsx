@@ -47,7 +47,7 @@ export default function FeaturedProducts() {
             <h2 className="mb-4 text-3xl font-bold text-gray-900 md:text-4xl">Featured Products</h2>
             <p className="mx-auto max-w-2xl text-lg text-red-600">{error}</p>
             <button
-              onClick={fetchFeaturedProducts}
+              onClick={() => fetchFeaturedProducts()}
               className="mt-4 rounded-md bg-blue-600 px-6 py-2 text-white hover:bg-blue-700">
               Retry
             </button>
@@ -85,14 +85,16 @@ export default function FeaturedProducts() {
           </div>
         </div>
 
-        <div className="mb-8 grid grid-cols-1 justify-center sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="mb-8 grid grid-cols-1 justify-center gap-4 sm:grid-cols-2 lg:grid-cols-5">
           {featuredProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}
         </div>
 
         <div className="mt-8 flex justify-center">
-          <button  onClick={() => router.push("/products")} className="bg-[#3A3938] text-white py-2 px-4 rounded-lg flex justify-center items-center cursor-pointer">
+          <button
+            onClick={() => router.push("/products")}
+            className="flex cursor-pointer items-center justify-center rounded-lg bg-[#3A3938] px-4 py-2 text-white">
             View All Products
             <ArrowRight className="ml-2 h-4 w-4 transition-transform" />
           </button>
