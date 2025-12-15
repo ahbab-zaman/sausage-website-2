@@ -7,6 +7,14 @@ import { useCartStore } from "@/stores/cartStore";
 import { useAuthStore } from "@/stores/authStore";
 import Link from "next/link";
 import Image from "next/image";
+import apple from "@/public/payment-apple-pay.png";
+import benefit from "@/public/payment-benefit.png";
+import jcb from "@/public/payment-jcb.png";
+import payK from "@/public/payment-k.png";
+import mada from "@/public/payment-mada.png";
+import master from "@/public/payment-master.png";
+import paygcc from "@/public/payment-paygcc.png";
+import visa from "@/public/payment-visa.png";
 
 export default function CartPage() {
   const {
@@ -258,7 +266,7 @@ export default function CartPage() {
               </div>
 
               {/* Summary Section */}
-              <div className="rounded-lg border border-gray-200 bg-white p-6">
+              <div className="rounded-lg border border-gray-200 bg-white p-8">
                 <h2 className="mb-4 text-base font-semibold text-gray-900">Summary</h2>
                 <div className="space-y-3 border-b border-gray-200 pb-4">
                   <div className="flex justify-between text-sm">
@@ -274,7 +282,6 @@ export default function CartPage() {
                   <span className="text-base font-semibold text-gray-900">Total</span>
                   <span className="text-xl font-bold text-gray-900">{formatPrice(total)} AED</span>
                 </div>
-
                 {/* Checkout Button */}
                 <Link href="/checkout" className="mt-6 block">
                   <button
@@ -290,21 +297,21 @@ export default function CartPage() {
                     )}
                   </button>
                 </Link>
-
                 {/* Payment Methods */}
-                <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-                  <div className="text-2xl font-bold text-blue-600">VISA</div>
-                  <div className="rounded border border-gray-300 px-2 py-1 text-xs font-semibold">
-                    Apple Pay
+                <div className="flex items-center justify-between">
+                  <div className="images flex gap-2">
+                    <Image src={visa} alt="visa" width={42} height={27} />
+                    <Image src={apple} alt="apple-pay" width={42} height={27} />
+                    <Image src={benefit} alt="benefit" width={42} height={27} />
+                    <Image src={jcb} alt="jcb" width={42} height={27} />
                   </div>
-                  <div className="text-xl text-pink-400">💳</div>
-                  <div className="text-xl font-bold text-blue-600">JCB</div>
-                  <div className="text-xs font-bold text-blue-600">AMEX</div>
-                  <div className="rounded border border-gray-300 px-2 py-1 text-xs">CEDB</div>
-                  <div className="flex h-6 w-8 items-center justify-center rounded-full bg-gradient-to-r from-red-500 via-orange-500 to-yellow-500">
-                    <div className="h-4 w-6 rounded-full bg-gradient-to-r from-orange-500 to-red-500"></div>
+
+                  <div className="images mt-2 flex gap-2">
+                    <Image src={payK} alt="knet" width={42} height={27} />
+                    <Image src={mada} alt="mada" width={42} height={27} />
+                    <Image src={master} alt="master" width={42} height={27} />
+                    <Image src={paygcc} alt="paygcc" width={42} height={27} />
                   </div>
-                  <div className="text-xs font-bold text-teal-500">PayGCC</div>
                 </div>
               </div>
             </div>

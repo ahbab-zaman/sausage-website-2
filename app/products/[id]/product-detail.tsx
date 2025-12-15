@@ -1,23 +1,22 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, memo } from "react";
 import {
   Star,
   Heart,
   Minus,
   Plus,
-  Truck,
-  RotateCcw,
+  Share,
+  Loader2,
+  CheckCircle2,
   Wine,
   Ruler,
   Building2,
-  Globe,
-  Share,
-  Loader2,
-  CheckCircle2
+  Globe
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/stores/cartStore";
+import { useProductStore } from "@/stores/productStore";
 import ProductCard from "@/components/ProductCard";
 import { Product } from "@/types/product";
 import Image from "next/image";
@@ -25,6 +24,55 @@ import Link from "next/link";
 import ReviewsSection from "@/components/Review";
 
 type Props = { product: Product; relatedProducts: Product[] };
+
+// Memoized product image component
+const ProductImage = memo(
+  ({ src, alt, priority = false }: { src: string; alt: string; priority?: boolean }) => (
+    <Image
+      fill
+      src={src || "/placeholder.svg"}
+      alt={alt}
+      className="object-contain p-8"
+      priority={priority}
+      sizes="(max-width: 768px) 100vw, 500px"
+    />
+  )
+);
+ProductImage.displayName = "ProductImage";
+
+// Memoized thumbnail component
+const ProductThumbnail = memo(
+  ({
+    image,
+    alt,
+    index,
+    isSelected,
+    onClick
+  }: {
+    image: string;
+    alt: string;
+    index: number;
+    isSelected: boolean;
+    onClick: () => void;
+  }) => (
+    <button
+      onClick={onClick}
+      className={`aspect-square overflow-hidden rounded-lg border-2 bg-gray-100 transition-all ${
+        isSelected
+          ? "border-red-600 ring-2 ring-red-600 ring-offset-2"
+          : "border-gray-300 hover:border-gray-400"
+      }`}>
+      <Image
+        width={100}
+        height={100}
+        src={image || "/placeholder.svg"}
+        alt={`${alt} ${index + 1}`}
+        className="h-full w-full object-contain p-2"
+      />
+    </button>
+  )
+);
+ProductThumbnail.displayName = "ProductThumbnail";
 
 // Icon mapping for specifications
 const getSpecIcon = (label: string) => {
@@ -43,6 +91,7 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
   const [showSuccess, setShowSuccess] = useState(false);
 
   const { addItem, loading, error, resetError } = useCartStore();
+  const { prefetchProductsBatch } = useProductStore();
 
   // Memoize product images
   const productImages = useMemo(() => {
@@ -51,6 +100,14 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
     }
     return product.image ? [product.image] : ["/placeholder.svg"];
   }, [product.images, product.image]);
+
+  // Prefetch related products on mount
+  useEffect(() => {
+    if (relatedProducts.length > 0) {
+      const relatedIds = relatedProducts.slice(0, 4).map((p) => p.id);
+      prefetchProductsBatch(relatedIds);
+    }
+  }, [relatedProducts, prefetchProductsBatch]);
 
   // Reset states when product changes
   useEffect(() => {
@@ -68,15 +125,7 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
     }
   }, [selectedImage, productImages.length]);
 
-  if (!product) {
-    return (
-      <div className="mx-auto max-w-7xl px-4 py-16 text-center sm:px-6 lg:px-8">
-        Product not found
-      </div>
-    );
-  }
-
-  const handleAddToCart = async () => {
+  const handleAddToCart = useCallback(async () => {
     try {
       await addItem(product.id, quantity);
 
@@ -89,7 +138,23 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
     } catch (err) {
       console.error("Failed to add to cart:", err);
     }
-  };
+  }, [product.id, quantity, addItem]);
+
+  const handleQuantityChange = useCallback((delta: number) => {
+    setQuantity((prev) => Math.max(1, prev + delta));
+  }, []);
+
+  const handleImageSelect = useCallback((index: number) => {
+    setSelectedImage(index);
+  }, []);
+
+  if (!product) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-16 text-center sm:px-6 lg:px-8">
+        Product not found
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
@@ -117,7 +182,7 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
           Home
         </Link>
         <span className="mx-2">›</span>
-        <Link href={`/products`} className="transition-colors hover:text-gray-900">
+        <Link href="/products" className="transition-colors hover:text-gray-900">
           All Products
         </Link>
         <span className="mx-2">›</span>
@@ -128,34 +193,19 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
         {/* Product Images */}
         <div className="space-y-4">
           <div className="relative mx-auto aspect-square max-w-[500px] overflow-hidden rounded-xl bg-gray-100">
-            <Image
-              key={`${product.id}-${selectedImage}`}
-              fill
-              src={productImages[selectedImage] || "/placeholder.svg"}
-              alt={product.name}
-              className="object-contain p-8"
-              priority
-            />
+            <ProductImage src={productImages[selectedImage]} alt={product.name} priority />
           </div>
           {productImages.length > 1 && (
             <div className="mx-auto grid max-w-[500px] grid-cols-4 gap-4">
               {productImages.map((image, index) => (
-                <button
-                  key={`${product.id}-thumb-${index}`}
-                  onClick={() => setSelectedImage(index)}
-                  className={`aspect-square overflow-hidden rounded-lg border-2 bg-gray-100 transition-all ${
-                    selectedImage === index
-                      ? "border-red-600 ring-2 ring-red-600 ring-offset-2"
-                      : "border-gray-300 hover:border-gray-400"
-                  }`}>
-                  <Image
-                    width={100}
-                    height={100}
-                    src={image || "/placeholder.svg"}
-                    alt={`${product.name} ${index + 1}`}
-                    className="h-full w-full object-contain p-2"
-                  />
-                </button>
+                <ProductThumbnail
+                  key={index}
+                  image={image}
+                  alt={product.name}
+                  index={index}
+                  isSelected={selectedImage === index}
+                  onClick={() => handleImageSelect(index)}
+                />
               ))}
             </div>
           )}
@@ -222,14 +272,14 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
           <div className="flex items-center gap-3">
             <div className="flex items-center rounded-md bg-[#f2f2f2] p-[6px]">
               <button
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                disabled={loading}
+                onClick={() => handleQuantityChange(-1)}
+                disabled={loading || quantity <= 1}
                 className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50">
                 <Minus className="h-4 w-4" />
               </button>
               <span className="w-12 text-center font-semibold">{quantity}</span>
               <button
-                onClick={() => setQuantity(quantity + 1)}
+                onClick={() => handleQuantityChange(1)}
                 disabled={loading}
                 className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-300 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50">
                 <Plus className="h-4 w-4" />
