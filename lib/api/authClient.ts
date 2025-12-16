@@ -271,6 +271,20 @@ class AuthApiClient {
     return res;
   }
 
+  async searchProducts(query: string, page = 1) {
+    const res = await this.request<any>(
+      `/index.php?route=feed/rest_api/search&search=${encodeURIComponent(query)}&page=${page}`,
+      { method: "GET" }
+    );
+
+    // Log the response structure to help debug
+    if (res.success) {
+      console.log("Search response structure:", res.data);
+    }
+
+    return res;
+  }
+
   /**
    * Refresh token if expired
    */
