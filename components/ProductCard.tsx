@@ -15,6 +15,7 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const addItem = useCartStore((state) => state.addItem);
   const { products, fetchProducts } = useProductStore();
+
   const [showModal, setShowModal] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [modalQuantity, setModalQuantity] = useState(1);
@@ -23,14 +24,14 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [showQuantityDropdown, setShowQuantityDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Load products if not already loaded
+  // Load products if not already loaded (for related products)
   useEffect(() => {
     if (products.length === 0) {
       fetchProducts();
     }
   }, [products.length, fetchProducts]);
 
-  // Trigger animation after modal shows
+  // Modal entrance animation
   useEffect(() => {
     if (showModal) {
       setTimeout(() => setIsAnimating(true), 10);
@@ -54,21 +55,28 @@ export default function ProductCard({ product }: ProductCardProps) {
     };
   }, [showQuantityDropdown]);
 
-  // Get related products (same category, different product)
+  // Related products from same category
   const relatedProducts = products
     .filter((p) => p.category === product.category && p.id !== product.id)
     .slice(0, 8);
-
-  console.log("Total products:", products.length);
-  console.log("Current product category:", product.category);
-  console.log("Related products found:", relatedProducts.length);
 
   const handleCartIconClick = () => {
     setShowQuantityDropdown(!showQuantityDropdown);
   };
 
+  // Updated: Pass full product object to addItem
   const handleQuantitySelect = (quantity: number) => {
-    addItem(product.id, quantity);
+    addItem(
+      {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        model: product.model
+      },
+      quantity
+    );
+
     setAddedQuantity(quantity);
     setModalQuantity(quantity);
     setShowQuantityDropdown(false);
@@ -84,15 +92,35 @@ export default function ProductCard({ product }: ProductCardProps) {
     }, 300);
   };
 
+  // Updated: Add more quantity using full product object
   const handleAddMoreToCart = () => {
     if (modalQuantity > addedQuantity) {
-      addItem(product.id, modalQuantity - addedQuantity);
+      addItem(
+        {
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          model: product.model
+        },
+        modalQuantity - addedQuantity
+      );
       setAddedQuantity(modalQuantity);
     }
   };
 
+  // Updated: Add related product using full object
   const handleAddRelatedToCart = (relatedProduct: Product) => {
-    addItem(relatedProduct.id, 1);
+    addItem(
+      {
+        id: relatedProduct.id,
+        name: relatedProduct.name,
+        price: relatedProduct.price,
+        image: relatedProduct.image,
+        model: relatedProduct.model
+      },
+      1
+    );
   };
 
   const formatPrice = (price: number) => {
@@ -118,10 +146,10 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <>
-      <div className="mx-h-[400px] max-w-[230px] overflow-hidden rounded-lg bg-white px-2 pt-8 shadow-sm transition-all duration-500 hover:border-[1px] hover:border-[#E1E2E3] hover:shadow-md">
-        {/* Top Part */}
+      {/* Product Card */}
+      <div className="max-h-[400px] max-w-[230px] overflow-hidden rounded-lg bg-white px-2 pt-8 shadow-sm transition-all duration-500 hover:border hover:border-[#E1E2E3] hover:shadow-md">
         <div className="relative">
-          {/* Badge Wrapper */}
+          {/* Badge */}
           <div className="absolute top-2 left-2 z-10">
             {product.badge && (
               <span className="rounded bg-red-500 px-2 py-1 text-xs font-medium text-white">
@@ -133,7 +161,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           {/* Wishlist Button */}
           <button
             className="absolute -top-6 right-2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm transition-colors hover:bg-gray-50"
-            aria-label="wishlist button">
+            aria-label="Add to wishlist">
             <svg width="40" height="40" viewBox="0 0 40 40" className="h-5 w-5 text-gray-600">
               <path
                 d="M20,35.07,4.55,19.62a8.5,8.5,0,0,1-.12-12l.12-.12a8.72,8.72,0,0,1,12.14,0L20,10.77l3.3-3.3A8.09,8.09,0,0,1,29.13,4.9a8.89,8.89,0,0,1,6.31,2.58,8.5,8.5,0,0,1,.12,12l-.12.12ZM10.64,7.13A6.44,6.44,0,0,0,6.07,18.19L20,32.06,33.94,18.12A6.44,6.44,0,0,0,34,9l0,0a6.44,6.44,0,0,0-4.77-1.85A6,6,0,0,0,24.83,9L20,13.78,15.21,9A6.44,6.44,0,0,0,10.64,7.13Z"
@@ -142,7 +170,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             </svg>
           </button>
 
-          {/* Image */}
+          {/* Product Image */}
           <Link href={`/products/${product.id}`} className="block">
             <div className="relative w-full" style={{ paddingBottom: "100%" }}>
               <Image
@@ -155,18 +183,17 @@ export default function ProductCard({ product }: ProductCardProps) {
           </Link>
         </div>
 
-        {/* Bottom Part */}
         <div className="p-4">
           {/* Title */}
           <div className="mb-3">
             <Link
               href={`/products/${product.id}`}
-              className="line-clamp-2 text-[16px] leading-relaxed font-bold text-gray-800 transition-colors">
+              className="line-clamp-2 text-[16px] leading-relaxed font-bold text-gray-800 transition-colors hover:text-gray-600">
               {product.name}
             </Link>
           </div>
 
-          {/* Price */}
+          {/* Price + Add to Cart */}
           <div className="flex items-center justify-between">
             <div className="flex items-baseline">
               <span className="text-2xl font-bold text-gray-900">{product.price.toFixed(2)}</span>
@@ -174,14 +201,13 @@ export default function ProductCard({ product }: ProductCardProps) {
             </div>
 
             <div className="relative" ref={dropdownRef}>
-              {/* Add to Cart Button */}
               <button
                 onClick={handleCartIconClick}
                 className="flex h-[38px] w-[38px] items-center justify-center rounded-full bg-[#AA383A] text-white transition-colors hover:bg-[#8a2c2e]">
                 <ShoppingCartIcon className="h-5 w-5" />
               </button>
 
-              {/* Quantity Dropdown - Goes upward */}
+              {/* Quantity Dropdown (upward) */}
               {showQuantityDropdown && (
                 <div className="absolute right-0 bottom-full z-50 mb-0 flex flex-col-reverse overflow-hidden rounded-t-lg bg-[#AA383A] shadow-lg">
                   {[1, 2, 3, 4, 5].map((num) => (
@@ -199,10 +225,9 @@ export default function ProductCard({ product }: ProductCardProps) {
         </div>
       </div>
 
-      {/* Add to Cart Modal */}
+      {/* Add to Cart Success Modal */}
       {showModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center">
-          {/* Backdrop with fade animation */}
           <div
             className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${
               isAnimating ? "opacity-100" : "opacity-0"
@@ -210,28 +235,23 @@ export default function ProductCard({ product }: ProductCardProps) {
             onClick={closeModal}
           />
 
-          {/* Modal with scale and fade animation */}
           <div
             className={`relative z-10 mx-4 w-full max-w-4xl overflow-hidden rounded-lg bg-white shadow-2xl transition-all duration-300 ${
               isAnimating ? "scale-100 opacity-100" : "scale-95 opacity-0"
             }`}>
-            {/* Close Button */}
             <button
               onClick={closeModal}
               className="absolute top-4 right-4 z-20 rounded-full bg-white p-2 text-gray-600 shadow-md transition-all hover:rotate-90 hover:bg-gray-100 hover:text-gray-900">
               <X className="h-6 w-6" />
             </button>
 
-            {/* Modal Content */}
             <div className="max-h-[90vh] overflow-y-auto p-8">
-              {/* Header */}
               <h2 className="mb-6 text-center text-2xl font-bold text-gray-900">
                 Successfully added to cart
               </h2>
 
-              {/* Product Info Section */}
+              {/* Main Product Info */}
               <div className="mb-8 flex items-start gap-6">
-                {/* Product Image */}
                 <div className="h-32 w-32 flex-shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
                   <Image
                     src={product.image || "/placeholder.svg"}
@@ -242,7 +262,6 @@ export default function ProductCard({ product }: ProductCardProps) {
                   />
                 </div>
 
-                {/* Product Details */}
                 <div className="flex-1">
                   <h3 className="mb-3 text-lg font-semibold text-gray-900">{product.name}</h3>
                   <p className="mb-2 text-sm text-gray-600">
@@ -253,7 +272,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                     AED
                   </p>
 
-                  {/* Quantity Controls */}
+                  {/* Update Quantity */}
                   <div className="mb-4 flex items-center gap-4">
                     <div className="flex items-center gap-3 rounded-lg border border-gray-300 bg-white px-2">
                       <button
@@ -295,13 +314,12 @@ export default function ProductCard({ product }: ProductCardProps) {
                 </Link>
               </div>
 
-              {/* Related Products Section */}
+              {/* Related Products Carousel */}
               {relatedProducts.length > 0 && (
                 <div>
                   <h3 className="mb-6 text-xl font-bold text-gray-900">You May Also Like</h3>
 
                   <div className="relative">
-                    {/* Previous Button */}
                     {currentSlide > 0 && (
                       <button
                         onClick={prevSlide}
@@ -310,13 +328,11 @@ export default function ProductCard({ product }: ProductCardProps) {
                       </button>
                     )}
 
-                    {/* Products Grid - Matching ProductDetailPage style */}
                     <div className="grid grid-cols-4 gap-4">
                       {visibleProducts.map((relatedProduct) => (
                         <div
                           key={relatedProduct.id}
                           className="group overflow-hidden rounded-lg border border-gray-200 bg-white transition-all hover:shadow-md">
-                          {/* Product Image */}
                           <Link
                             href={`/products/${relatedProduct.id}`}
                             onClick={closeModal}
@@ -329,16 +345,13 @@ export default function ProductCard({ product }: ProductCardProps) {
                             />
                           </Link>
 
-                          {/* Product Info */}
                           <div className="p-3">
-                            {/* Product Name */}
                             <Link href={`/products/${relatedProduct.id}`} onClick={closeModal}>
                               <h4 className="mb-2 line-clamp-2 min-h-[2.5rem] text-sm font-semibold text-gray-900 transition-colors hover:text-gray-700">
                                 {relatedProduct.name}
                               </h4>
                             </Link>
 
-                            {/* Price and Cart Button */}
                             <div className="flex items-center justify-between">
                               <div className="flex flex-col">
                                 <span className="text-base font-bold text-gray-900">
@@ -347,7 +360,6 @@ export default function ProductCard({ product }: ProductCardProps) {
                                 <span className="text-xs text-gray-500">AED</span>
                               </div>
 
-                              {/* Add to Cart Button */}
                               <button
                                 onClick={() => handleAddRelatedToCart(relatedProduct)}
                                 className="flex h-9 w-9 items-center justify-center rounded-full bg-red-600 text-white transition-all hover:scale-110 hover:bg-red-700 active:scale-95">
@@ -359,7 +371,6 @@ export default function ProductCard({ product }: ProductCardProps) {
                       ))}
                     </div>
 
-                    {/* Next Button */}
                     {currentSlide < maxSlide && (
                       <button
                         onClick={nextSlide}

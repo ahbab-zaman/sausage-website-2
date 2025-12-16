@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Minus, Plus, Trash2, Loader2, Home, ChevronRight } from "lucide-react";
+import { Minus, Plus, Trash2, Loader2, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/stores/cartStore";
 import { useAuthStore } from "@/stores/authStore";
@@ -29,6 +29,7 @@ export default function CartPage() {
     clearCart
   } = useCartStore();
   const { isAuthenticated } = useAuthStore();
+
   const [couponCode, setCouponCode] = useState("");
   const [discount, setDiscount] = useState(0);
 
@@ -39,20 +40,11 @@ export default function CartPage() {
     }
   }, [fetchCart, isAuthenticated]);
 
-  // Not authenticated
-  if (!isAuthenticated()) {
-    return (
-      <div className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 lg:px-8">
-        <h1 className="mb-4 text-3xl font-bold text-gray-900">Please Login</h1>
-        <p className="mb-8 text-gray-600">You need to be logged in to view your cart.</p>
-        <Link href="/login">
-          <Button size="lg">Login</Button>
-        </Link>
-      </div>
-    );
-  }
+  // Modal open state
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
 
-  // Show loading state
+
+
   if (loading && items.length === 0) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 lg:px-8">
@@ -62,7 +54,6 @@ export default function CartPage() {
     );
   }
 
-  // Show error if any
   if (error) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 lg:px-8">
@@ -81,11 +72,9 @@ export default function CartPage() {
     );
   }
 
-  // Empty cart state
   if (items.length === 0) {
     return (
       <>
-        {/* Breadcrumb */}
         <div className="bg-[#f2f2f2]">
           <div className="mx-auto mb-6 flex w-[90%] items-center py-1 text-sm text-gray-600">
             <Link href="/" className="hover:text-gray-900">
@@ -112,7 +101,6 @@ export default function CartPage() {
     );
   }
 
-  // Helper function to safely format price
   const formatPrice = (price: number) => {
     return isNaN(price) ? "0.00" : price.toFixed(2);
   };
@@ -121,7 +109,6 @@ export default function CartPage() {
   const total = subtotal - discount;
 
   const handleApplyCoupon = () => {
-    // Simple coupon logic - you can replace with actual API call
     if (couponCode.toLowerCase() === "save10") {
       setDiscount(subtotal * 0.1);
     } else if (couponCode.toLowerCase() === "save20") {
@@ -134,7 +121,6 @@ export default function CartPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
         <div className="mb-6 flex items-center text-sm text-gray-600">
           <Link href="/" className="hover:text-gray-900">
             Home
@@ -147,7 +133,6 @@ export default function CartPage() {
           <span className="font-medium text-gray-900">Shopping Cart</span>
         </div>
 
-        {/* Header with Clear All */}
         <div className="mb-6 flex items-center justify-between">
           <h1 className="text-2xl font-bold text-gray-900">Shopping Cart</h1>
           <button
@@ -163,7 +148,6 @@ export default function CartPage() {
           {/* Cart Items Section */}
           <div className="lg:col-span-2">
             <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-              {/* Table Header */}
               <div className="grid grid-cols-12 gap-4 border-b border-gray-200 bg-gray-50 px-6 py-4 text-sm font-semibold text-gray-900">
                 <div className="col-span-5">Product Name</div>
                 <div className="col-span-3 text-center">Quantity</div>
@@ -171,15 +155,13 @@ export default function CartPage() {
                 <div className="col-span-1"></div>
               </div>
 
-              {/* Cart Items */}
               <div className="divide-y divide-gray-200">
                 {items.map((item) => {
                   const itemTotal = item.price * item.quantity;
-                  const originalPrice = item.price * 1.18; // Assuming 15% discount shown in image
+                  const originalPrice = item.price * 1.18;
 
                   return (
                     <div key={item.key} className="grid grid-cols-12 gap-4 px-6 py-6">
-                      {/* Product Info */}
                       <div className="col-span-5 flex space-x-4">
                         <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg border border-gray-200">
                           <Image
@@ -209,7 +191,6 @@ export default function CartPage() {
                         </div>
                       </div>
 
-                      {/* Quantity Controls */}
                       <div className="col-span-3 flex items-center justify-center">
                         <div className="flex items-center space-x-3">
                           <button
@@ -228,14 +209,12 @@ export default function CartPage() {
                         </div>
                       </div>
 
-                      {/* Item Total */}
                       <div className="col-span-3 flex items-center justify-end">
                         <span className="text-lg font-bold text-gray-900">
                           {formatPrice(itemTotal)} AED
                         </span>
                       </div>
 
-                      {/* Remove Button */}
                       <div className="col-span-1 flex items-center justify-end">
                         <button
                           onClick={() => removeItem(item.key)}
@@ -254,7 +233,6 @@ export default function CartPage() {
           {/* Sidebar */}
           <div className="lg:col-span-1">
             <div className="space-y-6">
-              {/* Coupon Code Section */}
               <div className="rounded-lg border border-gray-200 bg-white p-6">
                 <h2 className="mb-4 text-base font-semibold text-gray-900">Use Coupon Code</h2>
                 <div className="flex space-x-2">
@@ -273,7 +251,6 @@ export default function CartPage() {
                 </div>
               </div>
 
-              {/* Summary Section */}
               <div className="rounded-lg border border-gray-200 bg-white p-8">
                 <h2 className="mb-4 text-base font-semibold text-gray-900">Summary</h2>
                 <div className="space-y-3 border-b border-gray-200 pb-4">
@@ -290,7 +267,7 @@ export default function CartPage() {
                   <span className="text-base font-semibold text-gray-900">Total</span>
                   <span className="text-xl font-bold text-gray-900">{formatPrice(total)} AED</span>
                 </div>
-                {/* Checkout Button */}
+
                 <Link href="/checkout" className="mt-6 block">
                   <button
                     disabled={loading}
@@ -305,16 +282,15 @@ export default function CartPage() {
                     )}
                   </button>
                 </Link>
-                {/* Payment Methods */}
+
                 <div className="mt-4 flex items-center justify-between px-2">
-                  <div className="flex items-center">
+                  <div className="flex items-center space-x-2">
                     <Image src={visa} alt="visa" width={42} height={27} />
                     <Image src={apple} alt="apple-pay" width={42} height={27} />
                     <Image src={benefit} alt="benefit" width={42} height={27} />
                     <Image src={jcb} alt="jcb" width={42} height={27} />
                   </div>
-
-                  <div className="flex items-center">
+                  <div className="flex items-center space-x-2">
                     <Image src={payK} alt="knet" width={42} height={27} />
                     <Image src={mada} alt="mada" width={42} height={27} />
                     <Image src={master} alt="master" width={42} height={27} />

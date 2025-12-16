@@ -5,6 +5,7 @@ import { X, Minus, Plus, ChevronLeft, ChevronRight, ShoppingCart } from "lucide-
 import Image from "next/image";
 import Link from "next/link";
 import { Product } from "@/types/product";
+import { useCartStore } from "@/stores/cartStore";
 
 interface AddToCartModalProps {
   isOpen: boolean;
@@ -27,6 +28,7 @@ export default function AddToCartModal({
 }: AddToCartModalProps) {
   const [quantity, setQuantity] = useState(addedQuantity);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const addItem = useCartStore((state) => state.addItem);
 
   useEffect(() => {
     setQuantity(addedQuantity);
@@ -46,33 +48,51 @@ export default function AddToCartModal({
   if (!isOpen) return null;
 
   const handleQuantityChange = (newQty: number) => {
-    if (newQty >= 1) {
-      setQuantity(newQty);
-    }
+    if (newQty >= 1) setQuantity(newQty);
   };
 
   const handleAddToCart = () => {
     if (onAddMore) {
       onAddMore(quantity);
+    } else {
+      // Fallback: direct add using store
+      addItem(
+        {
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          model: product.model
+        },
+        quantity - addedQuantity
+      );
     }
   };
 
-  const formatPrice = (price: number) => {
-    return isNaN(price) ? "0.00" : price.toFixed(2);
+  const handleAddRelated = (relatedProduct: Product) => {
+    if (onAddRelatedToCart) {
+      onAddRelatedToCart(relatedProduct);
+    } else {
+      addItem(
+        {
+          id: relatedProduct.id,
+          name: relatedProduct.name,
+          price: relatedProduct.price,
+          image: relatedProduct.image,
+          model: relatedProduct.model
+        },
+        1
+      );
+    }
   };
 
-  // Calculate visible products for carousel
+  const formatPrice = (price: number) => (isNaN(price) ? "0.00" : price.toFixed(2));
+
   const itemsPerView = 4;
   const maxSlide = Math.max(0, Math.ceil(relatedProducts.length / itemsPerView) - 1);
 
-  const nextSlide = () => {
-    setCurrentSlide((prev) => Math.min(prev + 1, maxSlide));
-  };
-
-  const prevSlide = () => {
-    setCurrentSlide((prev) => Math.max(prev - 1, 0));
-  };
-
+  const nextSlide = () => setCurrentSlide((prev) => Math.min(prev + 1, maxSlide));
+  const prevSlide = () => setCurrentSlide((prev) => Math.max(prev - 1, 0));
   const visibleProducts = relatedProducts.slice(
     currentSlide * itemsPerView,
     (currentSlide + 1) * itemsPerView
@@ -193,24 +213,17 @@ export default function AddToCartModal({
                           className="h-full w-full object-contain"
                         />
                       </div>
-
                       {/* Product Name */}
                       <h4 className="mb-2 line-clamp-2 min-h-[2.5rem] text-sm font-medium text-gray-900">
                         {relatedProduct.name}
                       </h4>
-
                       {/* Price */}
                       <p className="mb-3 text-base font-bold text-gray-900">
                         {formatPrice(relatedProduct.price)}AED
                       </p>
-
                       {/* Add to Cart Button */}
                       <button
-                        onClick={() => {
-                          if (onAddRelatedToCart) {
-                            onAddRelatedToCart(relatedProduct);
-                          }
-                        }}
+                        onClick={() => handleAddRelated(relatedProduct)}
                         className="flex w-full items-center justify-center gap-2 rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700">
                         <ShoppingCart className="h-4 w-4" />
                       </button>

@@ -88,3 +88,78 @@ export interface CartItem {
   quantity: number;
   color?: string;
 }
+
+// Existing content...
+
+// Add optional fields for home API product format compatibility
+export interface ApiProductResponse {
+  id?: number;
+  product_id: number;
+  name: string;
+  // description?: string | undefined;
+  price: number | string;
+  price_formated?: string;
+  special?: string;
+  special_formated?: string;
+  image?: string;
+  thumb?: string;
+  images?: string[];
+  rating?: number;
+  quantity?: number | string;
+  model?: string;
+  product_code?: string;
+  manufacturer?: string;
+  stock_status?: string;
+  availability?: string;
+  attribute_groups?: AttributeGroup[];
+  related?: ApiProductResponse[];
+  label?: string; // From home response
+  label_image?: string;
+  seo_url?: string;
+  status?: string;
+  special_start_date?: string;
+  special_end_date?: string;
+  is_wishlist?: number;
+  cart_quantity?: number;
+}
+
+// New: For home endpoint response
+export interface HomeProductResponse extends ApiProductResponse {} // Alias for clarity, same as above
+
+export interface RecommendedSection {
+  title: string;
+  products: HomeProductResponse[];
+}
+
+export interface HomeApiResponse {
+  success: number;
+  error: string[];
+  data: {
+    ios_maintenance_mode: string;
+    android_maintenance_mode: string;
+    maintenance_message: string;
+    force_update: number;
+    banners: {
+      images: Array<{
+        link_type: string;
+        name: string;
+        link: string;
+        image: string;
+        parent_id: string;
+        parent_name: string;
+        categories: any[];
+      }>;
+    };
+    popup: Array<{
+      link_type: string;
+      name: string;
+      link: string;
+      image: string;
+      parent_id: string;
+      parent_name: string;
+      sub_categories: any[];
+    }>;
+    recommended: RecommendedSection;
+    // ... (other sections like cta1, promotions, etc., can be added if needed)
+  };
+}

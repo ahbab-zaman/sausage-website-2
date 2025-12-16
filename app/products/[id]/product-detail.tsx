@@ -127,18 +127,24 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
 
   const handleAddToCart = useCallback(async () => {
     try {
-      await addItem(product.id, quantity);
+      await addItem(
+        {
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          model: product.model
+        },
+        quantity
+      );
 
-      // Show success message
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
-
-      // Reset quantity after adding
       setQuantity(1);
     } catch (err) {
       console.error("Failed to add to cart:", err);
     }
-  }, [product.id, quantity, addItem]);
+  }, [product, quantity, addItem]);
 
   const handleQuantityChange = useCallback((delta: number) => {
     setQuantity((prev) => Math.max(1, prev + delta));
@@ -160,7 +166,7 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       {/* Success Message */}
       {showSuccess && (
-        <div className="fixed top-4 right-4 z-50 flex items-center gap-2 rounded-lg bg-black font-bold px-6 py-3 text-white shadow-lg">
+        <div className="fixed top-4 right-4 z-50 flex items-center gap-2 rounded-lg bg-black px-6 py-3 font-bold text-white shadow-lg">
           <CheckCircle2 className="h-5 w-5" />
           <span>Added to cart successfully!</span>
         </div>

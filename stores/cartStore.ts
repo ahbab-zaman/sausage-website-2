@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { CartItem } from "@/types/cart";
 import { cartApiClient } from "@/lib/api/cartClient";
+import { authApiClient } from "@/lib/api/authClient";
 
 interface CartStore {
   items: CartItem[];
@@ -10,7 +11,16 @@ interface CartStore {
   lastSync: number | null;
 
   fetchCart: (force?: boolean) => Promise<void>;
-  addItem: (productId: string, quantity: number) => Promise<void>;
+  addItem: (
+    product: {
+      id: string;
+      name: string;
+      price: number;
+      image?: string;
+      model?: string;
+    },
+    quantity?: number
+  ) => Promise<void>;
   updateQuantity: (key: string, quantity: number) => Promise<void>;
   removeItem: (key: string) => Promise<void>;
   clearCart: () => Promise<void>;
@@ -20,7 +30,7 @@ interface CartStore {
   resetError: () => void;
 }
 
-const CART_STALE_TIME = 5 * 60 * 1000; // 5 minutes (increased from 2)
+const CART_STALE_TIME = 5 * 60 * 1000; // 5 minutes
 const BACKGROUND_REFRESH_TIME = 3 * 60 * 1000; // 3 minutes
 
 export const useCartStore = create<CartStore>()(
@@ -31,39 +41,39 @@ export const useCartStore = create<CartStore>()(
       error: null,
       lastSync: null,
 
+      // Load server cart only when logged in
       fetchCart: async (force = false) => {
+        if (!authApiClient.isLoggedIn()) {
+          // Guest: nothing to fetch, just keep local data
+          return;
+        }
+
         const state = get();
         const now = Date.now();
 
-        // Skip if data is fresh
         if (
           !force &&
           state.items.length > 0 &&
           state.lastSync &&
           now - state.lastSync < CART_STALE_TIME
         ) {
-          // Background refresh if data is getting stale
           if (now - state.lastSync > BACKGROUND_REFRESH_TIME) {
             cartApiClient
               .getCart()
-              .then((items) => {
-                set({ items, lastSync: Date.now() });
-              })
+              .then((items) => set({ items, lastSync: Date.now() }))
               .catch(() => {});
           }
           return;
         }
 
-        // Show loading only if we don't have data
         if (state.items.length === 0) {
           set({ loading: true, error: null });
         }
 
         try {
-          const items: CartItem[] = await cartApiClient.getCart();
+          const items = await cartApiClient.getCart();
           set({ items, loading: false, lastSync: now });
         } catch (error) {
-          // Don't clear existing data on error
           set({
             error: error instanceof Error ? error.message : "Failed to fetch cart",
             loading: false
@@ -71,40 +81,75 @@ export const useCartStore = create<CartStore>()(
         }
       },
 
-      addItem: async (productId, quantity) => {
+      // Add item – works for guests & logged-in users
+      addItem: async (product, quantity = 1) => {
+        const isLoggedIn = authApiClient.isLoggedIn();
+
+        // Guest mode: fully local
+        if (!isLoggedIn) {
+          const currentItems = get().items;
+          const existing = currentItems.find((i) => i.product_id === product.id);
+
+          let newItems: CartItem[];
+
+          if (existing) {
+            newItems = currentItems.map((i) =>
+              i.product_id === product.id
+                ? {
+                    ...i,
+                    quantity: i.quantity + quantity,
+                    total: i.price * (i.quantity + quantity)
+                  }
+                : i
+            );
+          } else {
+            const newItem: CartItem = {
+              id: product.id,
+              key: `guest_${Date.now()}_${product.id}`,
+              product_id: product.id,
+              name: product.name,
+              price: product.price,
+              quantity,
+              total: product.price * quantity,
+              image: product.image || "/placeholder.svg",
+              model: product.model
+            };
+            newItems = [...currentItems, newItem];
+          }
+
+          set({ items: newItems, loading: false });
+          return;
+        }
+
+        // Logged-in: server sync with optimistic update
         const currentItems = get().items;
+        const existing = currentItems.find((i) => i.product_id === product.id);
 
-        // Check if item already exists
-        const existingItem = currentItems.find((item) => item.product_id === productId);
-
-        if (existingItem) {
-          // If exists, update quantity instead
-          return get().updateQuantity(existingItem.key, existingItem.quantity + quantity);
+        if (existing) {
+          return get().updateQuantity(existing.key, existing.quantity + quantity);
         }
 
         set({ loading: true, error: null });
 
-        // Optimistic update with placeholder
         const tempItem: CartItem = {
-          id: productId,
-          product_id: productId,
-          name: "Adding...",
-          price: 0,
+          id: product.id,
+          key: `temp_${Date.now()}`,
+          product_id: product.id,
+          name: product.name,
+          price: product.price,
           quantity,
-          total: 0,
-          image: "/placeholder.svg",
-          key: `temp_${Date.now()}`
+          total: product.price * quantity,
+          image: product.image || "/placeholder.svg",
+          model: product.model
         };
 
         set({ items: [...currentItems, tempItem] });
 
         try {
-          const items: CartItem[] = await cartApiClient.addToCart(productId, quantity);
+          const items = await cartApiClient.addToCart(product.id, quantity);
           set({ items, loading: false, lastSync: Date.now() });
         } catch (error) {
-          // Revert on error
           set({ items: currentItems });
-
           set({
             error: error instanceof Error ? error.message : "Failed to add item",
             loading: false
@@ -113,12 +158,24 @@ export const useCartStore = create<CartStore>()(
         }
       },
 
+      // Update quantity
       updateQuantity: async (key, quantity) => {
-        if (quantity === 0) return get().removeItem(key);
+        if (quantity <= 0) return get().removeItem(key);
 
+        const isLoggedIn = authApiClient.isLoggedIn();
+
+        if (!isLoggedIn) {
+          // Guest: local update
+          const currentItems = get().items;
+          const newItems = currentItems.map((item) =>
+            item.key === key ? { ...item, quantity, total: item.price * quantity } : item
+          );
+          set({ items: newItems });
+          return;
+        }
+
+        // Logged-in: server sync
         const currentItems = get().items;
-
-        // Optimistic update
         const optimisticItems = currentItems.map((item) =>
           item.key === key ? { ...item, quantity, total: item.price * quantity } : item
         );
@@ -126,12 +183,10 @@ export const useCartStore = create<CartStore>()(
         set({ items: optimisticItems, loading: true, error: null });
 
         try {
-          const items: CartItem[] = await cartApiClient.updateCartItem(key, quantity);
+          const items = await cartApiClient.updateCartItem(key, quantity);
           set({ items, loading: false, lastSync: Date.now() });
         } catch (error) {
-          // Revert on error
           set({ items: currentItems });
-
           set({
             error: error instanceof Error ? error.message : "Failed to update quantity",
             loading: false
@@ -140,21 +195,28 @@ export const useCartStore = create<CartStore>()(
         }
       },
 
+      // Remove item
       removeItem: async (key) => {
-        const currentItems = get().items;
+        const isLoggedIn = authApiClient.isLoggedIn();
 
-        // Optimistic update
+        if (!isLoggedIn) {
+          // Guest: local remove
+          const currentItems = get().items;
+          set({ items: currentItems.filter((item) => item.key !== key) });
+          return;
+        }
+
+        // Logged-in: server sync
+        const currentItems = get().items;
         const optimisticItems = currentItems.filter((item) => item.key !== key);
 
         set({ items: optimisticItems, loading: true, error: null });
 
         try {
-          const items: CartItem[] = await cartApiClient.removeCartItem(key);
+          const items = await cartApiClient.removeCartItem(key);
           set({ items, loading: false, lastSync: Date.now() });
         } catch (error) {
-          // Revert on error
           set({ items: currentItems });
-
           set({
             error: error instanceof Error ? error.message : "Failed to remove item",
             loading: false
@@ -163,19 +225,23 @@ export const useCartStore = create<CartStore>()(
         }
       },
 
+      // Clear cart
       clearCart: async () => {
-        const currentItems = get().items;
+        const isLoggedIn = authApiClient.isLoggedIn();
 
-        // Optimistic update
+        if (!isLoggedIn) {
+          set({ items: [] });
+          return;
+        }
+
+        const currentItems = get().items;
         set({ items: [], loading: true, error: null });
 
         try {
           await cartApiClient.emptyCart();
           set({ loading: false, lastSync: Date.now() });
         } catch (error) {
-          // Revert on error
           set({ items: currentItems });
-
           set({
             error: error instanceof Error ? error.message : "Failed to clear cart",
             loading: false
@@ -185,24 +251,23 @@ export const useCartStore = create<CartStore>()(
       },
 
       getTotal: () => {
-        const items = get().items;
-        return items.reduce((sum, item) => {
-          const itemTotal = item.price * item.quantity;
-          return sum + (isNaN(itemTotal) ? 0 : itemTotal);
+        return get().items.reduce((sum, item) => {
+          const total = item.price * item.quantity;
+          return sum + (isNaN(total) ? 0 : total);
         }, 0);
       },
 
       getItemCount: () => {
-        const items = get().items;
-        return items.reduce((sum, item) => {
-          return sum + (isNaN(item.quantity) ? 0 : item.quantity);
-        }, 0);
+        return get().items.reduce(
+          (sum, item) => sum + (isNaN(item.quantity) ? 0 : item.quantity),
+          0
+        );
       },
 
       resetError: () => set({ error: null })
     }),
     {
-      name: "cart-storage",
+      name: "cart-storage", // persists in localStorage
       partialize: (state) => ({
         items: state.items,
         lastSync: state.lastSync

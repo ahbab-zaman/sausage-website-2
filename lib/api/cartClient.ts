@@ -18,28 +18,18 @@ interface BackendApiResponse {
 class CartApiClient {
   private baseUrl: string = API_CONFIG.BASE_URL;
 
-  /**
-   * Get authorization header with token
-   */
   private async getAuthHeader(): Promise<string> {
     const token = await authApiClient.getClientToken();
     return `Bearer ${token}`;
   }
 
-  /**
-   * Check if user is logged in
-   */
   private checkAuth(): void {
     if (!authApiClient.isLoggedIn()) {
       throw new Error("Please login to manage your cart");
     }
   }
 
-  /**
-   * Map backend cart item to frontend cart item
-   */
   private mapItem(item: BackendCartItem): CartItem {
-    // Safely parse numbers, handling various formats
     const parseNumber = (value: any): number => {
       if (typeof value === "number") return value;
       const parsed = parseFloat(String(value).replace(/[^0-9.-]/g, ""));
@@ -59,9 +49,6 @@ class CartApiClient {
     };
   }
 
-  /**
-   * Handle API response
-   */
   private async handleResponse<T>(response: Response): Promise<T> {
     const data: BackendApiResponse = await response.json();
 
@@ -79,7 +66,6 @@ class CartApiClient {
       throw new Error(`HTTP error ${response.status}`);
     }
 
-    // Backend returns success as number (1 or 0)
     if (data.success !== 1) {
       const errorMsg = data.error?.length > 0 ? data.error.join(", ") : "Operation failed";
       throw new Error(errorMsg);
@@ -88,159 +74,89 @@ class CartApiClient {
     return data as T;
   }
 
-  /**
-   * Get cart items
-   */
   async getCart(): Promise<CartItem[]> {
-    try {
-      this.checkAuth();
+    this.checkAuth();
+    const authHeader = await this.getAuthHeader();
 
-      const authHeader = await this.getAuthHeader();
-      const res = await fetch(`${this.baseUrl}${API_CONFIG.ENDPOINTS.CART}`, {
-        method: "GET",
-        headers: {
-          Authorization: authHeader
-        },
-        credentials: "include"
-      });
+    const res = await fetch(`${this.baseUrl}${API_CONFIG.ENDPOINTS.CART}`, {
+      method: "GET",
+      headers: { Authorization: authHeader },
+      credentials: "include"
+    });
 
-      const data: BackendCartResponse = await this.handleResponse(res);
+    const data: BackendCartResponse = await this.handleResponse(res);
 
-      if (!data.data?.products) {
-        return [];
-      }
-
-      return data.data.products.map(this.mapItem);
-    } catch (error) {
-      console.error("❌ Get cart error:", error);
-      throw error;
-    }
+    return data.data?.products?.map(this.mapItem) ?? [];
   }
 
-  /**
-   * Add item to cart
-   * Using JSON body (as per Postman collection)
-   */
   async addToCart(product_id: string, quantity: number = 1): Promise<CartItem[]> {
-    try {
-      this.checkAuth();
+    this.checkAuth();
+    const body = { product_id, quantity: quantity.toString() };
+    const authHeader = await this.getAuthHeader();
 
-      const body = {
-        product_id,
-        quantity: quantity.toString()
-      };
+    const res = await fetch(`${this.baseUrl}${API_CONFIG.ENDPOINTS.CART}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: authHeader
+      },
+      credentials: "include",
+      body: JSON.stringify(body)
+    });
 
-      const authHeader = await this.getAuthHeader();
-
-      console.log("➕ Adding to cart:", body);
-
-      const res = await fetch(`${this.baseUrl}${API_CONFIG.ENDPOINTS.CART}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: authHeader
-        },
-        credentials: "include",
-        body: JSON.stringify(body)
-      });
-
-      await this.handleResponse(res);
-
-      // Fetch updated cart
-      return this.getCart();
-    } catch (error) {
-      console.error("❌ Add to cart error:", error);
-      throw error;
-    }
+    await this.handleResponse(res);
+    return this.getCart();
   }
 
-  /**
-   * Update cart item quantity
-   * Using JSON body with PUT method
-   */
   async updateCartItem(key: string, quantity: number): Promise<CartItem[]> {
-    try {
-      this.checkAuth();
+    this.checkAuth();
+    const body = { key, quantity: quantity.toString() };
+    const authHeader = await this.getAuthHeader();
 
-      const body = {
-        key,
-        quantity: quantity.toString()
-      };
+    const res = await fetch(`${this.baseUrl}${API_CONFIG.ENDPOINTS.CART}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: authHeader
+      },
+      credentials: "include",
+      body: JSON.stringify(body)
+    });
 
-      const authHeader = await this.getAuthHeader();
-
-      const res = await fetch(`${this.baseUrl}${API_CONFIG.ENDPOINTS.CART}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: authHeader
-        },
-        credentials: "include",
-        body: JSON.stringify(body)
-      });
-
-      await this.handleResponse(res);
-
-      return this.getCart();
-    } catch (error) {
-      console.error("❌ Update cart error:", error);
-      throw error;
-    }
+    await this.handleResponse(res);
+    return this.getCart();
   }
 
-  /**
-   * Remove item from cart
-   * Using JSON body with DELETE method
-   */
   async removeCartItem(key: string): Promise<CartItem[]> {
-    try {
-      this.checkAuth();
+    this.checkAuth();
+    const body = { key };
+    const authHeader = await this.getAuthHeader();
 
-      const body = { key };
+    const res = await fetch(`${this.baseUrl}${API_CONFIG.ENDPOINTS.CART}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: authHeader
+      },
+      credentials: "include",
+      body: JSON.stringify(body)
+    });
 
-      const authHeader = await this.getAuthHeader();
-
-      const res = await fetch(`${this.baseUrl}${API_CONFIG.ENDPOINTS.CART}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: authHeader
-        },
-        credentials: "include",
-        body: JSON.stringify(body)
-      });
-
-      await this.handleResponse(res);
-
-      return this.getCart();
-    } catch (error) {
-      console.error("❌ Remove cart item error:", error);
-      throw error;
-    }
+    await this.handleResponse(res);
+    return this.getCart();
   }
 
-  /**
-   * Empty entire cart
-   */
   async emptyCart(): Promise<void> {
-    try {
-      this.checkAuth();
+    this.checkAuth();
+    const authHeader = await this.getAuthHeader();
 
-      const authHeader = await this.getAuthHeader();
+    const res = await fetch(`${this.baseUrl}${API_CONFIG.ENDPOINTS.EMPTY_CART}`, {
+      method: "DELETE",
+      headers: { Authorization: authHeader },
+      credentials: "include"
+    });
 
-      const res = await fetch(`${this.baseUrl}${API_CONFIG.ENDPOINTS.EMPTY_CART}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: authHeader
-        },
-        credentials: "include"
-      });
-
-      await this.handleResponse(res);
-    } catch (error) {
-      console.error("❌ Empty cart error:", error);
-      throw error;
-    }
+    await this.handleResponse(res);
   }
 }
 
