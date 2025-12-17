@@ -4,6 +4,7 @@ import { z } from "zod";
 export const BackendWishlistItemSchema = z.object({
   product_id: z.string(),
   cart_quantity: z.number(),
+  description: z.string(),
   quantity: z.string(),
   manufacturer: z.string(),
   manufacturer_id: z.number(),
