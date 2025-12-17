@@ -147,7 +147,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <>
       {/* Product Card */}
-      <div className="max-h-[400px] max-w-[230px] overflow-hidden rounded-lg bg-white px-2 pt-8 shadow-sm transition-all duration-500 hover:border hover:border-[#E1E2E3] hover:shadow-md">
+      <div className="lg:max-h-[400px] max-h-[420px] lg:max-w-[230px] max-w-[260px] mx-auto overflow-hidden rounded-lg bg-white px-2 pt-8 shadow-sm transition-all duration-500 hover:border hover:border-[#E1E2E3] hover:shadow-md">
         <div className="relative">
           {/* Badge */}
           <div className="absolute top-2 left-2 z-10">

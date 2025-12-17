@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ShoppingCart, User, X, Search, Globe, LayoutDashboard } from "lucide-react";
+import { ShoppingCart, User, X, Search, Globe, LayoutDashboard, Heart, Home } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 import { useCartStore } from "@/stores/cartStore";
@@ -16,6 +16,7 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+  const [showWishlistTooltip, setShowWishlistTooltip] = useState(false);
 
   const router = useRouter();
 
@@ -32,6 +33,15 @@ export default function Navbar() {
   const handleLogout = () => {
     logout();
     router.push("/auth/signin");
+  };
+
+  const handleWishlistClick = () => {
+    if (!user) {
+      setShowWishlistTooltip(true);
+      setTimeout(() => setShowWishlistTooltip(false), 3000);
+    } else {
+      router.push("/wishlist");
+    }
   };
 
   return (
@@ -57,14 +67,19 @@ export default function Navbar() {
                 <Logo />
               </div>
 
-              <button onClick={() => setIsCartOpen(true)} className="relative text-black">
-                <ShoppingCart className="h-6 w-6" />
-                {itemCount > 0 && (
-                  <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs text-white">
-                    {itemCount}
-                  </span>
-                )}
-              </button>
+              <div className="flex items-center gap-2">
+                <button className="relative text-black">
+                  <User className="h-6 w-6" />
+                </button>
+                <button onClick={() => setIsCartOpen(true)} className="relative ml-4 text-black">
+                  <ShoppingCart className="h-6 w-6" />
+                  {itemCount > 0 && (
+                    <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs text-white">
+                      {itemCount}
+                    </span>
+                  )}
+                </button>
+              </div>
             </div>
 
             {/* ================= DESKTOP ================= */}
@@ -125,6 +140,32 @@ export default function Navbar() {
                     <span className="text-sm">Login</span>
                   </Link>
                 )}
+
+                {/* Wishlist */}
+                <div className="relative">
+                  <button
+                    onClick={handleWishlistClick}
+                    onMouseEnter={() => !user && setShowWishlistTooltip(true)}
+                    onMouseLeave={() => setShowWishlistTooltip(false)}
+                    className="flex flex-col items-center text-white">
+                    <Heart className="h-6 w-6" />
+                    <span className="text-sm">Wishlist</span>
+                  </button>
+
+                  {/* Wishlist Tooltip */}
+                  {!user && showWishlistTooltip && (
+                    <div className="animate-in fade-in slide-in-from-top-2 absolute top-full right-0 -left-12 mt-2 w-40 rounded-lg bg-white opacity-90 p-4 shadow-xl duration-200">
+                      <p className="mb-3 text-center text-sm font-medium text-gray-700">
+                        login to be able to see your wishlist
+                      </p>
+                      <Link
+                        href="/auth/signin"
+                        className="block w-full rounded-full bg-[#3A3938] py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-[#2a2928]">
+                        Login
+                      </Link>
+                    </div>
+                  )}
+                </div>
 
                 {/* Cart */}
                 <button
@@ -189,7 +230,7 @@ export default function Navbar() {
       {/* ================= MOBILE BOTTOM NAV ================= */}
       <div className="fixed right-0 bottom-0 left-0 z-50 flex justify-around border-t bg-white py-2 md:hidden">
         <Link href="/">
-          <Search />
+          <Home />
         </Link>
 
         <button onClick={() => setIsMobileSearchOpen((p) => !p)}>
@@ -200,14 +241,30 @@ export default function Navbar() {
           <LayoutDashboard />
         </Link>
 
-        <button onClick={() => setIsCartOpen(true)} className="relative">
-          <ShoppingCart />
-          {itemCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-600 text-xs text-white">
-              {itemCount}
-            </span>
+        {/* Mobile Wishlist with Tooltip */}
+        <div className="relative">
+          <button
+            onClick={handleWishlistClick}
+            onTouchStart={() => !user && setShowWishlistTooltip(true)}
+            className="relative">
+            <Heart />
+          </button>
+
+          {/* Mobile Wishlist Tooltip */}
+          {!user && showWishlistTooltip && (
+            <div className="animate-in fade-in slide-in-from-bottom-2 fixed bottom-16 right-16 z-[60] w-40 -translate-x-1/2 rounded-lg bg-white p-4 shadow-xl duration-200">
+              <p className="mb-3 text-center text-sm font-medium text-gray-700">
+                login to be able to see your wishlist
+              </p>
+              <Link
+                href="/auth/signin"
+                onClick={() => setShowWishlistTooltip(false)}
+                className="block w-full rounded-full bg-[#3A3938] py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-[#2a2928]">
+                Login
+              </Link>
+            </div>
           )}
-        </button>
+        </div>
 
         <Link href={user ? "/profile" : "/auth/signin"}>
           <User />

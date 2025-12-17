@@ -112,8 +112,6 @@ export default function SearchDropdown({ baseUrl }: Props) {
     e.preventDefault(); // Prevent navigation
     e.stopPropagation();
 
-    const productId = product.product_id.toString();
-
     // Prevent double-click
     if (addingToCart[product.product_id]) {
       return;
@@ -122,8 +120,17 @@ export default function SearchDropdown({ baseUrl }: Props) {
     setAddingToCart((prev) => ({ ...prev, [product.product_id]: true }));
 
     try {
-      // Optimistically add to cart (store handles this)
-      await addItem(productId, 1);
+      // Pass the full product object with the correct structure
+      await addItem(
+        {
+          id: product.product_id.toString(),
+          name: product.name,
+          price: parseFloat(product.price), // Convert string to number
+          image: product.image
+          // Add model if it exists in your Product interface
+        },
+        1
+      );
 
       // Show success feedback
       setJustAdded((prev) => ({ ...prev, [product.product_id]: true }));

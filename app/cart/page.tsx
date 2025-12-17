@@ -3,6 +3,13 @@
 import { useEffect, useState } from "react";
 import { Minus, Plus, Trash2, Loader2, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle
+} from "@/components/ui/dialog";
 import { useCartStore } from "@/stores/cartStore";
 import { useAuthStore } from "@/stores/authStore";
 import Link from "next/link";
@@ -32,24 +39,34 @@ export default function CartPage() {
 
   const [couponCode, setCouponCode] = useState("");
   const [discount, setDiscount] = useState(0);
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
 
   // Fetch cart on mount if authenticated
   useEffect(() => {
-    if (isAuthenticated()) {
-      fetchCart();
-    }
+    const initializeCart = async () => {
+      if (isAuthenticated()) {
+        await fetchCart();
+      }
+      setIsInitialLoading(false);
+    };
+
+    initializeCart();
   }, [fetchCart, isAuthenticated]);
 
-  // Modal open state
-  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const handleCheckoutClick = (e: React.MouseEvent) => {
+    if (!isAuthenticated()) {
+      e.preventDefault();
+      setIsLoginModalOpen(true);
+    }
+  };
 
-
-
-  if (loading && items.length === 0) {
+  if (isInitialLoading || (loading && items.length === 0)) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 lg:px-8">
-        <Loader2 className="mx-auto h-12 w-12 animate-spin text-gray-400" />
-        <p className="mt-4 text-gray-600">Loading cart...</p>
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="mx-auto h-12 w-12 animate-spin text-gray-400" />
+        </div>
       </div>
     );
   }
@@ -268,20 +285,29 @@ export default function CartPage() {
                   <span className="text-xl font-bold text-gray-900">{formatPrice(total)} AED</span>
                 </div>
 
-                <Link href="/checkout" className="mt-6 block">
+                {isAuthenticated() ? (
+                  <Link href="/checkout" className="mt-6 block">
+                    <button
+                      disabled={loading}
+                      className="w-full rounded-full bg-black py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50">
+                      {loading ? (
+                        <span className="flex items-center justify-center">
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Processing...
+                        </span>
+                      ) : (
+                        "Checkout"
+                      )}
+                    </button>
+                  </Link>
+                ) : (
                   <button
+                    onClick={handleCheckoutClick}
                     disabled={loading}
-                    className="w-full rounded-full bg-black py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50">
-                    {loading ? (
-                      <span className="flex items-center justify-center">
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Processing...
-                      </span>
-                    ) : (
-                      "Checkout"
-                    )}
+                    className="mt-6 w-full rounded-full bg-black py-3 text-sm font-semibold text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50">
+                    Checkout
                   </button>
-                </Link>
+                )}
 
                 <div className="mt-4 flex items-center justify-between px-2">
                   <div className="flex items-center space-x-2">
@@ -302,6 +328,25 @@ export default function CartPage() {
           </div>
         </div>
       </div>
+
+      {/* Login Modal */}
+      <Dialog open={isLoginModalOpen} onOpenChange={setIsLoginModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold">Login Required</DialogTitle>
+            <DialogDescription className="text-base">
+              Please login to proceed to checkout and complete your purchase.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 pt-4">
+            <Link href="/login" className="w-full">
+              <Button className="w-full rounded-full bg-black py-6 text-base font-semibold hover:bg-gray-800">
+                Login
+              </Button>
+            </Link>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
