@@ -1,4 +1,4 @@
-export interface BackendApiResponse<T> {
+export interface BackendApiResponse<T = unknown> {
   success: number; // 1 = success, 0 = fail
   error: string[]; // always an array
   data?: T;

@@ -128,7 +128,7 @@ export default function RecommendedSection() {
           {/* Track */}
           <div className="overflow-hidden">
             <div
-              className="flex gap-6 transition-transform duration-700 ease-in-out"
+              className="flex gap-6 transition-transform duration-700 ease-in-out py-6"
               style={{
                 transform: `translateX(-${currentIndex * (100 / visibleCount)}%)`
               }}>
@@ -147,16 +147,6 @@ export default function RecommendedSection() {
         </div>
       </div>
 
-      {/* === IMPORTANT FIX FOR MODAL === */}
-      {/* If your Add to Cart modal has a white background that makes content hard to read, */}
-      {/* make sure in your modal component (likely in ProductCard or a shared Modal): */}
-      {/*
-        - Use a semi-transparent dark overlay: bg-black/50
-        - Modal content: bg-white or bg-gray-900 with proper padding
-        - Text color contrast: text-gray-900 on light, or text-white on dark
-        - Max width: max-w-md or max-w-lg mx-auto
-        - Responsive padding: p-6 md:p-8
-      */}
     </section>
   );
 }

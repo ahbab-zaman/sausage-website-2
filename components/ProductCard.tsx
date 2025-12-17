@@ -3,10 +3,22 @@
 import Link from "next/link";
 import { useCartStore } from "@/stores/cartStore";
 import { useProductStore } from "@/stores/productStore";
+import { useWishlist } from "@/hooks/useWishlist";
+import { useAuthStore } from "@/stores/authStore";
 import type { Product } from "@/lib/schemas";
 import Image from "next/image";
-import { useState, useEffect, useRef } from "react";
-import { ShoppingCartIcon, X, Minus, Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import {
+  ShoppingCartIcon,
+  X,
+  Minus,
+  Plus,
+  ChevronLeft,
+  ChevronRight,
+  Heart,
+  Loader2
+} from "lucide-react";
+import { toast } from "sonner";
 
 interface ProductCardProps {
   product: Product;
@@ -15,6 +27,13 @@ interface ProductCardProps {
 export default function ProductCard({ product }: ProductCardProps) {
   const addItem = useCartStore((state) => state.addItem);
   const { products, fetchProducts } = useProductStore();
+  const {
+    isInWishlist,
+    addItem: addToWishlist,
+    removeItem: removeFromWishlist,
+    loading: wishlistLoading
+  } = useWishlist();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
 
   const [showModal, setShowModal] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -22,7 +41,10 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [addedQuantity, setAddedQuantity] = useState(1);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showQuantityDropdown, setShowQuantityDropdown] = useState(false);
+  const [localWishlistLoading, setLocalWishlistLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const inWishlist = isInWishlist(product.id);
 
   // Load products if not already loaded (for related products)
   useEffect(() => {
@@ -64,7 +86,6 @@ export default function ProductCard({ product }: ProductCardProps) {
     setShowQuantityDropdown(!showQuantityDropdown);
   };
 
-  // Updated: Pass full product object to addItem
   const handleQuantitySelect = (quantity: number) => {
     addItem(
       {
@@ -92,7 +113,6 @@ export default function ProductCard({ product }: ProductCardProps) {
     }, 300);
   };
 
-  // Updated: Add more quantity using full product object
   const handleAddMoreToCart = () => {
     if (modalQuantity > addedQuantity) {
       addItem(
@@ -109,7 +129,6 @@ export default function ProductCard({ product }: ProductCardProps) {
     }
   };
 
-  // Updated: Add related product using full object
   const handleAddRelatedToCart = (relatedProduct: Product) => {
     addItem(
       {
@@ -122,6 +141,57 @@ export default function ProductCard({ product }: ProductCardProps) {
       1
     );
   };
+
+  // const handleWishlistToggle = useCallback(
+  //   async (e: React.MouseEvent) => {
+  //     e.preventDefault();
+  //     e.stopPropagation();
+
+  //     if (!isAuthenticated) {
+  //       alert("Please login to manage your wishlist");
+  //       return;
+  //     }
+
+  //     setLocalWishlistLoading(true);
+  //     try {
+  //       if (inWishlist) {
+  //         await removeFromWishlist(product.id);
+  //       } else {
+  //         await addToWishlist(product.id);
+  //       }
+  //     } catch (error) {
+  //       console.error("Wishlist error:", error);
+  //     } finally {
+  //       setLocalWishlistLoading(false);
+  //     }
+  //   },
+  //   [isAuthenticated, inWishlist, product.id, addToWishlist, removeFromWishlist]
+  // );
+
+  const handleWishlistToggle = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      if (!isAuthenticated) {
+        toast.error("Please login to manage your wishlist"); // Recommended: use toast instead of alert
+        return;
+      }
+      setLocalWishlistLoading(true);
+
+      const action = inWishlist ? removeFromWishlist : addToWishlist;
+
+      action(product.id)
+        .catch((error) => {
+          console.error("Wishlist toggle failed:", error);
+          toast.error(inWishlist ? "Failed to remove from wishlist" : "Failed to add to wishlist");
+        })
+        .finally(() => {
+          setLocalWishlistLoading(false);
+        });
+    },
+    [isAuthenticated, inWishlist, product.id, addToWishlist, removeFromWishlist]
+  );
 
   const formatPrice = (price: number) => {
     return isNaN(price) ? "0.00" : price.toFixed(2);
@@ -147,7 +217,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   return (
     <>
       {/* Product Card */}
-      <div className="lg:max-h-[400px] max-h-[420px] lg:max-w-[230px] max-w-[260px] mx-auto overflow-hidden rounded-lg bg-white px-2 pt-8 shadow-sm transition-all duration-500 hover:border hover:border-[#E1E2E3] hover:shadow-md">
+      <div className="mx-auto max-h-[420px] max-w-[260px] overflow-hidden rounded-lg bg-white px-2 pt-8 shadow-sm transition-all duration-500 hover:border hover:border-[#E1E2E3] hover:shadow-md lg:max-h-[400px] lg:max-w-[230px]">
         <div className="relative">
           {/* Badge */}
           <div className="absolute top-2 left-2 z-10">
@@ -160,14 +230,19 @@ export default function ProductCard({ product }: ProductCardProps) {
 
           {/* Wishlist Button */}
           <button
-            className="absolute -top-6 right-2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm transition-colors hover:bg-gray-50"
+            onClick={handleWishlistToggle}
+            disabled={wishlistLoading || localWishlistLoading}
+            className="absolute -top-6 right-2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="Add to wishlist">
-            <svg width="40" height="40" viewBox="0 0 40 40" className="h-5 w-5 text-gray-600">
-              <path
-                d="M20,35.07,4.55,19.62a8.5,8.5,0,0,1-.12-12l.12-.12a8.72,8.72,0,0,1,12.14,0L20,10.77l3.3-3.3A8.09,8.09,0,0,1,29.13,4.9a8.89,8.89,0,0,1,6.31,2.58,8.5,8.5,0,0,1,.12,12l-.12.12ZM10.64,7.13A6.44,6.44,0,0,0,6.07,18.19L20,32.06,33.94,18.12A6.44,6.44,0,0,0,34,9l0,0a6.44,6.44,0,0,0-4.77-1.85A6,6,0,0,0,24.83,9L20,13.78,15.21,9A6.44,6.44,0,0,0,10.64,7.13Z"
-                fill="currentColor"
+            {wishlistLoading || localWishlistLoading ? (
+              <Loader2 className="h-5 w-5 animate-spin text-gray-600" />
+            ) : (
+              <Heart
+                className={`h-5 w-5 transition-all ${
+                  inWishlist ? "fill-red-500 text-red-500" : "text-gray-600 hover:text-red-500"
+                }`}
               />
-            </svg>
+            )}
           </button>
 
           {/* Product Image */}

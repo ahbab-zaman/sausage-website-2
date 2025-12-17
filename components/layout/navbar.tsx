@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 
 import { useCartStore } from "@/stores/cartStore";
 import { useAuthStore } from "@/stores/authStore";
+import { useWishlistStore } from "@/stores/wishlistStore"; // NEW: Import wishlist store
 
 import Logo from "@/components/logo";
 import CartSidebar from "@/components/CartSidebar";
@@ -24,6 +25,10 @@ export default function Navbar() {
   const items = useCartStore((state) => state.items);
   const itemCount = useCartStore((state) => state.getItemCount());
   const cartTotal = useCartStore((state) => state.getTotal());
+
+  /* ---------------- Wishlist ---------------- */
+  const wishlistItems = useWishlistStore((state) => state.items);
+  const wishlistCount = wishlistItems.length; // Instant & optimized – reacts immediately to store changes
 
   /* ---------------- Auth ---------------- */
   const { user, logout } = useAuthStore();
@@ -141,20 +146,27 @@ export default function Navbar() {
                   </Link>
                 )}
 
-                {/* Wishlist */}
+                {/* Wishlist – DESKTOP */}
                 <div className="relative">
                   <button
                     onClick={handleWishlistClick}
                     onMouseEnter={() => !user && setShowWishlistTooltip(true)}
                     onMouseLeave={() => setShowWishlistTooltip(false)}
                     className="flex flex-col items-center text-white">
-                    <Heart className="h-6 w-6" />
+                    <div className="relative">
+                      <Heart className="h-6 w-6" />
+                      {wishlistCount > 0 && (
+                        <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs text-white">
+                          {wishlistCount}
+                        </span>
+                      )}
+                    </div>
                     <span className="text-sm">Wishlist</span>
                   </button>
 
                   {/* Wishlist Tooltip */}
                   {!user && showWishlistTooltip && (
-                    <div className="animate-in fade-in slide-in-from-top-2 absolute top-full right-0 -left-12 mt-2 w-40 rounded-lg bg-white opacity-90 p-4 shadow-xl duration-200">
+                    <div className="animate-in fade-in slide-in-from-top-2 absolute top-full right-0 -left-12 mt-2 w-40 rounded-lg bg-white p-4 opacity-90 shadow-xl duration-200">
                       <p className="mb-3 text-center text-sm font-medium text-gray-700">
                         login to be able to see your wishlist
                       </p>
@@ -241,18 +253,25 @@ export default function Navbar() {
           <LayoutDashboard />
         </Link>
 
-        {/* Mobile Wishlist with Tooltip */}
+        {/* Mobile Wishlist with Count Badge */}
         <div className="relative">
           <button
             onClick={handleWishlistClick}
             onTouchStart={() => !user && setShowWishlistTooltip(true)}
             className="relative">
-            <Heart />
+            <div className="relative">
+              <Heart className="h-6 w-6" />
+              {wishlistCount > 0 && (
+                <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs text-white">
+                  {wishlistCount}
+                </span>
+              )}
+            </div>
           </button>
 
           {/* Mobile Wishlist Tooltip */}
           {!user && showWishlistTooltip && (
-            <div className="animate-in fade-in slide-in-from-bottom-2 fixed bottom-16 right-16 z-[60] w-40 -translate-x-1/2 rounded-lg bg-white p-4 shadow-xl duration-200">
+            <div className="animate-in fade-in slide-in-from-bottom-2 fixed right-16 bottom-16 z-[60] w-40 -translate-x-1/2 rounded-lg bg-white p-4 shadow-xl duration-200">
               <p className="mb-3 text-center text-sm font-medium text-gray-700">
                 login to be able to see your wishlist
               </p>

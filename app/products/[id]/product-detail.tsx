@@ -17,11 +17,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/stores/cartStore";
 import { useProductStore } from "@/stores/productStore";
+import { useWishlist } from "@/hooks/useWishlist";
+import { useAuthStore } from "@/stores/authStore";
 import ProductCard from "@/components/ProductCard";
 import { Product } from "@/types/product";
 import Image from "next/image";
 import Link from "next/link";
 import ReviewsSection from "@/components/Review";
+import { toast } from "sonner";
 
 type Props = { product: Product; relatedProducts: Product[] };
 
@@ -89,9 +92,19 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
   const [selectedColor, setSelectedColor] = useState(product?.colors?.[0]);
   const [quantity, setQuantity] = useState(1);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [localWishlistLoading, setLocalWishlistLoading] = useState(false);
 
   const { addItem, loading, error, resetError } = useCartStore();
   const { prefetchProductsBatch } = useProductStore();
+  const {
+    isInWishlist,
+    addItem: addToWishlist,
+    removeItem: removeFromWishlist,
+    loading: wishlistLoading
+  } = useWishlist();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
+
+  const inWishlist = isInWishlist(product.id);
 
   // Memoize product images
   const productImages = useMemo(() => {
@@ -153,6 +166,26 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
   const handleImageSelect = useCallback((index: number) => {
     setSelectedImage(index);
   }, []);
+
+  const handleWishlistToggle = useCallback(() => {
+    if (!isAuthenticated) {
+      toast.error("Please login to manage your wishlist");
+      return;
+    }
+
+    setLocalWishlistLoading(true);
+
+    const action = inWishlist ? removeFromWishlist : addToWishlist;
+
+    action(product.id)
+      .catch((error) => {
+        console.error("Wishlist toggle failed:", error);
+        toast.error(inWishlist ? "Failed to remove from wishlist" : "Failed to add to wishlist");
+      })
+      .finally(() => {
+        setLocalWishlistLoading(false);
+      });
+  }, [isAuthenticated, inWishlist, product.id, addToWishlist, removeFromWishlist]);
 
   if (!product) {
     return (
@@ -311,8 +344,21 @@ export default function ProductDetailPage({ product, relatedProducts }: Props) {
 
           {/* Action Buttons */}
           <div className="flex flex-col gap-4 sm:flex-row">
-            <Button variant="outline" size="lg" className="border-gray-300">
-              <Heart className="h-9 w-9" />
+            <Button
+              variant="outline"
+              size="lg"
+              className="border-gray-300"
+              onClick={handleWishlistToggle}
+              disabled={wishlistLoading || localWishlistLoading}>
+              {wishlistLoading || localWishlistLoading ? (
+                <Loader2 className="h-9 w-9 animate-spin" />
+              ) : (
+                <Heart
+                  className={`h-9 w-9 transition-all ${
+                    inWishlist ? "fill-red-500 text-red-500" : "hover:text-red-500"
+                  }`}
+                />
+              )}
             </Button>
             <Button variant="outline" size="lg" className="border-gray-300">
               <Share />
