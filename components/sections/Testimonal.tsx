@@ -92,7 +92,7 @@ const MarqueeRow = ({
     <div
       className="animate-marquee-horizontal flex w-max gap-6"
       style={{
-        animationDuration: `${speed}`,
+        animationDuration: `${speed}s`,
         animationDirection: reverse ? "reverse" : "normal",
         animationPlayState: isHovered ? "paused" : "running"
       }}
