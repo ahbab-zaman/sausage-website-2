@@ -4,6 +4,7 @@ import { Geist } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
+// import "antd/dist/reset.css";
 
 const inter = Geist({ subsets: ["latin"] });
 

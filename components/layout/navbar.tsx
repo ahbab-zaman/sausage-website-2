@@ -43,13 +43,6 @@ export default function Navbar() {
 
   const closeTooltip = () => setShowWishlistTooltip(false);
 
-  useEffect(() => {
-    if (showWishlistTooltip) {
-      const timer = setTimeout(closeTooltip, 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [showWishlistTooltip]);
-
   return (
     <>
       <nav className="sticky top-0 z-50 w-full bg-white shadow-sm md:bg-[#3A3938]">
@@ -140,11 +133,10 @@ export default function Navbar() {
                 )}
 
                 {/* Wishlist – DESKTOP */}
-                <div className="relative">
+                <div className="group relative">
                   <button
-                    onClick={openTooltip}
-                    // onMouseEnter={openTooltip}
-                    className="flex flex-col items-center text-white">
+                    onClick={() => user && router.push("/wishlist")}
+                    className="flex flex-col items-center text-white transition-transform hover:scale-105">
                     <div className="relative">
                       <Heart className="h-6 w-6" />
                       {wishlistCount > 0 && (
@@ -156,25 +148,41 @@ export default function Navbar() {
                     <span className="text-sm">Wishlist</span>
                   </button>
 
-                  {/* Desktop Tooltip (Small) */}
-                  {showWishlistTooltip && (
-                    <div className="animate-in fade-in slide-in-from-top-3 zoom-in-95 absolute top-full left-1/2 mt-2 w-64 -translate-x-1/2 duration-300">
-                      <div className="overflow-hidden rounded-lg border border-gray-100 bg-white shadow-xl">
-                        <div className="p-4">
-                          <button
-                            onClick={closeTooltip}
-                            className="absolute top-2 right-2 rounded-full p-1 transition hover:bg-gray-100">
-                            <X className="h-3.5 w-3.5 text-gray-500" />
-                          </button>
-                          <p className="pr-6 text-sm leading-snug font-medium text-gray-800">
-                            You must login or create an account to save items to your wish list!
-                          </p>
-                          <Link
-                            href="/auth/signin"
-                            onClick={closeTooltip}
-                            className="mt-3 block w-full rounded-full bg-[#3A3938] py-2 text-center text-sm font-semibold text-white transition hover:bg-[#2a2928]">
-                            Login
-                          </Link>
+                  {/* Desktop Premium Tooltip */}
+                  {!user && (
+                    <div className="invisible absolute top-full left-1/2 mt-3 w-80 -translate-x-1/2 opacity-0 transition-all duration-300 group-hover:visible group-hover:opacity-100 hover:visible hover:opacity-100">
+                      <div className="relative">
+                        {/* Elegant Arrow */}
+                        <div className="absolute -top-2 left-1/2 h-4 w-4 -translate-x-1/2 rotate-45 border-t border-l border-gray-200 bg-white"></div>
+
+                        {/* Premium Card */}
+                        <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-2xl">
+                          {/* Subtle top accent line */}
+
+                          <div className="p-6">
+                            <button
+                              onClick={closeTooltip}
+                              className="absolute top-4 right-4 rounded-full p-1.5 transition-all hover:rotate-90 hover:bg-gray-100">
+                              <X className="h-4 w-4 text-gray-400" />
+                            </button>
+
+                            {/* Message */}
+                            <h3 className="mb-2 text-center text-lg font-bold tracking-tight text-gray-900">
+                              Save Your Favorites
+                            </h3>
+                            <p className="mb-5 text-center text-sm leading-relaxed text-gray-600">
+                              Create an account to save items to your wishlist and access them
+                              anytime, anywhere.
+                            </p>
+
+                            {/* Premium Button */}
+                            <Link
+                              href="/auth/signin"
+                              onClick={closeTooltip}
+                              className="block w-full rounded-xl bg-black py-3.5 text-center text-sm font-bold text-white transition-all hover:bg-gray-800 hover:shadow-lg active:scale-95">
+                              Sign In to Continue
+                            </Link>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -234,7 +242,7 @@ export default function Navbar() {
 
         {/* Mobile Wishlist */}
         <div className="relative">
-          <button onClick={openTooltip}>
+          <button onClick={openTooltip} className="transition-transform active:scale-95">
             <Heart className="h-6 w-6 text-gray-800" />
             {wishlistCount > 0 && (
               <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs text-white">
@@ -243,27 +251,60 @@ export default function Navbar() {
             )}
           </button>
 
-          {/* Mobile Tooltip (Small, Above) */}
+          {/* Mobile Premium Tooltip */}
           {showWishlistTooltip && (
-            <div className="animate-in fade-in slide-in-from-bottom-4 zoom-in-95 absolute bottom-full left-1/2 mb-3 w-64 -translate-x-1/2 duration-300">
-              <div className="overflow-hidden rounded-lg border border-gray-100 bg-white shadow-xl">
-                <div className="p-4">
-                  <button
-                    onClick={closeTooltip}
-                    className="absolute top-2 right-2 rounded-full p-1 transition hover:bg-gray-100">
-                    <X className="h-3.5 w-3.5 text-gray-500" />
-                  </button>
-                  <p className="pr-6 text-sm leading-snug font-medium text-gray-800">
-                    You must login or create an account to save items to your wish list!
-                  </p>
-                  <Link
-                    href="/auth/signin"
-                    onClick={closeTooltip}
-                    className="mt-3 block w-full rounded-full bg-[#3A3938] py-2 text-center text-sm font-semibold text-white transition hover:bg-[#2a2928]">
-                    Login
-                  </Link>
+            <div
+              className="absolute bottom-full left-1/2 mb-4 w-72 -translate-x-1/2"
+              style={{
+                animation: "tooltipFadeInMobile 0.3s cubic-bezier(0.16, 1, 0.3, 1)"
+              }}>
+              <div className="relative">
+                {/* Premium Card */}
+                <div className="relative overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl">
+                  {/* Subtle top accent line */}
+                  <div className="absolute top-0 right-0 left-0 h-0.5"></div>
+
+                  <div className="p-4">
+                    <button
+                      onClick={closeTooltip}
+                      className="absolute top-3 right-3 rounded-full p-1 transition-all hover:rotate-90 hover:bg-gray-100">
+                      <X className="h-3.5 w-3.5 text-gray-400" />
+                    </button>
+
+                    {/* Message */}
+                    <h3 className="mb-1.5 pr-6 text-left text-base font-bold tracking-tight text-gray-900">
+                      Save Your Favorites
+                    </h3>
+                    <p className="mb-4 text-left text-xs leading-relaxed text-gray-600">
+                      Create an account to save items to your wishlist and access them anytime.
+                    </p>
+
+                    {/* Premium Button */}
+                    <Link
+                      href="/auth/signin"
+                      onClick={closeTooltip}
+                      className="block w-full rounded-lg bg-black py-2.5 text-center text-sm font-bold text-white transition-all hover:bg-gray-800 active:scale-95">
+                      Sign In to Continue
+                    </Link>
+                  </div>
                 </div>
+
+                {/* Elegant Arrow (bottom) */}
+                <div className="absolute -bottom-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 border-r border-b border-gray-200 bg-white"></div>
               </div>
+
+              <style jsx>{`
+                @keyframes tooltipFadeInMobile {
+                  from {
+                    opacity: 0;
+                    transform: translateX(-50%) translateY(8px) scale(0.95);
+                  }
+                  to {
+                    opacity: 1;
+                    transform: translateX(-50%) translateY(0) scale(1);
+                  }
+                }
+              `}</style>
             </div>
           )}
         </div>
@@ -273,8 +314,10 @@ export default function Navbar() {
         </Link>
       </div>
 
-      {/* Click outside to close tooltip */}
-      {showWishlistTooltip && <div className="fixed inset-0 z-40" onClick={closeTooltip} />}
+      {/* Click outside to close tooltip - Only show for mobile */}
+      {showWishlistTooltip && (
+        <div className="fixed inset-0 z-40 md:hidden" onClick={closeTooltip} />
+      )}
     </>
   );
 }

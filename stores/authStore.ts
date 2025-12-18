@@ -34,6 +34,7 @@ export const useAuthStore = create<AuthStore>()(
       /**
        * Login user
        * Creates server-side session, token remains the same
+       * NOTE: Wishlist sync is handled automatically by useWishlist hook
        */
       login: async (data) => {
         set({ isLoading: true, error: null });
@@ -55,6 +56,7 @@ export const useAuthStore = create<AuthStore>()(
 
             set({ user, isLoading: false });
             console.log("✅ User state updated:", user.email);
+            console.log("🔄 Wishlist sync will be triggered automatically");
 
             return { success: true };
           }
@@ -101,6 +103,8 @@ export const useAuthStore = create<AuthStore>()(
 
       /**
        * Verify OTP after registration
+       * After successful OTP verification, user needs to login
+       * So wishlist sync will happen during login
        */
       verifyOTP: async (otp) => {
         const customerId = get().pendingCustomerId;
@@ -127,6 +131,7 @@ export const useAuthStore = create<AuthStore>()(
               pendingOTP: null,
               isLoading: false
             });
+            console.log("✅ OTP verified - User can now login");
             return { success: true };
           } else {
             const errMsg = res.error || "OTP verification failed";

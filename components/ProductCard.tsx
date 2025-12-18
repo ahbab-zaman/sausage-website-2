@@ -42,6 +42,9 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showQuantityDropdown, setShowQuantityDropdown] = useState(false);
   const [localWishlistLoading, setLocalWishlistLoading] = useState(false);
+  const [isClosingDropdown, setIsClosingDropdown] = useState(false);
+  const [isCardHovered, setIsCardHovered] = useState(false);
+  const [cartIconHover, setCartIconHover] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const inWishlist = isInWishlist(product.id);
@@ -64,7 +67,13 @@ export default function ProductCard({ product }: ProductCardProps) {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowQuantityDropdown(false);
+        if (showQuantityDropdown) {
+          setIsClosingDropdown(true);
+          setTimeout(() => {
+            setShowQuantityDropdown(false);
+            setIsClosingDropdown(false);
+          }, 300);
+        }
       }
     };
 
@@ -83,26 +92,42 @@ export default function ProductCard({ product }: ProductCardProps) {
     .slice(0, 8);
 
   const handleCartIconClick = () => {
-    setShowQuantityDropdown(!showQuantityDropdown);
+    if (showQuantityDropdown) {
+      // Close with animation
+      setIsClosingDropdown(true);
+      setTimeout(() => {
+        setShowQuantityDropdown(false);
+        setIsClosingDropdown(false);
+      }, 300);
+    } else {
+      // Open dropdown
+      setShowQuantityDropdown(true);
+    }
   };
 
   const handleQuantitySelect = (quantity: number) => {
-    addItem(
-      {
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        image: product.image,
-        model: product.model
-      },
-      quantity
-    );
+    // Close with animation
+    setIsClosingDropdown(true);
 
-    setAddedQuantity(quantity);
-    setModalQuantity(quantity);
-    setShowQuantityDropdown(false);
-    setShowModal(true);
-    document.body.style.overflow = "hidden";
+    setTimeout(() => {
+      addItem(
+        {
+          id: product.id,
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          model: product.model
+        },
+        quantity
+      );
+
+      setAddedQuantity(quantity);
+      setModalQuantity(quantity);
+      setShowQuantityDropdown(false);
+      setIsClosingDropdown(false);
+      setShowModal(true);
+      document.body.style.overflow = "hidden";
+    }, 300);
   };
 
   const closeModal = () => {
@@ -143,45 +168,55 @@ export default function ProductCard({ product }: ProductCardProps) {
   };
 
   // const handleWishlistToggle = useCallback(
-  //   async (e: React.MouseEvent) => {
+  //   (e: React.MouseEvent<HTMLButtonElement>) => {
   //     e.preventDefault();
   //     e.stopPropagation();
 
   //     if (!isAuthenticated) {
-  //       alert("Please login to manage your wishlist");
+  //       toast.error("Please login to manage your wishlist");
   //       return;
   //     }
-
   //     setLocalWishlistLoading(true);
-  //     try {
-  //       if (inWishlist) {
-  //         await removeFromWishlist(product.id);
-  //       } else {
-  //         await addToWishlist(product.id);
-  //       }
-  //     } catch (error) {
-  //       console.error("Wishlist error:", error);
-  //     } finally {
-  //       setLocalWishlistLoading(false);
-  //     }
+
+  //     const action = inWishlist ? removeFromWishlist : addToWishlist;
+
+  //     action(product.id)
+  //       .catch((error) => {
+  //         console.error("Wishlist toggle failed:", error);
+  //         toast.error(inWishlist ? "Failed to remove from wishlist" : "Failed to add to wishlist");
+  //       })
+  //       .finally(() => {
+  //         setLocalWishlistLoading(false);
+  //       });
   //   },
   //   [isAuthenticated, inWishlist, product.id, addToWishlist, removeFromWishlist]
   // );
-
   const handleWishlistToggle = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
       e.stopPropagation();
 
-      if (!isAuthenticated) {
-        toast.error("Please login to manage your wishlist"); // Recommended: use toast instead of alert
-        return;
-      }
+      // REMOVED: Authentication check - now guests can add to wishlist too!
+      // The store will handle guest vs logged-in users internally
+
       setLocalWishlistLoading(true);
 
       const action = inWishlist ? removeFromWishlist : addToWishlist;
 
+      // Pass product details for better guest experience (optional)
       action(product.id)
+        .then(() => {
+          // Success toast
+          if (inWishlist) {
+            toast.success("Removed from wishlist");
+          } else {
+            if (isAuthenticated) {
+              toast.success("Added to wishlist");
+            } else {
+              toast.success("Added to wishlist! Login to sync across devices");
+            }
+          }
+        })
         .catch((error) => {
           console.error("Wishlist toggle failed:", error);
           toast.error(inWishlist ? "Failed to remove from wishlist" : "Failed to add to wishlist");
@@ -190,7 +225,7 @@ export default function ProductCard({ product }: ProductCardProps) {
           setLocalWishlistLoading(false);
         });
     },
-    [isAuthenticated, inWishlist, product.id, addToWishlist, removeFromWishlist]
+    [inWishlist, product.id, addToWishlist, removeFromWishlist, isAuthenticated]
   );
 
   const formatPrice = (price: number) => {
@@ -216,8 +251,94 @@ export default function ProductCard({ product }: ProductCardProps) {
 
   return (
     <>
+      <style jsx>{`
+        @keyframes blowUp {
+          0% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.5);
+          }
+          100% {
+            transform: scale(1);
+          }
+        }
+
+        @keyframes slideDownOpen {
+          0% {
+            opacity: 0;
+            transform: translateY(-15px) scale(0.9);
+            max-height: 0;
+          }
+          100% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            max-height: 300px;
+          }
+        }
+
+        @keyframes slideUpClose {
+          0% {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+            max-height: 300px;
+          }
+          100% {
+            opacity: 0;
+            transform: translateY(-15px) scale(0.9);
+            max-height: 0;
+          }
+        }
+
+        @keyframes borderGlow {
+          0% {
+            border-color: rgba(170, 56, 58, 0);
+            box-shadow: 0 0 0 0 rgba(170, 56, 58, 0);
+          }
+          50% {
+            border-color: rgba(170, 56, 58, 1);
+            box-shadow: 0 0 20px 2px rgba(170, 56, 58, 0.4);
+          }
+          100% {
+            border-color: rgba(170, 56, 58, 1);
+            box-shadow: 0 0 20px 2px rgba(170, 56, 58, 0.4);
+          }
+        }
+
+        .icon-blow:hover {
+          animation: blowUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .animate-dropdown-open {
+          animation: slideDownOpen 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .animate-dropdown-close {
+          animation: slideUpClose 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .quantity-item {
+          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .quantity-item:hover {
+          transform: scale(1.05);
+        }
+
+        .card-border-animated {
+          animation: 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+      `}</style>
+
       {/* Product Card */}
-      <div className="mx-auto max-h-[420px] max-w-[260px] overflow-hidden rounded-lg bg-white px-2 pt-8 shadow-sm transition-all duration-500 hover:border hover:border-[#E1E2E3] hover:shadow-md lg:max-h-[400px] lg:max-w-[230px]">
+      <div
+        onMouseEnter={() => setIsCardHovered(true)}
+        onMouseLeave={() => setIsCardHovered(false)}
+        className={`mx-auto max-h-[420px] max-w-[260px] overflow-hidden rounded-lg bg-white px-2 pt-8 shadow-sm transition-all duration-500 hover:shadow-md lg:max-h-[400px] lg:max-w-[230px] ${
+          isCardHovered
+            ? "card-border-animated border-[1px] border-[#C95467]"
+            : "border border-[#E1E2E3]"
+        }`}>
         <div className="relative">
           {/* Badge */}
           <div className="absolute top-2 left-2 z-10">
@@ -232,13 +353,13 @@ export default function ProductCard({ product }: ProductCardProps) {
           <button
             onClick={handleWishlistToggle}
             disabled={wishlistLoading || localWishlistLoading}
-            className="absolute -top-6 right-2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            className="absolute -top-6 right-2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm transition-all hover:bg-gray-50 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="Add to wishlist">
             {wishlistLoading || localWishlistLoading ? (
               <Loader2 className="h-5 w-5 animate-spin text-gray-600" />
             ) : (
               <Heart
-                className={`h-5 w-5 transition-all ${
+                className={`icon-blow h-5 w-5 transition-all ${
                   inWishlist ? "fill-red-500 text-red-500" : "text-gray-600 hover:text-red-500"
                 }`}
               />
@@ -278,18 +399,33 @@ export default function ProductCard({ product }: ProductCardProps) {
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={handleCartIconClick}
-                className="flex h-[38px] w-[38px] items-center justify-center rounded-full bg-[#AA383A] text-white transition-colors hover:bg-[#8a2c2e]">
-                <ShoppingCartIcon className="h-5 w-5" />
+                onMouseEnter={() => setCartIconHover(true)}
+                onMouseLeave={() => setCartIconHover(false)}
+                onAnimationEnd={() => setCartIconHover(false)}
+                className={`flex h-[38px] w-[38px] items-center justify-center rounded-full bg-[#AA383A] text-white transition-all hover:bg-[#8a2c2e] hover:shadow-lg ${
+                  showQuantityDropdown && !isClosingDropdown
+                    ? "pointer-events-none opacity-0"
+                    : "opacity-100"
+                }`}
+                style={{ transition: "opacity 0.3s ease" }}>
+                <ShoppingCartIcon className={`h-5 w-5 ${cartIconHover ? "animate-blow-up" : ""}`} />
               </button>
 
-              {/* Quantity Dropdown (upward) */}
-              {showQuantityDropdown && (
-                <div className="absolute right-0 bottom-full z-50 mb-0 flex flex-col-reverse overflow-hidden rounded-t-lg bg-[#AA383A] shadow-lg">
-                  {[1, 2, 3, 4, 5].map((num) => (
+              {/* Premium Quantity Dropdown */}
+              {(showQuantityDropdown || isClosingDropdown) && (
+                <div
+                  className={`absolute right-0 bottom-0 z-50 overflow-hidden rounded-xl bg-[#AA383A] shadow-2xl ring-1 ring-black/5 ${
+                    isClosingDropdown ? "animate-dropdown-close" : "animate-dropdown-open"
+                  }`}>
+                  {[1, 2, 3, 4, 5].map((num, index) => (
                     <button
                       key={num}
                       onClick={() => handleQuantitySelect(num)}
-                      className="flex h-[38px] w-[38px] items-center justify-center border-t border-[#8a2c2e] text-lg font-bold text-white transition-colors first:border-t-0 hover:bg-[#8a2c2e]">
+                      disabled={isClosingDropdown}
+                      style={{
+                        animationDelay: isClosingDropdown ? "0ms" : `${index * 30}ms`
+                      }}
+                      className="quantity-item flex h-[42px] w-[42px] items-center justify-center border-b border-gray-100 text-sm font-semibold text-white transition-all last:border-b-0 hover:bg-[#C95467] hover:text-white disabled:pointer-events-none">
                       {num}
                     </button>
                   ))}
