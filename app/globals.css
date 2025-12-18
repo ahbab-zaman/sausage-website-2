@@ -127,6 +127,19 @@
   [data-slot="dropdown-menu-trigger"],
   [data-slot="popover-trigger"],
   [data-slot="tooltip-trigger"] {
-    @apply cursor-pointer!
+    @apply cursor-pointer!;
   }
+}
+
+@keyframes marquee-horizontal {
+  from {
+    transform: translateX(0%);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee-horizontal {
+  animation: marquee-horizontal linear infinite;
 }

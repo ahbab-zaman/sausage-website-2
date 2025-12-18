@@ -190,9 +190,6 @@ export default function CartPage() {
                           />
                         </div>
                         <div className="flex flex-col justify-center">
-                          <p className="mb-1 text-xs font-medium text-red-600">
-                            Only {Math.floor(Math.random() * 5) + 3} products left
-                          </p>
                           <div className="mb-2 flex items-center space-x-2">
                             <span className="text-lg font-bold text-gray-900">
                               {formatPrice(item.price)} AED
@@ -339,7 +336,7 @@ export default function CartPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-3 pt-4">
-            <Link href="/login" className="w-full">
+            <Link href="/auth/signin" className="w-full">
               <Button className="w-full rounded-full bg-black py-6 text-base font-semibold hover:bg-gray-800">
                 Login
               </Button>

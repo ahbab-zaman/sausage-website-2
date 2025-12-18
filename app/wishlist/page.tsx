@@ -29,6 +29,36 @@ export default function WishlistPage() {
     return <p className="text-center text-red-600">{error}</p>;
   }
 
+  /* ---------- EMPTY STATE ---------- */
+  if (items.length === 0) {
+    return (
+      <div className="bg-gray-50">
+        {/* Breadcrumb */}
+        <div className="bg-[#f2f2f2]">
+          <div className="mx-auto mb-6 flex w-[90%] items-center py-1 text-sm text-gray-600">
+            <Link href="/" className="hover:text-gray-900">
+              Home
+            </Link>
+            <ChevronRight className="mx-2 h-4 w-4" />
+            <span className="font-medium text-gray-900">My Wish List</span>
+          </div>
+        </div>
+
+        {/* Empty Message */}
+        <div className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 lg:px-8">
+          <h1 className="mb-4 text-3xl font-bold text-gray-900">Your Wish List is Empty</h1>
+          <p className="mb-8 text-gray-600">You have no items saved in your wish list</p>
+          <Link href="/products">
+            <Button className="rounded-full bg-black font-bold hover:bg-black" size="lg">
+              Shop More
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  /* ---------- WISHLIST ITEMS ---------- */
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Breadcrumb */}
