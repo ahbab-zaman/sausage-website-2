@@ -74,16 +74,16 @@ export default function CartPage() {
   if (error) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 lg:px-8">
-        <div className="rounded-lg bg-red-50 p-6">
-          <p className="text-red-600">{error}</p>
-          <Button
+        <div className="rounded-lg p-6">
+          <p className="bg-black">{error}</p>
+          <button
             onClick={() => {
               resetError();
               fetchCart();
             }}
-            className="mt-4">
+            className="mt-4 bg-black text-white py-4 px-2 rounded-full">
             Try Again
-          </Button>
+          </button>
         </div>
       </div>
     );
