@@ -94,9 +94,15 @@ export default function FeaturedProducts() {
         <div className="mt-8 flex justify-center">
           <button
             onClick={() => router.push("/products")}
-            className="flex cursor-pointer items-center justify-center rounded-lg bg-[#3A3938] px-4 py-2 text-white">
-            View All Products
-            <ArrowRight className="ml-2 h-4 w-4 transition-transform" />
+            className="group relative flex items-center justify-center gap-2 overflow-hidden rounded-lg bg-[#3A3938] px-5 py-2.5 text-sm font-medium text-white">
+            {/* Hover shade layer */}
+            <span className="pointer-events-none absolute inset-0 -translate-x-full bg-[#4A4948] transition-transform duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:translate-x-0" />
+
+            {/* Button content */}
+            <span className="relative z-10 flex items-center gap-2">
+              View All Products
+              <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+            </span>
           </button>
         </div>
       </div>

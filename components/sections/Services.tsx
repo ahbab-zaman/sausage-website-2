@@ -1,196 +1,266 @@
 "use client";
-
-import { useState } from "react";
-import { DollarSign, Truck, Users, ChevronLeft, ChevronRight, Zap } from "lucide-react";
+import Link from "next/link";
+import Slider from "react-slick";
+import { useEffect, useState } from "react";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 
 const Services = () => {
-  const [currentSlide, setCurrentSlide] = useState(0);
+  const [isMobile, setIsMobile] = useState(false);
 
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
   const services = [
     {
-      icon: Zap,
+      icon: (
+        <svg width="49" height="48" viewBox="0 -67 430.08 430" xmlns="http://www.w3.org/2000/svg">
+          <path d="m428.96875 179.441406-21.769531-33.308594c-9.613281-14.71875-25.945313-23.507812-43.699219-23.507812h-56.300781v-32.398438c0-19.78125-16.085938-35.867187-35.867188-35.867187h-105.394531c-5.914062-30.886719-33.101562-54.3203125-65.6875-54.3203125-36.898438 0-66.914062 30.0195315-66.914062 66.9140625 0 23.199219 11.878906 43.664063 29.863281 55.671875h-56.371094c-3.773437 0-6.828125 3.054688-6.828125 6.828125s3.054688 6.828125 6.828125 6.828125h68.265625v13.652344h-27.308594c-3.769531 0-6.824218 3.054687-6.824218 6.828125 0 3.773437 3.054687 6.824219 6.824218 6.824219h27.308594v13.652343h-68.265625c-3.773437 0-6.828125 3.054688-6.828125 6.828125 0 3.773438 3.054688 6.828125 6.828125 6.828125h68.265625v30.234375c-12.035156 5.308594-20.480469 17.316406-20.480469 31.292969v6.738281c0 3.773438 3.058594 6.828125 6.828125 6.828125h60.546875c3.882813 16.703125 18.859375 29.203125 36.730469 29.203125 17.875 0 32.847656-12.5 36.730469-29.203125h131.339843c3.886719 16.703125 18.863282 29.203125 36.730469 29.203125 17.867188 0 32.847657-12.5 36.730469-29.203125h23.003906c3.773438 0 6.824219-3.054687 6.824219-6.828125v-75.984375c0-1.328125-.386719-2.628906-1.109375-3.734375zm-381.980469-112.488281c0-29.367187 23.894531-53.261719 53.261719-53.261719 29.371094 0 53.261719 23.894532 53.261719 53.261719s-23.890625 53.261719-53.261719 53.261719c-29.367188 0-53.261719-23.894532-53.261719-53.261719zm41.757813 123.941406h13.652344c3.773437 0 6.828124-3.054687 6.828124-6.828125 0-3.773437-3.054687-6.828125-6.828124-6.828125h-13.652344v-13.652343h47.789062c3.769532 0 6.824219-3.050782 6.824219-6.824219 0-3.773438-3.054687-6.828125-6.824219-6.828125h-47.789062v-13.652344h88.746094c3.769531 0 6.828124-3.054688 6.828124-6.828125s-3.058593-6.828125-6.828124-6.828125h-40.191407c17.707031-11.824219 29.453125-31.855469 29.8125-54.613281h104.222657c12.246093 0 22.210937 9.96875 22.210937 22.214843v127.972657h-204.714844c-.027343 0-.054687.007812-.085937.007812zm204.800781 61.4375h-97.476563c-1.074218-7.851562-4.558593-14.929687-9.703124-20.480469h107.179687zm-204.714844-20.480469h42.238281c-5.140624 5.550782-8.628906 12.628907-9.699218 20.480469h-53.105469c.046875-11.296875 9.257813-20.480469 20.566406-20.480469zm69.886719 49.6875c-13.277344 0-24.085938-10.804687-24.085938-24.085937 0-13.277344 10.808594-24.085937 24.085938-24.085937 13.28125 0 24.085938 10.808593 24.085938 24.085937 0 13.28125-10.804688 24.085937-24.085938 24.085937zm204.800781 0c-13.277343 0-24.085937-10.804687-24.085937-24.085937 0-13.277344 10.808594-24.085937 24.085937-24.085937 13.28125 0 24.085938 10.808593 24.085938 24.085937 0 13.28125-10.804688 24.085937-24.085938 24.085937zm52.90625-29.207031h-15.554687c-2.511719-18.386719-18.285156-32.617187-37.351563-32.617187-19.066406 0-34.835937 14.230468-37.351562 32.617187h-18.96875v-116.050781h56.300781c13.121094 0 25.1875 6.472656 32.273438 17.316406l20.652343 31.609375zm0 0"></path>
+          <path d="m374.6875 257.453125c0 6.167969-5 11.167969-11.167969 11.167969s-11.167969-5-11.167969-11.167969 5-11.167969 11.167969-11.167969 11.167969 5 11.167969 11.167969zm0 0"></path>
+          <path d="m169.886719 257.453125c0 6.167969-5 11.167969-11.167969 11.167969-6.164062 0-11.164062-5-11.164062-11.167969s5-11.167969 11.164062-11.167969c6.167969 0 11.167969 5 11.167969 11.167969zm0 0"></path>
+          <path d="m109.226562 66.953125v-29.867187c0-3.773438-3.054687-6.824219-6.828124-6.824219-3.769532 0-6.824219 3.050781-6.824219 6.824219v27.640624l-13.933594 19.113282c-2.222656 3.046875-1.554687 7.3125 1.492187 9.53125 1.21875.890625 2.625 1.316406 4.019532 1.316406 2.105468 0 4.183594-.972656 5.519531-2.808594l15.246094-20.90625c.847656-1.164062 1.308593-2.570312 1.308593-4.019531zm0 0"></path>
+          <path d="m361.21875 143.105469h-13.058594c-3.773437 0-6.828125 3.054687-6.828125 6.828125v47.785156c0 3.773438 3.054688 6.828125 6.828125 6.828125h45.945313c4.28125 0 8.113281-2.214844 10.261719-5.914063 2.148437-3.699218 2.152343-8.128906.035156-11.820312l-15.941406-27.902344c-5.566407-9.742187-16.007813-15.804687-27.242188-15.804687zm-6.230469 47.789062v-34.132812h6.230469c6.347656 0 12.242188 3.417969 15.386719 8.925781l14.402343 25.207031zm0 0"></path>
+        </svg>
+      ),
       title: "Lightning-Fast Service",
       description:
-        "Your order delivered in under 90 mins anywhere in Abu Dhabi between 9am and 11:00pm 7 days a week!",
-      note: "(excluding western region)",
-      iconColor: "text-blue-600",
-      iconBg: "bg-blue-100"
+        "Your order delivered in under 90 mins anywhere in Abu Dhabi between 9am and 11:00pm 7 days a week! (excluding western region)"
     },
     {
-      icon: DollarSign,
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" width="49" height="48" viewBox="0 0 49 48">
+          <g id="Group_9398" data-name="Group 9398" transform="translate(-479.25 -5100)">
+            <rect
+              id="Rectangle_4104"
+              data-name="Rectangle 4104"
+              width="49"
+              height="48"
+              rx="5"
+              transform="translate(479.25 5100)"
+              fill="#fff"></rect>
+            <g
+              id="_1737376_dollar_money_sign_icon"
+              data-name="1737376_dollar_money_sign_icon"
+              transform="translate(418.161 5038.911)">
+              <path
+                id="Path_7913"
+                data-name="Path 7913"
+                d="M85.089,73.089a12,12,0,1,0,12,12A12.014,12.014,0,0,0,85.089,73.089Zm0,22.107A10.107,10.107,0,1,1,95.2,85.089,10.118,10.118,0,0,1,85.089,95.2Z"></path>
+              <path
+                id="Path_7914"
+                data-name="Path 7914"
+                d="M194.9,150.8c0-.759,1.11-.889,2.074-.889a7.794,7.794,0,0,1,3.185.963l.2-2.092a7.856,7.856,0,0,0-2.944-.722l.3-2.13h-1.981l.3,2.13c-2.555.24-3.389,1.722-3.389,2.962,0,3.129,5.832,2.463,5.832,4.388,0,.723-.685.981-1.888.981a5.154,5.154,0,0,1-3.481-1.166l-.315,2.352a7.852,7.852,0,0,0,3.241.741l-.3,2.055h1.981l-.3-2.074c3-.259,3.537-1.852,3.537-2.907C200.954,151.669,194.9,152.595,194.9,150.8Z"
+                transform="translate(-111.708 -68.061)"></path>
+            </g>
+          </g>
+        </svg>
+      ),
       title: "Spend more, save more",
-      list: [
-        "Spend AED 300 get 5% discount",
-        "Spend AED 450 get 10% discount",
-        "Spend AED 750 get 15% discount"
-      ],
-      iconColor: "text-green-600",
-      iconBg: "bg-green-100"
+      description:
+        "Spend more, save more! Spend AED 300 get 5% discount | Spend AED 450 get 10% discount | Spend AED 750 get 15% discount"
     },
     {
-      icon: Truck,
+      icon: (
+        <svg
+          width="49"
+          height="48"
+          viewBox="0 0 32 32"
+          id="svg5"
+          version="1.1"
+          xmlns="http://www.w3.org/2000/svg">
+          <defs id="defs2"></defs>
+
+          <g id="layer1" transform="translate(-60,-436)">
+            <path
+              d="m 68,456.01367 a 1,1 0 0 0 -1,1 1,1 0 0 0 1,1 h 8 a 1,1 0 0 0 1,-1 1,1 0 0 0 -1,-1 z"
+              id="path453673"
+              style={{
+                color: "#000000",
+                fill: "#000000",
+                fillRule: "evenodd",
+                strokeLinecap: "round",
+                strokeLinejoin: "round",
+                strokeMiterlimit: 4.1
+              }}></path>
+
+            <path
+              d="m 70,453.01367 a 1,1 0 0 0 -1,1 1,1 0 0 0 1,1 h 6 a 1,1 0 0 0 1,-1 1,1 0 0 0 -1,-1 z"
+              id="path453657"
+              style={{
+                color: "#000000",
+                fill: "#000000",
+                fillRule: "evenodd",
+                strokeLinecap: "round",
+                strokeLinejoin: "round",
+                strokeMiterlimit: 4.1
+              }}></path>
+
+            <path
+              d="m 73,450.01367 a 1,1 0 0 0 -1,1 1,1 0 0 0 1,1 h 3 a 1,1 0 0 0 1,-1 1,1 0 0 0 -1,-1 z"
+              id="path453639"
+              style={{
+                color: "#000000",
+                fill: "#000000",
+                fillRule: "evenodd",
+                strokeLinecap: "round",
+                strokeLinejoin: "round",
+                strokeMiterlimit: 4.1
+              }}></path>
+
+            <path
+              d="m 68.888672,444.01953 a 1,1 0 0 0 -0.595703,0.28711 L 66.5,446.09961 65.707031,445.30664 a 1,1 0 0 0 -1.414062,0 1,1 0 0 0 0,1.41406 l 1.5,1.5 a 1.0001,1.0001 0 0 0 1.414062,0 l 2.5,-2.5 a 1,1 0 0 0 0,-1.41406 1,1 0 0 0 -0.818359,-0.28711 z"
+              id="path453633"
+              style={{
+                color: "#000000",
+                fill: "#000000",
+                fillRule: "evenodd",
+                strokeLinecap: "round",
+                strokeLinejoin: "round",
+                strokeMiterlimit: 4.1
+              }}></path>
+
+            <path
+              d="m 67,440.01367 c -3.301857,0 -6,2.69815 -6,6 0,1.76801 0.774349,3.36262 2,4.46289 v 11.53711 a 1.0001,1.0001 0 0 0 1,1 h 2.173828 c 0.415693,1.16039 1.530816,2 2.826172,2 1.295356,0 2.410479,-0.83961 2.826172,-2 H 79 81.173828 c 0.415693,1.16039 1.530816,2 2.826172,2 1.295356,0 2.410479,-0.83961 2.826172,-2 H 90 a 1.0001,1.0001 0 0 0 1,-1 v -7 a 1.0001,1.0001 0 0 0 -0.21875,-0.625 l -4,-5 A 1.0001,1.0001 0 0 0 86,449.01367 h -6 v -2 a 1.0001,1.0001 0 0 0 -1,-1 h -6 c 0,-3.30185 -2.698143,-6 -6,-6 z m 0,2 c 2.220979,0 4,1.77902 4,4 0,2.22098 -1.779021,4 -4,4 -0.84757,0 -1.630859,-0.25926 -2.275391,-0.70312 a 1,1 0 0 0 -0.267578,-0.20117 C 63.565547,448.37778 63,447.26595 63,446.01367 c 0,-2.22098 1.779021,-4 4,-4 z m 5.654297,6 H 78 v 13 h -6.173828 c -0.415693,-1.16039 -1.530816,-2 -2.826172,-2 -1.295356,0 -2.410479,0.83961 -2.826172,2 H 65 v -9.3457 c 0.626269,0.22297 1.29935,0.3457 2,0.3457 2.601207,0 4.826496,-1.67494 5.654297,-4 z m 7.345703,3 h 2 v 5 a 1.0001,1.0001 0 0 0 1,1 h 6 v 4 h -2.173828 c -0.415693,-1.16039 -1.530816,-2 -2.826172,-2 -1.295356,0 -2.410479,0.83961 -2.826172,2 H 80 Z m 4,0 h 1.519531 l 3.199219,4 H 84 Z m -15,10 c 0.564128,0 1,0.43587 1,1 0,0.56413 -0.435872,1 -1,1 -0.564128,0 -1,-0.43587 -1,-1 0,-0.56413 0.435872,-1 1,-1 z m 15,0 c 0.564128,0 1,0.43587 1,1 0,0.56413 -0.435872,1 -1,1 -0.564128,0 -1,-0.43587 -1,-1 0,-0.56413 0.435872,-1 1,-1 z"
+              id="path453615"
+              style={{
+                color: "#000000",
+                fill: "#000000",
+                fillRule: "evenodd",
+                strokeLinecap: "round",
+                strokeLinejoin: "round",
+                strokeMiterlimit: 4.1
+              }}></path>
+          </g>
+        </svg>
+      ),
+
       title: "Free Delivery",
-      description: "Free delivery for orders over AED 100 (excluding certain areas)",
-      iconColor: "text-purple-600",
-      iconBg: "bg-purple-100"
+      description: "Free delivery for orders over AED 100 (excluding certain areas)"
     },
     {
-      icon: Users,
+      icon: (
+        <svg
+          version="1.1"
+          id="fi_860800"
+          xmlns="http://www.w3.org/2000/svg"
+          xmlnsXlink="http://www.w3.org/1999/xlink"
+          x="0px"
+          y="0px"
+          viewBox="0 0 477.869 477.869"
+          xmlSpace="preserve"
+          width="42"
+          height="41">
+          <g>
+            <g>
+              <path
+                d="M387.415,233.496c48.976-44.029,52.987-119.424,8.958-168.4C355.991,20.177,288.4,12.546,239.02,47.332
+			c-53.83-37.99-128.264-25.149-166.254,28.68c-34.859,49.393-27.259,117.054,17.689,157.483
+			c-55.849,29.44-90.706,87.481-90.453,150.613v51.2c0,9.426,7.641,17.067,17.067,17.067h443.733
+			c9.426,0,17.067-7.641,17.067-17.067v-51.2C478.121,320.976,443.264,262.935,387.415,233.496z M307.201,59.842
+			c47.062-0.052,85.256,38.057,85.309,85.119c0.037,33.564-19.631,64.023-50.237,77.799c-1.314,0.597-2.628,1.143-3.959,1.707
+			c-4.212,1.699-8.556,3.051-12.988,4.045c-0.853,0.188-1.707,0.29-2.577,0.461c-4.952,0.949-9.977,1.457-15.019,1.519
+			c-2.27,0-4.557-0.171-6.827-0.375c-0.853,0-1.707,0-2.56-0.171c-9.7-1.142-19.136-3.923-27.904-8.226
+			c-0.324-0.154-0.7-0.137-1.024-0.273c-1.707-0.819-3.413-1.536-4.932-2.458c0.137-0.171,0.222-0.358,0.358-0.529
+			c7.826-10.056,13.996-21.296,18.278-33.297l0.529-1.434c1.947-5.732,3.459-11.602,4.523-17.562c0.154-0.87,0.273-1.707,0.41-2.645
+			c0.987-6.067,1.506-12.2,1.553-18.347c-0.049-6.135-0.568-12.257-1.553-18.313c-0.137-0.887-0.256-1.707-0.41-2.645
+			c-1.064-5.959-2.576-11.83-4.523-17.562l-0.529-1.434c-4.282-12.001-10.453-23.241-18.278-33.297
+			c-0.137-0.171-0.222-0.358-0.358-0.529C277.449,63.831,292.19,59.843,307.201,59.842z M85.335,145.176
+			c-0.121-47.006,37.886-85.21,84.892-85.331c22.034-0.057,43.232,8.434,59.134,23.686c0.99,0.956,1.963,1.911,2.918,2.901
+			c2.931,3.071,5.634,6.351,8.09,9.813c0.751,1.058,1.434,2.185,2.133,3.277c2.385,3.671,4.479,7.523,6.263,11.52
+			c0.427,0.973,0.751,1.963,1.126,2.935c1.799,4.421,3.215,8.989,4.233,13.653c0.12,0.512,0.154,1.024,0.256,1.553
+			c2.162,10.597,2.162,21.522,0,32.119c-0.102,0.529-0.137,1.041-0.256,1.553c-1.017,4.664-2.433,9.232-4.233,13.653
+			c-0.375,0.973-0.7,1.963-1.126,2.935c-1.786,3.991-3.88,7.837-6.263,11.503c-0.7,1.092-1.382,2.219-2.133,3.277
+			c-2.455,3.463-5.159,6.742-8.09,9.813c-0.956,0.99-1.929,1.946-2.918,2.901c-6.91,6.585-14.877,11.962-23.569,15.906
+			c-1.382,0.631-2.782,1.212-4.198,1.707c-4.114,1.633-8.347,2.945-12.663,3.925c-1.075,0.239-2.185,0.375-3.277,0.563
+			c-4.634,0.863-9.333,1.336-14.046,1.417h-1.877c-4.713-0.08-9.412-0.554-14.046-1.417c-1.092-0.188-2.202-0.324-3.277-0.563
+			c-4.316-0.98-8.55-2.292-12.663-3.925c-1.417-0.563-2.816-1.143-4.198-1.707C105.013,209.057,85.374,178.677,85.335,145.176z
+			 M307.201,418.242H34.135v-34.133c-0.25-57.833,36.188-109.468,90.76-128.614c29.296,12.197,62.249,12.197,91.546,0
+			c5.698,2.082,11.251,4.539,16.623,7.356c3.55,1.826,6.827,3.908,10.24,6.007c2.219,1.382,4.471,2.731,6.605,4.25
+			c3.294,2.338,6.4,4.881,9.455,7.492c1.963,1.707,3.908,3.413,5.751,5.12c2.816,2.662,5.461,5.478,8.004,8.363
+			c1.826,2.082,3.601,4.198,5.291,6.383c2.236,2.867,4.369,5.803,6.349,8.823c1.707,2.56,3.226,5.222,4.727,7.885
+			c1.707,2.935,3.277,5.871,4.71,8.926c1.434,3.055,2.697,6.4,3.925,9.66c1.075,2.833,2.219,5.649,3.106,8.533
+			c1.195,3.959,2.031,8.055,2.867,12.151c0.512,2.423,1.178,4.796,1.553,7.253c1.011,6.757,1.53,13.579,1.553,20.412V418.242z
+			 M443.735,418.242h-102.4v-34.133c0-5.342-0.307-10.633-0.785-15.872c-0.137-1.536-0.375-3.055-0.546-4.591
+			c-0.461-3.772-0.99-7.509-1.707-11.213c-0.307-1.581-0.631-3.169-0.973-4.762c-0.819-3.8-1.769-7.566-2.85-11.298
+			c-0.358-1.229-0.683-2.475-1.058-3.686c-4.779-15.277-11.704-29.797-20.565-43.127l-0.666-0.973
+			c-2.935-4.358-6.07-8.573-9.404-12.646l-0.119-0.154c-3.413-4.232-7.117-8.346-11.008-12.237c0.222,0,0.461,0,0.7,0
+			c4.816,0.633,9.666,0.975,14.524,1.024h0.939c4.496-0.039,8.985-0.33,13.449-0.87c1.399-0.171,2.782-0.427,4.181-0.649
+			c3.63-0.557,7.214-1.28,10.752-2.167c1.007-0.256,2.031-0.495,3.055-0.785c4.643-1.263,9.203-2.814,13.653-4.642
+			c54.612,19.127,91.083,70.785,90.829,128.649V418.242z"></path>
+            </g>
+          </g>
+        </svg>
+      ),
       title: "Refer a friend",
-      description: "Refer your friends and get 30% off!",
-      link: "Click here to learn more",
-      iconColor: "text-orange-600",
-      iconBg: "bg-orange-100"
+      description: (
+        <>
+          Refer your friends and get 30% off! {""}
+          <Link
+            href={`${process.env.NEXT_PUBLIC_API_BASE_URL}/index.php?route=account/refer_friend`}
+            className="text-red-600 underline">
+            Click here {""}
+          </Link>
+          to learn more
+        </>
+      )
     }
   ];
 
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % services.length);
+  const sliderSettings = {
+    dots: true,
+    infinite: false,
+    speed: 500,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    arrows: false,
+    draggable: true,
+    swipeToSlide: true
   };
 
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + services.length) % services.length);
-  };
-
-  return (
-    <div className="mx-auto w-[90%] py-12">
-      {/* Desktop View - Grid */}
-      <div className="hidden grid-cols-1 gap-6 md:grid md:grid-cols-2 lg:grid-cols-4">
-        {services.map((service, index) => (
-          <div
-            key={index}
-            className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-[#faf4f4] p-8 shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-2xl">
-            <div className="relative">
-              <div
-                className={`mb-6 inline-flex h-20 w-20 items-center justify-center rounded-2xl ${service.iconBg} shadow-md transition-transform duration-300 group-hover:scale-110`}>
-                <service.icon className={`h-10 w-10 ${service.iconColor}`} strokeWidth={2.5} />
-              </div>
-
-              <h3 className="mb-4 text-xl font-bold text-black">{service.title}</h3>
-
-              {service.description && (
-                <div>
-                  <p className="mb-2 text-sm leading-relaxed font-semibold text-black">
-                    {service.description}
-                  </p>
-                  {service.note && (
-                    <p className="text-xs font-semibold text-black">{service.note}</p>
-                  )}
-                </div>
-              )}
-
-              {service.list && (
-                <ul className="space-y-2">
-                  {service.list.map((item, i) => (
-                    <li key={i} className="flex items-start text-sm font-semibold text-black">
-                      <span
-                        className={`mt-1 mr-2 h-2 w-2 flex-shrink-0 rounded-full ${service.iconColor.replace("text", "bg")}`}></span>
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              {service.link && (
-                <a
-                  href="#"
-                  className="mt-4 inline-flex items-center text-sm font-bold text-black underline transition-all duration-300 hover:opacity-70">
-                  {service.link}
-                  <ChevronRight className="ml-1 h-4 w-4" />
-                </a>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Mobile View - Carousel */}
-      <div className="relative md:hidden">
-        <div className="overflow-hidden rounded-2xl">
-          <div
-            className="flex transition-transform duration-500 ease-out"
-            style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
-            {services.map((service, index) => (
-              <div key={index} className="w-full flex-shrink-0 px-2">
-                <div className="relative overflow-hidden rounded-2xl border border-gray-200 bg-[#f2f2f2] p-8 shadow-lg">
-                  <div className="relative">
-                    <div
-                      className={`mb-6 inline-flex h-20 w-20 items-center justify-center rounded-2xl ${service.iconBg} shadow-md`}>
-                      <service.icon
-                        className={`h-10 w-10 ${service.iconColor}`}
-                        strokeWidth={2.5}
-                      />
-                    </div>
-
-                    <h3 className="mb-4 text-xl font-bold text-black">{service.title}</h3>
-
-                    {service.description && (
-                      <div>
-                        <p className="mb-2 text-sm leading-relaxed font-semibold text-black">
-                          {service.description}
-                        </p>
-                        {service.note && (
-                          <p className="text-xs font-semibold text-black">{service.note}</p>
-                        )}
-                      </div>
-                    )}
-
-                    {service.list && (
-                      <ul className="space-y-2">
-                        {service.list.map((item, i) => (
-                          <li key={i} className="flex items-start text-sm font-semibold text-black">
-                            <span
-                              className={`mt-1 mr-2 h-2 w-2 flex-shrink-0 rounded-full ${service.iconColor.replace("text", "bg")}`}></span>
-                            <span>{item}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-
-                    {service.link && (
-                      <a
-                        href="#"
-                        className="mt-4 inline-flex items-center text-sm font-bold text-black underline transition-all duration-300 hover:opacity-70">
-                        {service.link}
-                        <ChevronRight className="ml-1 h-4 w-4" />
-                      </a>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Navigation Arrows */}
-        <button
-          onClick={prevSlide}
-          className="absolute top-1/2 left-0 z-10 -translate-x-3 -translate-y-1/2 rounded-full bg-white p-3 shadow-xl transition-all duration-300 hover:scale-110 hover:bg-gray-50 active:scale-95"
-          aria-label="Previous slide">
-          <ChevronLeft className="h-5 w-5 text-gray-800" strokeWidth={3} />
-        </button>
-
-        <button
-          onClick={nextSlide}
-          className="absolute top-1/2 right-0 z-10 translate-x-3 -translate-y-1/2 rounded-full bg-white p-3 shadow-xl transition-all duration-300 hover:scale-110 hover:bg-gray-50 active:scale-95"
-          aria-label="Next slide">
-          <ChevronRight className="h-5 w-5 text-gray-800" strokeWidth={3} />
-        </button>
-
-        {/* Pagination Dots */}
-        <div className="mt-6 flex justify-center gap-2">
-          {services.map((_, index) => (
-            <button
+  if (isMobile) {
+    return (
+      <div className="mx-auto max-w-full px-4 py-8">
+        <Slider className="overflow-visible" {...sliderSettings}>
+          {services.map((service, index) => (
+            <div
               key={index}
-              onClick={() => setCurrentSlide(index)}
-              className={`h-2 rounded-full transition-all duration-300 ${
-                currentSlide === index ? "w-8 bg-gray-800" : "w-2 bg-gray-300"
-              }`}
-              aria-label={`Go to slide ${index + 1}`}
-            />
+              style={{
+                width: "250px", // fixed width
+                height: "250px", // fixed height
+                marginRight: "30px", // space between slides
+              }}
+              className="flex flex-col items-start gap-4 rounded-xl border border-gray-200 p-4 shadow-md mr-6">
+              <div className="flex-shrink-0">{service.icon}</div>
+              <div className="flex flex-col text-black">
+                <span className="text-lg font-bold">{service.title}</span>
+                <span className="mt-1">{service.description}</span>
+              </div>
+            </div>
           ))}
-        </div>
+        </Slider>
       </div>
+    );
+  }
+
+  // Desktop layout
+  return (
+    <div className="mx-auto flex max-w-6xl justify-between border-gray-300 px-4 py-8">
+      {services.map((service, index) => (
+        <div
+          key={index}
+          className={`flex flex-1 items-start gap-4 ${
+            index !== services.length - 1 ? "mr-6 border-r border-gray-300 pr-6" : ""
+          }`}>
+          <div className="flex-shrink-0">{service.icon}</div>
+          <div className="flex flex-col text-black">
+            <span className="text-lg font-bold">{service.title}</span>
+            <span className="mt-1">{service.description}</span>
+          </div>
+        </div>
+      ))}
     </div>
   );
 };

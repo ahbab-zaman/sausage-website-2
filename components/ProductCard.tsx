@@ -33,569 +33,161 @@ export default function ProductCard({ product }: ProductCardProps) {
     removeItem: removeFromWishlist,
     loading: wishlistLoading
   } = useWishlist();
+
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
 
-  const [showModal, setShowModal] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [modalQuantity, setModalQuantity] = useState(1);
-  const [addedQuantity, setAddedQuantity] = useState(1);
-  const [currentSlide, setCurrentSlide] = useState(0);
   const [showQuantityDropdown, setShowQuantityDropdown] = useState(false);
-  const [localWishlistLoading, setLocalWishlistLoading] = useState(false);
-  const [isClosingDropdown, setIsClosingDropdown] = useState(false);
-  const [isCardHovered, setIsCardHovered] = useState(false);
-  const [cartIconHover, setCartIconHover] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (products.length === 0) fetchProducts();
+  }, [products.length, fetchProducts]);
+
+  /** close on outside click */
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowQuantityDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const handleQuantitySelect = (qty: number) => {
+    addItem(
+      {
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        image: product.image,
+        model: product.model
+      },
+      qty
+    );
+    setShowQuantityDropdown(false);
+  };
 
   const inWishlist = isInWishlist(product.id);
 
-  // Load products if not already loaded (for related products)
-  useEffect(() => {
-    if (products.length === 0) {
-      fetchProducts();
-    }
-  }, [products.length, fetchProducts]);
-
-  // Modal entrance animation
-  useEffect(() => {
-    if (showModal) {
-      setTimeout(() => setIsAnimating(true), 10);
-    }
-  }, [showModal]);
-
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        if (showQuantityDropdown) {
-          setIsClosingDropdown(true);
-          setTimeout(() => {
-            setShowQuantityDropdown(false);
-            setIsClosingDropdown(false);
-          }, 300);
-        }
-      }
-    };
-
-    if (showQuantityDropdown) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showQuantityDropdown]);
-
-  // Related products from same category
-  const relatedProducts = products
-    .filter((p) => p.category === product.category && p.id !== product.id)
-    .slice(0, 8);
-
-  const handleCartIconClick = () => {
-    if (showQuantityDropdown) {
-      // Close with animation
-      setIsClosingDropdown(true);
-      setTimeout(() => {
-        setShowQuantityDropdown(false);
-        setIsClosingDropdown(false);
-      }, 300);
-    } else {
-      // Open dropdown
-      setShowQuantityDropdown(true);
-    }
-  };
-
-  const handleQuantitySelect = (quantity: number) => {
-    // Close with animation
-    setIsClosingDropdown(true);
-
-    setTimeout(() => {
-      addItem(
-        {
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          image: product.image,
-          model: product.model
-        },
-        quantity
-      );
-
-      setAddedQuantity(quantity);
-      setModalQuantity(quantity);
-      setShowQuantityDropdown(false);
-      setIsClosingDropdown(false);
-      setShowModal(true);
-      document.body.style.overflow = "hidden";
-    }, 300);
-  };
-
-  const closeModal = () => {
-    setIsAnimating(false);
-    setTimeout(() => {
-      setShowModal(false);
-      document.body.style.overflow = "unset";
-    }, 300);
-  };
-
-  const handleAddMoreToCart = () => {
-    if (modalQuantity > addedQuantity) {
-      addItem(
-        {
-          id: product.id,
-          name: product.name,
-          price: product.price,
-          image: product.image,
-          model: product.model
-        },
-        modalQuantity - addedQuantity
-      );
-      setAddedQuantity(modalQuantity);
-    }
-  };
-
-  const handleAddRelatedToCart = (relatedProduct: Product) => {
-    addItem(
-      {
-        id: relatedProduct.id,
-        name: relatedProduct.name,
-        price: relatedProduct.price,
-        image: relatedProduct.image,
-        model: relatedProduct.model
-      },
-      1
-    );
-  };
-
-  // const handleWishlistToggle = useCallback(
-  //   (e: React.MouseEvent<HTMLButtonElement>) => {
-  //     e.preventDefault();
-  //     e.stopPropagation();
-
-  //     if (!isAuthenticated) {
-  //       toast.error("Please login to manage your wishlist");
-  //       return;
-  //     }
-  //     setLocalWishlistLoading(true);
-
-  //     const action = inWishlist ? removeFromWishlist : addToWishlist;
-
-  //     action(product.id)
-  //       .catch((error) => {
-  //         console.error("Wishlist toggle failed:", error);
-  //         toast.error(inWishlist ? "Failed to remove from wishlist" : "Failed to add to wishlist");
-  //       })
-  //       .finally(() => {
-  //         setLocalWishlistLoading(false);
-  //       });
-  //   },
-  //   [isAuthenticated, inWishlist, product.id, addToWishlist, removeFromWishlist]
-  // );
   const handleWishlistToggle = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
       e.stopPropagation();
 
-      // REMOVED: Authentication check - now guests can add to wishlist too!
-      // The store will handle guest vs logged-in users internally
-
-      setLocalWishlistLoading(true);
-
       const action = inWishlist ? removeFromWishlist : addToWishlist;
 
-      // Pass product details for better guest experience (optional)
       action(product.id)
         .then(() => {
-          // Success toast
-          if (inWishlist) {
-            toast.success("Removed from wishlist");
-          } else {
-            if (isAuthenticated) {
-              toast.success("Added to wishlist");
-            } else {
-              toast.success("Added to wishlist! Login to sync across devices");
-            }
-          }
+          toast.success(inWishlist ? "Removed from wishlist" : "Added to wishlist");
         })
-        .catch((error) => {
-          console.error("Wishlist toggle failed:", error);
-          toast.error(inWishlist ? "Failed to remove from wishlist" : "Failed to add to wishlist");
-        })
-        .finally(() => {
-          setLocalWishlistLoading(false);
+        .catch(() => {
+          toast.error("Wishlist action failed");
         });
     },
-    [inWishlist, product.id, addToWishlist, removeFromWishlist, isAuthenticated]
+    [inWishlist, product.id, addToWishlist, removeFromWishlist]
   );
 
-  const formatPrice = (price: number) => {
-    return isNaN(price) ? "0.00" : price.toFixed(2);
+  // 1. Add a state to track if this product is in wishlist
+  const [wishlistClicked, setWishlistClicked] = useState(inWishlist);
+
+  // 2. Update handleWishlistToggle to also update this state
+  const handleWishlistClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const action = wishlistClicked ? removeFromWishlist : addToWishlist;
+
+    action(product.id)
+      .then(() => {
+        toast.success(wishlistClicked ? "Removed from wishlist" : "Added to wishlist");
+        setWishlistClicked(!wishlistClicked); // toggle fill state
+      })
+      .catch(() => {
+        toast.error("Wishlist action failed");
+      });
   };
-
-  // Carousel logic
-  const itemsPerView = 4;
-  const maxSlide = Math.max(0, Math.ceil(relatedProducts.length / itemsPerView) - 1);
-
-  const nextSlide = () => {
-    setCurrentSlide((prev) => Math.min(prev + 1, maxSlide));
-  };
-
-  const prevSlide = () => {
-    setCurrentSlide((prev) => Math.max(prev - 1, 0));
-  };
-
-  const visibleProducts = relatedProducts.slice(
-    currentSlide * itemsPerView,
-    (currentSlide + 1) * itemsPerView
-  );
 
   return (
-    <>
-      <style jsx>{`
-        @keyframes blowUp {
-          0% {
-            transform: scale(1);
-          }
-          50% {
-            transform: scale(1.5);
-          }
-          100% {
-            transform: scale(1);
-          }
-        }
-
-        @keyframes slideDownOpen {
-          0% {
-            opacity: 0;
-            transform: translateY(-15px) scale(0.9);
-            max-height: 0;
-          }
-          100% {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-            max-height: 300px;
-          }
-        }
-
-        @keyframes slideUpClose {
-          0% {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-            max-height: 300px;
-          }
-          100% {
-            opacity: 0;
-            transform: translateY(-15px) scale(0.9);
-            max-height: 0;
-          }
-        }
-
-        @keyframes borderGlow {
-          0% {
-            border-color: rgba(170, 56, 58, 0);
-            box-shadow: 0 0 0 0 rgba(170, 56, 58, 0);
-          }
-          50% {
-            border-color: rgba(170, 56, 58, 1);
-            box-shadow: 0 0 20px 2px rgba(170, 56, 58, 0.4);
-          }
-          100% {
-            border-color: rgba(170, 56, 58, 1);
-            box-shadow: 0 0 20px 2px rgba(170, 56, 58, 0.4);
-          }
-        }
-
-        .icon-blow:hover {
-          animation: blowUp 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        .animate-dropdown-open {
-          animation: slideDownOpen 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-
-        .animate-dropdown-close {
-          animation: slideUpClose 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .quantity-item {
-          transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .quantity-item:hover {
-          transform: scale(1.05);
-        }
-
-        .card-border-animated {
-          animation: 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-        }
-      `}</style>
-
-      {/* Product Card */}
-      <div
-        onMouseEnter={() => setIsCardHovered(true)}
-        onMouseLeave={() => setIsCardHovered(false)}
-        className={`mx-auto max-h-[420px] max-w-[260px] overflow-hidden rounded-lg bg-white px-2 pt-8 shadow-sm transition-all duration-500 hover:shadow-md lg:max-h-[400px] lg:max-w-[230px] ${
-          isCardHovered
-            ? "card-border-animated border-[1px] border-[#C95467]"
-            : "border border-[#E1E2E3]"
-        }`}>
-        <div className="relative">
-          {/* Badge */}
-          <div className="absolute top-2 left-2 z-10">
-            {product.badge && (
-              <span className="rounded bg-red-500 px-2 py-1 text-xs font-medium text-white">
-                {product.badge}
-              </span>
-            )}
-          </div>
-
-          {/* Wishlist Button */}
-          <button
-            onClick={handleWishlistToggle}
-            disabled={wishlistLoading || localWishlistLoading}
-            className="absolute -top-6 right-2 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-sm transition-all hover:bg-gray-50 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
-            aria-label="Add to wishlist">
-            {wishlistLoading || localWishlistLoading ? (
-              <Loader2 className="h-5 w-5 animate-spin text-gray-600" />
-            ) : (
-              <Heart
-                className={`icon-blow h-5 w-5 transition-all ${
-                  inWishlist ? "fill-red-500 text-red-500" : "text-gray-600 hover:text-red-500"
-                }`}
-              />
-            )}
-          </button>
-
-          {/* Product Image */}
-          <Link href={`/products/${product.id}`} className="block">
-            <div className="relative w-full" style={{ paddingBottom: "100%" }}>
-              <Image
-                fill
-                src={product.image || "/placeholder.svg"}
-                alt={product.name}
-                className="mx-auto max-h-[300px] max-w-[220px] object-contain p-4"
-              />
-            </div>
-          </Link>
+    <div className="relative mx-auto flex h-[400px] max-w-[260px] flex-col rounded-lg border border-[#E1E2E3] bg-white p-4 shadow-sm hover:shadow-md">
+      {/* Image */}
+      <Link href={`/products/${product.id}`} className="flex-shrink-0">
+        <div className="relative mt-12 aspect-square">
+          <Image
+            fill
+            src={product.image || "/placeholder.svg"}
+            alt={product.name}
+            className="w-full object-contain p-4 pb-6"
+          />
         </div>
+      </Link>
+      {/* Spacer */}
+      <div className="flex-1"></div> {/* This pushes the content below to the bottom */}
+      {/* Bottom content */}
+      <div className="mt-3 flex flex-col gap-2">
+        {/* Title */}
+        <h3 className="line-clamp-2 text-[16px] font-bold text-gray-800">{product.name}</h3>
 
-        <div className="p-4">
-          {/* Title */}
-          <div className="mb-3">
-            <Link
-              href={`/products/${product.id}`}
-              className="line-clamp-2 text-[16px] leading-relaxed font-bold text-gray-800 transition-colors hover:text-gray-600">
-              {product.name}
-            </Link>
+        {/* Price + Cart */}
+        <div className="flex items-center justify-between">
+          <div>
+            <span className="text-xl font-bold">{product.price.toFixed(2)}</span>
+            <span className="ml-1 text-xs font-bold">AED</span>
           </div>
 
-          {/* Price + Add to Cart */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-baseline">
-              <span className="text-2xl font-bold text-gray-900">{product.price.toFixed(2)}</span>
-              <span className="ml-1 text-xs text-gray-500">AED</span>
-            </div>
+          {/* CART + DROPDOWN */}
+          <div className="relative w-[38px]" ref={dropdownRef}>
+            <button
+              onClick={() => setShowQuantityDropdown((p) => !p)}
+              className="flex h-[38px] w-[38px] items-center justify-center rounded-full bg-[#AA383A] text-white hover:bg-[#8a2c2e]">
+              {/* <ShoppingCartIcon className="h-5 w-5" /> */}
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="19.401"
+                height="18.259"
+                className="transition-transform duration-300 ease-in-out hover:scale-110"
+                viewBox="0 0 19.401 18.259">
+                <path
+                  id="Path_3046"
+                  data-name="Path 3046"
+                  d="M19.289,16.631a.622.622,0,0,0-.484-.266L6.77,15.846a.622.622,0,0,0-.053,1.244l11.22.484-2.206,6.883H5.913L4.14,14.8a.622.622,0,0,0-.385-.467L.85,13.191A.623.623,0,0,0,.395,14.35l2.583,1.015,1.8,9.827a.623.623,0,0,0,.612.51h.3l-.684,1.9A.519.519,0,0,0,5.5,28.3h.48a1.867,1.867,0,1,0,2.776,0h4.072a1.867,1.867,0,1,0,2.776,0h.583a.519.519,0,1,0,0-1.037H6.237L6.8,25.7h9.388a.622.622,0,0,0,.593-.432l2.594-8.092A.621.621,0,0,0,19.289,16.631ZM7.366,30.37a.83.83,0,1,1,.83-.83A.831.831,0,0,1,7.366,30.37Zm6.847,0a.83.83,0,1,1,.83-.83A.831.831,0,0,1,14.213,30.37Z"
+                  transform="translate(0 -13.148)"
+                  fill="#fff"></path>
+              </svg>
+            </button>
 
-            <div className="relative" ref={dropdownRef}>
-              <button
-                onClick={handleCartIconClick}
-                onMouseEnter={() => setCartIconHover(true)}
-                onMouseLeave={() => setCartIconHover(false)}
-                onAnimationEnd={() => setCartIconHover(false)}
-                className={`flex h-[38px] w-[38px] items-center justify-center rounded-full bg-[#AA383A] text-white transition-all hover:bg-[#8a2c2e] hover:shadow-lg ${
-                  showQuantityDropdown && !isClosingDropdown
-                    ? "pointer-events-none opacity-0"
-                    : "opacity-100"
-                }`}
-                style={{ transition: "opacity 0.3s ease" }}>
-                <ShoppingCartIcon className={`h-5 w-5 ${cartIconHover ? "animate-blow-up" : ""}`} />
-              </button>
-
-              {/* Premium Quantity Dropdown */}
-              {(showQuantityDropdown || isClosingDropdown) && (
-                <div
-                  className={`absolute right-0 bottom-0 z-50 overflow-hidden rounded-xl bg-[#AA383A] shadow-2xl ring-1 ring-black/5 ${
-                    isClosingDropdown ? "animate-dropdown-close" : "animate-dropdown-open"
-                  }`}>
-                  {[1, 2, 3, 4, 5].map((num, index) => (
-                    <button
-                      key={num}
-                      onClick={() => handleQuantitySelect(num)}
-                      disabled={isClosingDropdown}
-                      style={{
-                        animationDelay: isClosingDropdown ? "0ms" : `${index * 30}ms`
-                      }}
-                      className="quantity-item flex h-[42px] w-[42px] items-center justify-center border-b border-gray-100 text-sm font-semibold text-white transition-all last:border-b-0 hover:bg-[#C95467] hover:text-white disabled:pointer-events-none">
-                      {num}
-                    </button>
-                  ))}
-                </div>
-              )}
+            {/* DROPDOWN */}
+            <div
+              className={`absolute right-0 bottom-0 left-0 z-50 overflow-hidden rounded-t-md bg-[#AA383A] transition-all duration-300 ease-in-out ${
+                showQuantityDropdown ? "h-[200px]" : "h-0"
+              }`}>
+              <div className="flex flex-col">
+                {[1, 2, 3, 4, 5].map((qty) => (
+                  <button
+                    key={qty}
+                    onClick={() => handleQuantitySelect(qty)}
+                    className="w-full py-2 text-center text-[15px] font-semibold text-white transition hover:bg-[#C95467]">
+                    {qty}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
       </div>
-
-      {/* Add to Cart Success Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center">
-          <div
-            className={`absolute inset-0 bg-black/50 transition-opacity duration-300 ${
-              isAnimating ? "opacity-100" : "opacity-0"
-            }`}
-            onClick={closeModal}
+      {/* Wishlist button */}
+      <button
+        onClick={handleWishlistClick}
+        className="absolute top-0 right-4 mt-3 flex items-center justify-center text-gray-600 transition-transform duration-200 hover:scale-125">
+        <svg width="30" height="30" viewBox="0 0 24 24" className="transition-colors duration-200">
+          <path
+            d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+            fill={wishlistClicked ? "#EF4444" : "white"} // red or white
+            stroke="#000"
+            strokeWidth="1"
           />
-
-          <div
-            className={`relative z-10 mx-4 w-full max-w-4xl overflow-hidden rounded-lg bg-white shadow-2xl transition-all duration-300 ${
-              isAnimating ? "scale-100 opacity-100" : "scale-95 opacity-0"
-            }`}>
-            <button
-              onClick={closeModal}
-              className="absolute top-4 right-4 z-20 rounded-full bg-white p-2 text-gray-600 shadow-md transition-all hover:rotate-90 hover:bg-gray-100 hover:text-gray-900">
-              <X className="h-6 w-6" />
-            </button>
-
-            <div className="max-h-[90vh] overflow-y-auto p-8">
-              <h2 className="mb-6 text-center text-2xl font-bold text-gray-900">
-                Successfully added to cart
-              </h2>
-
-              {/* Main Product Info */}
-              <div className="mb-8 flex items-start gap-6">
-                <div className="h-32 w-32 flex-shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
-                  <Image
-                    src={product.image || "/placeholder.svg"}
-                    alt={product.name}
-                    width={128}
-                    height={128}
-                    className="h-full w-full object-contain p-2"
-                  />
-                </div>
-
-                <div className="flex-1">
-                  <h3 className="mb-3 text-lg font-semibold text-gray-900">{product.name}</h3>
-                  <p className="mb-2 text-sm text-gray-600">
-                    <span className="font-medium">Quantity:</span> {addedQuantity}
-                  </p>
-                  <p className="mb-4 text-sm text-gray-600">
-                    <span className="font-medium">Unit Price:</span> {formatPrice(product.price)}{" "}
-                    AED
-                  </p>
-
-                  {/* Update Quantity */}
-                  <div className="mb-4 flex items-center gap-4">
-                    <div className="flex items-center gap-3 rounded-lg border border-gray-300 bg-white px-2">
-                      <button
-                        onClick={() => setModalQuantity(Math.max(1, modalQuantity - 1))}
-                        disabled={modalQuantity <= 1}
-                        className="p-2 text-gray-600 transition-colors hover:text-gray-900 disabled:cursor-not-allowed disabled:opacity-40">
-                        <Minus className="h-5 w-5" />
-                      </button>
-                      <span className="w-12 text-center text-lg font-semibold">
-                        {modalQuantity}
-                      </span>
-                      <button
-                        onClick={() => setModalQuantity(modalQuantity + 1)}
-                        className="p-2 text-gray-600 transition-colors hover:text-gray-900">
-                        <Plus className="h-5 w-5" />
-                      </button>
-                    </div>
-
-                    <button
-                      onClick={handleAddMoreToCart}
-                      className="rounded-lg bg-gray-800 px-6 py-2.5 text-sm font-semibold text-white transition-all hover:bg-gray-900 active:scale-95">
-                      ADD TO CART
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="mb-8 flex gap-4">
-                <button
-                  onClick={closeModal}
-                  className="flex-1 rounded-lg border-2 border-gray-800 bg-white px-6 py-3 font-semibold text-gray-800 transition-all hover:bg-gray-50 active:scale-95">
-                  Continue Shopping
-                </button>
-                <Link href="/cart" className="flex-1" onClick={closeModal}>
-                  <button className="w-full rounded-lg bg-gray-800 px-6 py-3 font-semibold text-white transition-all hover:bg-gray-900 active:scale-95">
-                    Submit Your Order
-                  </button>
-                </Link>
-              </div>
-
-              {/* Related Products Carousel */}
-              {relatedProducts.length > 0 && (
-                <div>
-                  <h3 className="mb-6 text-xl font-bold text-gray-900">You May Also Like</h3>
-
-                  <div className="relative">
-                    {currentSlide > 0 && (
-                      <button
-                        onClick={prevSlide}
-                        className="absolute top-1/2 -left-4 z-10 -translate-y-1/2 rounded-full bg-white p-2 shadow-lg transition-all hover:scale-110 hover:bg-gray-100">
-                        <ChevronLeft className="h-6 w-6 text-gray-600" />
-                      </button>
-                    )}
-
-                    <div className="grid grid-cols-4 gap-4">
-                      {visibleProducts.map((relatedProduct) => (
-                        <div
-                          key={relatedProduct.id}
-                          className="group overflow-hidden rounded-lg border border-gray-200 bg-white transition-all hover:shadow-md">
-                          <Link
-                            href={`/products/${relatedProduct.id}`}
-                            onClick={closeModal}
-                            className="relative block aspect-square overflow-hidden bg-gray-50">
-                            <Image
-                              src={relatedProduct.image || "/placeholder.svg"}
-                              alt={relatedProduct.name}
-                              fill
-                              className="object-contain p-4 transition-transform duration-300 group-hover:scale-105"
-                            />
-                          </Link>
-
-                          <div className="p-3">
-                            <Link href={`/products/${relatedProduct.id}`} onClick={closeModal}>
-                              <h4 className="mb-2 line-clamp-2 min-h-[2.5rem] text-sm font-semibold text-gray-900 transition-colors hover:text-gray-700">
-                                {relatedProduct.name}
-                              </h4>
-                            </Link>
-
-                            <div className="flex items-center justify-between">
-                              <div className="flex flex-col">
-                                <span className="text-base font-bold text-gray-900">
-                                  {formatPrice(relatedProduct.price)}
-                                </span>
-                                <span className="text-xs text-gray-500">AED</span>
-                              </div>
-
-                              <button
-                                onClick={() => handleAddRelatedToCart(relatedProduct)}
-                                className="flex h-9 w-9 items-center justify-center rounded-full bg-red-600 text-white transition-all hover:scale-110 hover:bg-red-700 active:scale-95">
-                                <ShoppingCartIcon className="h-4 w-4" />
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    {currentSlide < maxSlide && (
-                      <button
-                        onClick={nextSlide}
-                        className="absolute top-1/2 -right-4 z-10 -translate-y-1/2 rounded-full bg-white p-2 shadow-lg transition-all hover:scale-110 hover:bg-gray-100">
-                        <ChevronRight className="h-6 w-6 text-gray-600" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </>
+        </svg>
+      </button>
+    </div>
   );
 }

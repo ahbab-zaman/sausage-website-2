@@ -103,7 +103,7 @@ export default function WishlistPage() {
 
       {/* Wishlist Grid */}
       <div className="mx-auto max-w-7xl px-6 pb-16">
-        <div className="grid gap-6 sm:grid-cols-1 pb-2">
+        <div className="grid gap-6 pb-2 sm:grid-cols-1">
           {items.map((item, index) => (
             <div
               key={item.product_id}
@@ -158,7 +158,7 @@ export default function WishlistPage() {
                     <Trash2 size={24} className="transition-transform group-hover/btn:scale-110" />
                   </button>
 
-                  <Button
+                  <button
                     onClick={() =>
                       addItem({
                         id: item.product_id,
@@ -168,11 +168,20 @@ export default function WishlistPage() {
                       })
                     }
                     className="group/cart flex h-16 w-16 items-center justify-center rounded-2xl bg-black p-0 text-white shadow-lg transition-all duration-300 hover:scale-110 hover:bg-black hover:shadow-xl">
-                    <ShoppingCart
-                      size={24}
-                      className="transition-transform group-hover/cart:scale-110"
-                    />
-                  </Button>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="25"
+                      height="25"
+                      className="w-"
+                      viewBox="0 0 19.401 18.259">
+                      <path
+                        id="Path_3046"
+                        data-name="Path 3046"
+                        d="M19.289,16.631a.622.622,0,0,0-.484-.266L6.77,15.846a.622.622,0,0,0-.053,1.244l11.22.484-2.206,6.883H5.913L4.14,14.8a.622.622,0,0,0-.385-.467L.85,13.191A.623.623,0,0,0,.395,14.35l2.583,1.015,1.8,9.827a.623.623,0,0,0,.612.51h.3l-.684,1.9A.519.519,0,0,0,5.5,28.3h.48a1.867,1.867,0,1,0,2.776,0h4.072a1.867,1.867,0,1,0,2.776,0h.583a.519.519,0,1,0,0-1.037H6.237L6.8,25.7h9.388a.622.622,0,0,0,.593-.432l2.594-8.092A.621.621,0,0,0,19.289,16.631ZM7.366,30.37a.83.83,0,1,1,.83-.83A.831.831,0,0,1,7.366,30.37Zm6.847,0a.83.83,0,1,1,.83-.83A.831.831,0,0,1,14.213,30.37Z"
+                        transform="translate(0 -13.148)"
+                        fill="#fff"></path>
+                    </svg>
+                  </button>
                 </div>
               </div>
 
