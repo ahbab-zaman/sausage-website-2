@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Loader2, Trash2, ChevronRight, ShoppingCart } from "lucide-react";
+import { Loader2, Trash2, ChevronRight, ShoppingCart, Heart, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWishlist } from "@/hooks/useWishlist";
 import { useCart } from "@/hooks/useCart";
@@ -19,38 +19,55 @@ export default function WishlistPage() {
   /* ---------- LOADING ---------- */
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-10 w-10 animate-spin text-black" />
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="text-center">
+          <Loader2 className="mx-auto h-12 w-12 animate-spin text-black" />
+          <p className="mt-4 text-sm font-medium text-gray-600">Loading your wishlist...</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
-    return <p className="text-center text-red-600">{error}</p>;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="text-center">
+          <p className="font-medium text-red-600">{error}</p>
+        </div>
+      </div>
+    );
   }
 
   /* ---------- EMPTY STATE ---------- */
   if (items.length === 0) {
     return (
-      <div className="bg-gray-50">
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
         {/* Breadcrumb */}
-        <div className="bg-[#f2f2f2]">
-          <div className="mx-auto mb-6 flex w-[90%] items-center py-1 text-sm text-gray-600">
-            <Link href="/" className="hover:text-gray-900">
+        <div className="border-b border-gray-200 bg-white/80 backdrop-blur-sm">
+          <div className="mx-auto flex max-w-7xl items-center px-6 py-4 text-sm">
+            <Link href="/" className="text-gray-600 transition-colors hover:text-black">
               Home
             </Link>
-            <ChevronRight className="mx-2 h-4 w-4" />
-            <span className="font-medium text-gray-900">My Wish List</span>
+            <ChevronRight className="mx-3 h-4 w-4 text-gray-400" />
+            <span className="font-medium text-black">My Wish List</span>
           </div>
         </div>
 
         {/* Empty Message */}
-        <div className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 lg:px-8">
-          <h1 className="mb-4 text-3xl font-bold text-gray-900">Your Wish List is Empty</h1>
-          <p className="mb-8 text-gray-600">You have no items saved in your wish list</p>
+        <div className="mx-auto max-w-2xl px-6 py-24 text-center">
+          <div className="mb-6 inline-flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200 shadow-inner">
+            <Heart className="h-12 w-12 text-gray-400" />
+          </div>
+          <h1 className="mb-3 text-4xl font-bold tracking-tight text-gray-900">
+            Your Wish List is Empty
+          </h1>
+          <p className="mb-10 text-lg text-gray-600">
+            Start adding items you love and keep them saved for later
+          </p>
           <Link href="/products">
-            <Button className="rounded-full bg-black font-bold hover:bg-black" size="lg">
-              Shop More
+            <Button className="group rounded-full bg-black px-8 py-6 text-base font-semibold text-white shadow-lg transition-all hover:scale-105 hover:bg-black hover:shadow-xl">
+              Explore Products
+              <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
             </Button>
           </Link>
         </div>
@@ -60,76 +77,130 @@ export default function WishlistPage() {
 
   /* ---------- WISHLIST ITEMS ---------- */
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
       {/* Breadcrumb */}
-      <div className="border-b bg-white">
-        <div className="mx-auto flex max-w-7xl items-center px-4 py-3 text-sm text-gray-600">
-          <Link href="/">Home</Link>
-          <ChevronRight className="mx-2 h-4 w-4" />
+      <div className="border-b border-gray-200 bg-white/80 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-7xl items-center px-6 py-4 text-sm">
+          <Link href="/" className="text-gray-600 transition-colors hover:text-black">
+            Home
+          </Link>
+          <ChevronRight className="mx-3 h-4 w-4 text-gray-400" />
           <span className="font-medium text-black">My Wish List</span>
         </div>
       </div>
 
-      {/* Wishlist */}
-      <div className="mx-auto max-w-7xl space-y-3 px-4 py-6">
-        {items.map((item) => (
-          <div
-            key={item.product_id}
-            className="flex items-center gap-4 rounded border bg-white p-4">
-            {/* IMAGE */}
-            <Link href={`/products/${item.product_id}`}>
-              <div className="relative h-24 w-24 shrink-0 bg-gray-100">
-                <Image src={item.image} alt={item.name} fill className="object-contain" />
-              </div>
-            </Link>
-
-            {/* INFO */}
-            <div className="flex-1">
-              <Link href={`/products/${item.product_id}`}>
-                <h3 className="line-clamp-1 text-sm font-medium text-black hover:underline">
-                  {item.name}
-                </h3>
-              </Link>
-
-              {/* DESCRIPTION */}
-              {item.description && (
-                <p className="mt-1 line-clamp-2 text-xs text-black/70">{item.description}</p>
-              )}
-
-              {/* QUANTITY */}
-              <p className="mt-1 text-xs text-black">
-                Available: <span className="font-medium">{item.quantity}</span>
-              </p>
-
-              {/* PRICE */}
-              <p className="mt-2 text-sm font-semibold text-black">AED {item.price}.00</p>
-            </div>
-
-            {/* ACTIONS */}
-            <div className="flex flex-col items-end gap-2">
-              <button
-                onClick={() => removeItem(item.product_id)}
-                className="text-gray-400 hover:text-red-600"
-                aria-label="Remove">
-                <Trash2 size={16} />
-              </button>
-
-              <Button
-                onClick={() =>
-                  addItem({
-                    id: item.product_id,
-                    name: item.name,
-                    price: item.price,
-                    image: item.image
-                  })
-                }
-                className="bg-black px-4 py-2 text-xs text-white hover:bg-black/90">
-                <ShoppingCart />
-              </Button>
-            </div>
+      {/* Header */}
+      <div className="mx-auto max-w-7xl px-6 py-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-gray-900">My Wish List</h1>
+            <p className="mt-2 text-sm text-gray-600">
+              {items.length} {items.length === 1 ? "item" : "items"} saved
+            </p>
           </div>
-        ))}
+        </div>
       </div>
+
+      {/* Wishlist Grid */}
+      <div className="mx-auto max-w-7xl px-6 pb-16">
+        <div className="grid gap-6 sm:grid-cols-1 pb-2">
+          {items.map((item, index) => (
+            <div
+              key={item.product_id}
+              className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition-all duration-300 hover:border-gray-300 hover:shadow-xl"
+              style={{
+                animation: `fadeInUp 0.5s ease-out ${index * 0.1}s both`
+              }}>
+              <div className="flex items-start gap-6">
+                {/* IMAGE */}
+                <Link href={`/products/${item.product_id}`} className="shrink-0">
+                  <div className="relative h-32 w-32 overflow-hidden rounded-xl bg-gradient-to-br from-gray-50 to-gray-100 shadow-inner transition-transform duration-300 group-hover:scale-105">
+                    <Image
+                      src={item.image}
+                      alt={item.name}
+                      fill
+                      className="object-contain p-3 transition-transform duration-500 group-hover:scale-110"
+                    />
+                  </div>
+                </Link>
+
+                {/* INFO */}
+                <div className="min-w-0 flex-1">
+                  <Link href={`/products/${item.product_id}`}>
+                    <h3 className="mb-2 line-clamp-2 text-lg font-semibold text-gray-900 transition-colors hover:text-black">
+                      {item.name}
+                    </h3>
+                  </Link>
+
+                  {/* DESCRIPTION */}
+                  {item.description && (
+                    <p className="mb-3 line-clamp-2 text-sm leading-relaxed text-gray-600">
+                      {item.description}
+                    </p>
+                  )}
+
+                  {/* META INFO */}
+                  <div className="flex items-center gap-4 text-sm">
+                    <div className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1.5">
+                      <span className="text-gray-600">Stock:</span>
+                      <span className="font-semibold text-gray-900">{item.quantity}</span>
+                    </div>
+                    <div className="text-2xl font-bold text-gray-900">AED {item.price}.00</div>
+                  </div>
+                </div>
+
+                {/* ACTIONS */}
+                <div className="flex flex-col gap-4">
+                  <button
+                    onClick={() => removeItem(item.product_id)}
+                    className="group/btn flex h-16 w-16 items-center justify-center rounded-2xl border border-gray-200 bg-white text-gray-400 shadow-sm transition-all duration-300 hover:border-red-200 hover:bg-red-50 hover:text-red-600 hover:shadow-md"
+                    aria-label="Remove from wishlist">
+                    <Trash2 size={24} className="transition-transform group-hover/btn:scale-110" />
+                  </button>
+
+                  <Button
+                    onClick={() =>
+                      addItem({
+                        id: item.product_id,
+                        name: item.name,
+                        price: item.price,
+                        image: item.image
+                      })
+                    }
+                    className="group/cart flex h-16 w-16 items-center justify-center rounded-2xl bg-black p-0 text-white shadow-lg transition-all duration-300 hover:scale-110 hover:bg-black hover:shadow-xl">
+                    <ShoppingCart
+                      size={24}
+                      className="transition-transform group-hover/cart:scale-110"
+                    />
+                  </Button>
+                </div>
+              </div>
+
+              {/* Hover gradient effect */}
+              <div
+                className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                style={{
+                  background:
+                    "radial-gradient(circle at top right, rgba(0,0,0,0.02) 0%, transparent 50%)"
+                }}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <style jsx>{`
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+      `}</style>
     </div>
   );
 }
