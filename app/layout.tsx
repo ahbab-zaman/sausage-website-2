@@ -1,10 +1,9 @@
-import type React from "react";
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import "./globals.css";
-import Navbar from "@/components/layout/navbar";
-import Footer from "@/components/layout/footer";
-// import "antd/dist/reset.css";
+
+import AgeRedirect from "@/components/AgeRedirect";
+import ClientLayoutWrapper from "@/components/ClientWrapper";
 
 const inter = Geist({ subsets: ["latin"] });
 
@@ -23,9 +22,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className={inter.className}>
-        <Navbar />
-        {children}
-        <Footer />
+        <ClientLayoutWrapper>{children}</ClientLayoutWrapper>
+        <AgeRedirect />
       </body>
     </html>
   );
