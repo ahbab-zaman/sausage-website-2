@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { Spinner } from "./ui/spinner";
 
 interface Product {
-  product_id: number;
+  product_id: string;
   name: string;
   price: string;
   currency: string;
@@ -29,8 +29,8 @@ export default function SearchDropdown({ baseUrl }: Props) {
   const [loading, setLoading] = useState(false);
   const [loadingRecent, setLoadingRecent] = useState(false);
   const [open, setOpen] = useState(false);
-  const [addingToCart, setAddingToCart] = useState<Record<number, boolean>>({});
-  const [justAdded, setJustAdded] = useState<Record<number, boolean>>({});
+  const [addingToCart, setAddingToCart] = useState<Record<string, boolean>>({});
+  const [justAdded, setJustAdded] = useState<Record<string, boolean>>({});
   const [showRecent, setShowRecent] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -293,7 +293,7 @@ export default function SearchDropdown({ baseUrl }: Props) {
                       style={{ animationDelay: `${index * 30}ms` }}
                       className="animate-fadeInSlide flex items-center justify-between px-4 py-4 transition-colors duration-150 hover:bg-gray-50">
                       <Link
-                        href={`/product/${product.product_id}`}
+                        href={`/products/${product.product_id}`}
                         className="flex min-w-0 flex-1 items-center gap-4"
                         onClick={() => setOpen(false)}>
                         <Image
