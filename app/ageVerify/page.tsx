@@ -47,7 +47,7 @@ export default function AgeVerify() {
       <div className="flex gap-6">
         <button
           onClick={handleConfirm}
-          className="cursor-pointer rounded-md border-2 border-[#c35151] bg-[#9f2d2d] px-10 py-3 text-lg font-semibold text-white shadow-md transition-all hover:bg-[#b13535]">
+          className="cursor-pointer rounded-md border-2 border-[#c35151] bg-[#9f2d2d] px-10 py-3 text-lg font-semibold text-white shadow-md transition-all hover:bg-[#b13535]po">
           I AM OVER 21
         </button>
 

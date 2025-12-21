@@ -8,22 +8,139 @@ interface SearchProduct {
 }
 
 interface SearchResponse {
-  success: boolean;
+  success: number;
+  error: string[];
   data?: {
     products: SearchProduct[];
   };
-  error?: string;
+}
+
+interface RecentSearchResponse {
+  success: number;
+  error: string[];
+  data: {
+    recent_search: Array<{ keyword: string }>;
+  };
 }
 
 class SearchApiClient {
   private baseUrl: string;
-  private cache: Map<string, SearchProduct[]>;
+  private searchCache: Map<string, { data: SearchProduct[]; timestamp: number }>;
+  private recentSearchCache: { data: string[]; timestamp: number } | null;
+  private pendingRequests: Map<string, Promise<SearchProduct[]>>;
+  private recentSearchPromise: Promise<string[]> | null;
+  private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+  private readonly RECENT_CACHE_DURATION = 2 * 60 * 1000; // 2 minutes
 
   constructor() {
     this.baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-    this.cache = new Map();
+    this.searchCache = new Map();
+    this.recentSearchCache = null;
+    this.pendingRequests = new Map();
+    this.recentSearchPromise = null;
   }
 
+  /**
+   * Get client token from localStorage
+   */
+  private getClientToken(): string | null {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem("client_token");
+  }
+
+  /**
+   * Get auth headers with Bearer token
+   */
+  private getAuthHeaders(): HeadersInit {
+    const token = this.getClientToken();
+    const headers: HeadersInit = {
+      "Content-Type": "application/json"
+    };
+
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+
+    return headers;
+  }
+
+  /**
+   * Prefetch recent searches - call this on app initialization
+   */
+  async prefetchRecentSearches(): Promise<void> {
+    try {
+      await this.getRecentSearches();
+    } catch (error) {
+      console.error("Failed to prefetch recent searches:", error);
+    }
+  }
+
+  /**
+   * Get recent search keywords
+   */
+  async getRecentSearches(): Promise<string[]> {
+    // Check cache first
+    if (
+      this.recentSearchCache &&
+      Date.now() - this.recentSearchCache.timestamp < this.RECENT_CACHE_DURATION
+    ) {
+      return this.recentSearchCache.data;
+    }
+
+    // Return existing promise if request is pending
+    if (this.recentSearchPromise) {
+      return this.recentSearchPromise;
+    }
+
+    // Create new request
+    this.recentSearchPromise = this.fetchRecentSearches();
+
+    try {
+      const result = await this.recentSearchPromise;
+      return result;
+    } finally {
+      this.recentSearchPromise = null;
+    }
+  }
+
+  private async fetchRecentSearches(): Promise<string[]> {
+    try {
+      const url = `${this.baseUrl}/index.php?route=feed/rest_api/recent_search`;
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: this.getAuthHeaders(),
+        credentials: "include"
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch recent searches: ${response.status}`);
+      }
+
+      const data: RecentSearchResponse = await response.json();
+
+      if (data.success !== 1) {
+        throw new Error("Recent search request failed");
+      }
+
+      const keywords = data.data?.recent_search?.map((item) => item.keyword) || [];
+
+      // Update cache
+      this.recentSearchCache = {
+        data: keywords,
+        timestamp: Date.now()
+      };
+
+      return keywords;
+    } catch (error) {
+      console.error("Recent search API error:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Search for products with request deduplication and caching
+   */
   async searchProducts(query: string): Promise<SearchProduct[]> {
     if (!query.trim()) {
       return [];
@@ -31,19 +148,37 @@ class SearchApiClient {
 
     const cacheKey = query.toLowerCase().trim();
 
-    // Check cache
-    if (this.cache.has(cacheKey)) {
-      return this.cache.get(cacheKey)!;
+    // Check cache with expiry
+    const cached = this.searchCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < this.CACHE_DURATION) {
+      return cached.data;
     }
 
+    // Return existing promise if request is already pending (request deduplication)
+    if (this.pendingRequests.has(cacheKey)) {
+      return this.pendingRequests.get(cacheKey)!;
+    }
+
+    // Create new request
+    const promise = this.fetchSearchProducts(query, cacheKey);
+    this.pendingRequests.set(cacheKey, promise);
+
     try {
-      const url = `${this.baseUrl}index.php?route=feed/rest_api/search&search=${encodeURIComponent(query)}`;
+      const result = await promise;
+      return result;
+    } finally {
+      this.pendingRequests.delete(cacheKey);
+    }
+  }
+
+  private async fetchSearchProducts(query: string, cacheKey: string): Promise<SearchProduct[]> {
+    try {
+      const url = `${this.baseUrl}/index.php?route=feed/rest_api/search&search=${encodeURIComponent(query)}`;
 
       const response = await fetch(url, {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json"
-        }
+        headers: this.getAuthHeaders(),
+        credentials: "include"
       });
 
       if (!response.ok) {
@@ -52,14 +187,25 @@ class SearchApiClient {
 
       const data: SearchResponse = await response.json();
 
-      if (!data.success) {
-        throw new Error(data.error || "Search request failed");
+      if (data.success !== 1) {
+        throw new Error(data.error?.join(", ") || "Search request failed");
       }
 
       const products = data.data?.products || [];
 
-      // Cache results
-      this.cache.set(cacheKey, products);
+      // Cache results with timestamp
+      this.searchCache.set(cacheKey, {
+        data: products,
+        timestamp: Date.now()
+      });
+
+      // Limit cache size to prevent memory issues
+      if (this.searchCache.size > 100) {
+        const firstKey = this.searchCache.keys().next().value;
+        if (firstKey !== undefined) {
+          this.searchCache.delete(firstKey);
+        }
+      }
 
       return products;
     } catch (error) {
@@ -68,12 +214,59 @@ class SearchApiClient {
     }
   }
 
-  clearCache() {
-    this.cache.clear();
+  /**
+   * Get products for recent search keywords (batch fetch)
+   */
+  async getRecentSearchProducts(): Promise<Map<string, SearchProduct[]>> {
+    const keywords = await this.getRecentSearches();
+    const results = new Map<string, SearchProduct[]>();
+
+    // Fetch products for each keyword in parallel
+    const promises = keywords.map(async (keyword) => {
+      try {
+        const products = await this.searchProducts(keyword);
+        results.set(keyword, products);
+      } catch (error) {
+        console.error(`Failed to fetch products for "${keyword}":`, error);
+        results.set(keyword, []);
+      }
+    });
+
+    await Promise.all(promises);
+    return results;
   }
 
-  getCacheSize() {
-    return this.cache.size;
+  /**
+   * Clear all caches
+   */
+  clearCache() {
+    this.searchCache.clear();
+    this.recentSearchCache = null;
+  }
+
+  /**
+   * Clear only search cache
+   */
+  clearSearchCache() {
+    this.searchCache.clear();
+  }
+
+  /**
+   * Clear only recent search cache
+   */
+  clearRecentSearchCache() {
+    this.recentSearchCache = null;
+  }
+
+  /**
+   * Get cache statistics
+   */
+  getCacheStats() {
+    return {
+      searchCacheSize: this.searchCache.size,
+      hasRecentCache: !!this.recentSearchCache,
+      pendingRequests: this.pendingRequests.size
+    };
   }
 }
 
