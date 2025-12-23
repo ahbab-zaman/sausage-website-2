@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { useAuthStore } from "@/stores/authStore";
 import { useAddressStore } from "@/stores/addressStore";
 import { AddAddressRequest, UpdateAddressRequest } from "@/types/address";
+import { UpdateAccountRequest } from "@/types/auth";
 import {
   User,
   MapPin,
@@ -14,9 +15,43 @@ import {
   AlertCircle,
   Edit,
   ChevronDown,
-  AlertTriangle
+  AlertTriangle,
+  CheckCircle2
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
+
+// Success Popup Component
+function SuccessPopup({ message, onClose }: { message: string; onClose: () => void }) {
+  useEffect(() => {
+    const timer = setTimeout(onClose, 3000);
+    return () => clearTimeout(timer);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-start justify-center px-4 pt-20">
+      <div className="animate-slideDown rounded-2xl border border-green-200 bg-white shadow-2xl">
+        <div className="flex items-start gap-4 p-6">
+          <div className="flex-shrink-0">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+              <CheckCircle2 className="h-6 w-6 text-green-600" />
+            </div>
+          </div>
+          <div className="flex-1">
+            <h3 className="text-lg font-semibold text-gray-900">Success!</h3>
+            <p className="mt-1 text-sm text-gray-600">{message}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="flex-shrink-0 text-gray-400 transition-colors hover:text-gray-600">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="animate-shrink h-1 bg-green-500" />
+      </div>
+    </div>
+  );
+}
+
 // Error Popup Component
 function ErrorPopup({ message, onClose }: { message: string; onClose: () => void }) {
   useEffect(() => {
@@ -65,28 +100,20 @@ function DeleteModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-      {/* Backdrop */}
       <div
         className="animate-fadeIn absolute inset-0 bg-black/60 backdrop-blur-sm"
         onClick={onClose}
       />
-
-      {/* Modal */}
       <div className="animate-scaleIn relative z-10 w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
-        {/* Icon */}
         <div className="mx-auto flex h-20 w-20 animate-bounce items-center justify-center rounded-full bg-red-100">
           <AlertTriangle className="h-10 w-10 text-red-600" />
         </div>
-
-        {/* Content */}
         <div className="mt-6 text-center">
           <h3 className="text-2xl font-bold text-gray-900">Delete Address?</h3>
           <p className="mt-3 text-base text-gray-600">
             Are you sure you want to delete this address? This action cannot be undone.
           </p>
         </div>
-
-        {/* Actions */}
         <div className="mt-8 flex gap-3">
           <button
             onClick={onClose}
@@ -128,14 +155,6 @@ function AccountInfoSkeleton() {
           ))}
         </div>
       </div>
-      <div className="rounded-lg border border-gray-200 bg-white p-6">
-        <div className="mb-6 h-7 w-48 animate-pulse rounded bg-gray-200" />
-        <div className="flex flex-wrap gap-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="h-12 w-48 animate-pulse rounded-full bg-gray-200" />
-          ))}
-        </div>
-      </div>
     </div>
   );
 }
@@ -150,18 +169,6 @@ function AddressSkeleton() {
             <div className="flex-1 space-y-4">
               <div className="h-5 w-32 animate-pulse rounded bg-gray-300" />
               <div className="h-6 w-full max-w-md animate-pulse rounded bg-gray-300" />
-              <div className="grid grid-cols-2 gap-4">
-                {[1, 2, 3, 4].map((j) => (
-                  <div key={j} className="space-y-2">
-                    <div className="h-4 w-16 animate-pulse rounded bg-gray-300" />
-                    <div className="h-5 w-32 animate-pulse rounded bg-gray-300" />
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="flex flex-col gap-2">
-              <div className="h-9 w-9 animate-pulse rounded bg-gray-300" />
-              <div className="h-9 w-9 animate-pulse rounded bg-gray-300" />
             </div>
           </div>
         </div>
@@ -170,17 +177,19 @@ function AddressSkeleton() {
   );
 }
 
-interface City {
-  id: string;
-  name: string;
-  status: string;
-}
-
 export default function AccountPage() {
   const [activeTab, setActiveTab] = useState("account");
-  const { user, fetchAccountInfo, isLoading: authLoading } = useAuthStore();
+  const {
+    user,
+    fetchAccountInfo,
+    updateAccountInfo,
+    isLoading: authLoading,
+    error: authError,
+    clearError: clearAuthError
+  } = useAuthStore();
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
+  const [showCityDropdown, setShowCityDropdown] = useState(false);
   const {
     addresses,
     isLoading: addressLoading,
@@ -189,18 +198,27 @@ export default function AccountPage() {
     addAddress,
     updateAddress,
     deleteAddress,
-    setDefaultAddress,
     getAllAddresses,
     fetchCities,
-    clearError
+    clearError: clearAddressError
   } = useAddressStore();
 
+  // Account update states
+  const [showAccountUpdateForm, setShowAccountUpdateForm] = useState(false);
+  const [accountFormData, setAccountFormData] = useState<UpdateAccountRequest>({
+    firstname: "",
+    lastname: "",
+    email: "",
+    telephone: "",
+    country_code: "+971",
+    dob: ""
+  });
+
+  // Address states
   const [showAddressForm, setShowAddressForm] = useState(false);
   const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
-  const [showErrorPopup, setShowErrorPopup] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [addressToDelete, setAddressToDelete] = useState<string | null>(null);
-
   const [addressFormData, setAddressFormData] = useState<AddAddressRequest>({
     name: "",
     address_1: "",
@@ -214,6 +232,11 @@ export default function AccountPage() {
     longitude: "",
     default: "0"
   });
+
+  // Popup states
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [popupMessage, setPopupMessage] = useState("");
 
   useEffect(() => {
     fetchAccountInfo();
@@ -234,9 +257,74 @@ export default function AccountPage() {
 
   useEffect(() => {
     if (addressError) {
+      setPopupMessage(addressError);
       setShowErrorPopup(true);
     }
   }, [addressError]);
+
+  useEffect(() => {
+    if (authError) {
+      setPopupMessage(authError);
+      setShowErrorPopup(true);
+    }
+  }, [authError]);
+
+  // Initialize account form with user data
+  const handleShowAccountUpdateForm = useCallback(() => {
+    if (user) {
+      setAccountFormData({
+        firstname: user.firstname || "",
+        lastname: user.lastname || "",
+        email: user.email || "",
+        telephone: user.telephone || "",
+        country_code: user.country_code || "+971",
+        dob: user.dob || ""
+      });
+      setShowAccountUpdateForm(true);
+
+      // Scroll to form
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }, 100);
+    }
+  }, [user]);
+
+  const resetAccountForm = useCallback(() => {
+    setAccountFormData({
+      firstname: "",
+      lastname: "",
+      email: "",
+      telephone: "",
+      country_code: "+971",
+      dob: ""
+    });
+    setShowAccountUpdateForm(false);
+  }, []);
+
+  const isAccountFormValid = useMemo(() => {
+    return (
+      accountFormData.firstname?.trim() &&
+      accountFormData.lastname?.trim() &&
+      accountFormData.email?.trim() &&
+      accountFormData.telephone?.trim()
+    );
+  }, [accountFormData]);
+
+  const handleAccountSubmit = useCallback(async () => {
+    if (!isAccountFormValid) return;
+
+    const result = await updateAccountInfo(accountFormData);
+
+    if (result.success) {
+      setPopupMessage("Account updated successfully!");
+      setShowSuccessPopup(true);
+      resetAccountForm();
+      // No need to manually fetch - updateAccountInfo now returns fresh data
+    } else {
+      setPopupMessage(result.error || "Failed to update account");
+      setShowErrorPopup(true);
+    }
+  }, [accountFormData, isAccountFormValid, updateAccountInfo, resetAccountForm]);
 
   const resetAddressForm = useCallback(() => {
     setAddressFormData({
@@ -273,7 +361,6 @@ export default function AccountPage() {
     if (!isAddressFormValid) return;
 
     if (editingAddressId) {
-      // Update existing address
       const updateData: UpdateAddressRequest = {
         name: addressFormData.name,
         address_1: addressFormData.address_1,
@@ -290,12 +377,15 @@ export default function AccountPage() {
 
       const result = await updateAddress(editingAddressId, updateData);
       if (result.success) {
+        setPopupMessage("Address updated successfully!");
+        setShowSuccessPopup(true);
         resetAddressForm();
       }
     } else {
-      // Add new address
       const result = await addAddress(addressFormData);
       if (result.success) {
+        setPopupMessage("Address added successfully!");
+        setShowSuccessPopup(true);
         resetAddressForm();
       }
     }
@@ -328,7 +418,6 @@ export default function AccountPage() {
         setEditingAddressId(addressId);
         setShowAddressForm(true);
 
-        // Scroll to form
         setTimeout(() => {
           window.scrollTo({ top: 0, behavior: "smooth" });
         }, 100);
@@ -346,6 +435,8 @@ export default function AccountPage() {
     if (addressToDelete) {
       const result = await deleteAddress(addressToDelete);
       if (result.success) {
+        setPopupMessage("Address deleted successfully!");
+        setShowSuccessPopup(true);
         setDeleteModalOpen(false);
         setAddressToDelete(null);
       }
@@ -357,37 +448,30 @@ export default function AccountPage() {
     setAddressToDelete(null);
   }, []);
 
-  const handleSetDefault = useCallback(
-    async (id: string) => {
-      await setDefaultAddress(id);
-    },
-    [setDefaultAddress]
-  );
-
   const handleCloseError = useCallback(() => {
     setShowErrorPopup(false);
-    clearError();
-  }, [clearError]);
+    clearAuthError();
+    clearAddressError();
+  }, [clearAuthError, clearAddressError]);
 
-  // Get city name from ID
+  const handleCloseSuccess = useCallback(() => {
+    setShowSuccessPopup(false);
+  }, []);
+
   const getCityName = (cityId: string) => {
     const city = cities.find((c) => c.id === cityId);
     return city ? city.name : cityId;
   };
 
-  // Filter active cities
   const activeCities = useMemo(() => {
     return cities.filter((city) => city.status === "1");
   }, [cities]);
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Error Popup */}
-      {showErrorPopup && addressError && (
-        <ErrorPopup message={addressError} onClose={handleCloseError} />
-      )}
+      {showErrorPopup && <ErrorPopup message={popupMessage} onClose={handleCloseError} />}
+      {showSuccessPopup && <SuccessPopup message={popupMessage} onClose={handleCloseSuccess} />}
 
-      {/* Delete Modal */}
       <DeleteModal
         isOpen={deleteModalOpen}
         onClose={handleDeleteCancel}
@@ -396,7 +480,6 @@ export default function AccountPage() {
       />
 
       <div className="mx-auto max-w-6xl px-4 py-8">
-        {/* Header */}
         <h1 className="animate-fadeIn mb-8 text-4xl font-bold text-black">My Account</h1>
 
         {/* Tabs */}
@@ -432,58 +515,192 @@ export default function AccountPage() {
         {/* Account Information Tab */}
         {activeTab === "account" && (
           <>
-            {authLoading ? (
+            {authLoading && !user ? (
               <AccountInfoSkeleton />
             ) : user ? (
               <div className="animate-fadeIn space-y-6">
+                {/* Update Account Form */}
+                {showAccountUpdateForm && (
+                  <div className="animate-slideDown rounded-lg border border-gray-200 bg-white p-6 shadow-lg">
+                    <div className="mb-6 flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-black">
+                        Update Account Information
+                      </h3>
+                      <button
+                        onClick={resetAccountForm}
+                        className="text-gray-400 transition-all duration-300 hover:rotate-90 hover:text-gray-600">
+                        <X className="h-6 w-6" />
+                      </button>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div
+                        className="animate-fadeIn grid gap-4 sm:grid-cols-2"
+                        style={{ animationDelay: "0.05s" }}>
+                        <div>
+                          <label className="mb-2 block text-sm text-gray-600">
+                            First Name <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={accountFormData.firstname}
+                            onChange={(e) =>
+                              setAccountFormData({ ...accountFormData, firstname: e.target.value })
+                            }
+                            placeholder="John"
+                            className="w-full rounded border border-gray-300 px-4 py-2 transition-all duration-300 focus:border-black focus:shadow-md focus:outline-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-2 block text-sm text-gray-600">
+                            Last Name <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            value={accountFormData.lastname}
+                            onChange={(e) =>
+                              setAccountFormData({ ...accountFormData, lastname: e.target.value })
+                            }
+                            placeholder="Doe"
+                            className="w-full rounded border border-gray-300 px-4 py-2 transition-all duration-300 focus:border-black focus:shadow-md focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="animate-fadeIn" style={{ animationDelay: "0.1s" }}>
+                        <label className="mb-2 block text-sm text-gray-600">
+                          Email Address <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="email"
+                          value={accountFormData.email}
+                          onChange={(e) =>
+                            setAccountFormData({ ...accountFormData, email: e.target.value })
+                          }
+                          placeholder="john@example.com"
+                          className="w-full rounded border border-gray-300 px-4 py-2 transition-all duration-300 focus:border-black focus:shadow-md focus:outline-none"
+                        />
+                      </div>
+
+                      <div
+                        className="animate-fadeIn grid gap-4 sm:grid-cols-4"
+                        style={{ animationDelay: "0.15s" }}>
+                        <div>
+                          <label className="mb-2 block text-sm text-gray-600">Code</label>
+                          <input
+                            type="text"
+                            value={accountFormData.country_code}
+                            onChange={(e) =>
+                              setAccountFormData({
+                                ...accountFormData,
+                                country_code: e.target.value
+                              })
+                            }
+                            placeholder="+971"
+                            className="w-full rounded border border-gray-300 px-4 py-2 transition-all duration-300 focus:border-black focus:shadow-md focus:outline-none"
+                          />
+                        </div>
+                        <div className="sm:col-span-3">
+                          <label className="mb-2 block text-sm text-gray-600">
+                            Mobile Number <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="tel"
+                            value={accountFormData.telephone}
+                            onChange={(e) =>
+                              setAccountFormData({ ...accountFormData, telephone: e.target.value })
+                            }
+                            placeholder="501234567"
+                            className="w-full rounded border border-gray-300 px-4 py-2 transition-all duration-300 focus:border-black focus:shadow-md focus:outline-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="animate-fadeIn" style={{ animationDelay: "0.2s" }}>
+                        <label className="mb-2 block text-sm text-gray-600">Date of Birth</label>
+                        <input
+                          type="text"
+                          value={accountFormData.dob}
+                          onChange={(e) =>
+                            setAccountFormData({ ...accountFormData, dob: e.target.value })
+                          }
+                          placeholder="DD-MM-YYYY"
+                          className="w-full rounded border border-gray-300 px-4 py-2 transition-all duration-300 focus:border-black focus:shadow-md focus:outline-none"
+                        />
+                      </div>
+
+                      <div
+                        className="animate-fadeIn flex gap-3 pt-4"
+                        style={{ animationDelay: "0.25s" }}>
+                        <button
+                          onClick={handleAccountSubmit}
+                          disabled={authLoading || !isAccountFormValid}
+                          className="group flex flex-1 items-center justify-center gap-2 rounded-full bg-black px-6 py-3 text-sm font-medium text-white transition-all duration-300 hover:scale-105 hover:bg-gray-800 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100">
+                          {authLoading ? (
+                            <>
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                              Updating...
+                            </>
+                          ) : (
+                            <span className="transition-transform duration-300 group-hover:scale-110">
+                              Update Account
+                            </span>
+                          )}
+                        </button>
+                        <button
+                          onClick={resetAccountForm}
+                          disabled={authLoading}
+                          className="rounded-full border border-gray-300 px-6 py-3 text-sm font-medium text-gray-700 transition-all duration-300 hover:scale-105 hover:border-gray-400 hover:bg-gray-50 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100">
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Current Information */}
-                <div className="rounded-lg border border-gray-200 bg-white p-6 transition-all duration-300 hover:shadow-lg">
-                  <h2 className="mb-6 text-xl font-bold text-black">Current Information</h2>
+                {!showAccountUpdateForm && (
+                  <div className="rounded-lg border border-gray-200 bg-white p-6 transition-all duration-300 hover:shadow-lg">
+                    <h2 className="mb-6 text-xl font-bold text-black">Current Information</h2>
 
-                  <div className="space-y-6">
-                    <div className="transform transition-all duration-300 hover:translate-x-1">
-                      <label className="mb-2 block text-sm text-gray-500">Full Name</label>
-                      <p className="text-base text-black">
-                        {user.firstname} {user.lastname}
-                      </p>
-                    </div>
+                    <div className="space-y-6">
+                      <div className="transform transition-all duration-300 hover:translate-x-1">
+                        <label className="mb-2 block text-sm text-gray-500">Full Name</label>
+                        <p className="text-base text-black">
+                          {user.firstname} {user.lastname}
+                        </p>
+                      </div>
 
-                    <div className="transform transition-all duration-300 hover:translate-x-1">
-                      <label className="mb-2 block text-sm text-gray-500">Email Address</label>
-                      <p className="text-base text-black">{user.email}</p>
-                    </div>
+                      <div className="transform transition-all duration-300 hover:translate-x-1">
+                        <label className="mb-2 block text-sm text-gray-500">Email Address</label>
+                        <p className="text-base text-black">{user.email}</p>
+                      </div>
 
-                    <div className="transform transition-all duration-300 hover:translate-x-1">
-                      <label className="mb-2 block text-sm text-gray-500">Mobile Number</label>
-                      <div className="flex items-center gap-2">
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-xs font-semibold text-white">
-                          B
-                        </span>
+                      <div className="transform transition-all duration-300 hover:translate-x-1">
+                        <label className="mb-2 block text-sm text-gray-500">Mobile Number</label>
                         <p className="text-base text-black">
                           {user.country_code} {user.telephone}
                         </p>
                       </div>
+
+                      {user.dob && (
+                        <div className="transform transition-all duration-300 hover:translate-x-1">
+                          <label className="mb-2 block text-sm text-gray-500">Date of Birth</label>
+                          <p className="text-base text-black">{user.dob}</p>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="mt-6 flex justify-end">
+                      <button
+                        onClick={handleShowAccountUpdateForm}
+                        className="group flex items-center gap-2 rounded-full bg-gray-800 px-6 py-3 text-sm font-medium text-white transition-all duration-300 hover:scale-105 hover:bg-gray-700 hover:shadow-lg">
+                        <Edit className="h-4 w-4 transition-transform duration-300 group-hover:rotate-12" />
+                        Update Information
+                      </button>
                     </div>
                   </div>
-                </div>
-
-                {/* Account Settings */}
-                <div className="rounded-lg border border-gray-200 bg-white p-6 transition-all duration-300 hover:shadow-lg">
-                  <h2 className="mb-6 text-xl font-bold text-black">Account Settings</h2>
-
-                  <div className="flex flex-wrap gap-4">
-                    {["Update Email", "Update Phone Number", "Change Password"].map((label, i) => (
-                      <button
-                        key={label}
-                        className="group rounded-full bg-gray-800 px-8 py-3 text-sm font-medium text-white transition-all duration-300 hover:scale-105 hover:bg-gray-700 hover:shadow-lg"
-                        style={{ animationDelay: `${i * 0.1}s` }}>
-                        <span className="inline-block transition-transform duration-300 group-hover:scale-105">
-                          {label}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                )}
               </div>
             ) : null}
           </>
@@ -492,7 +709,6 @@ export default function AccountPage() {
         {/* My Addresses Tab */}
         {activeTab === "address" && (
           <div className="space-y-6">
-            {/* Header with Add Button */}
             <div className="animate-fadeIn flex items-center justify-between">
               <h2 className="text-2xl font-bold text-black">My Addresses</h2>
               {!showAddressForm && (
@@ -505,7 +721,6 @@ export default function AccountPage() {
               )}
             </div>
 
-            {/* Add/Edit Address Form */}
             {showAddressForm && (
               <div className="animate-slideDown rounded-lg border border-gray-200 bg-white p-6 shadow-lg">
                 <div className="mb-6 flex items-center justify-between">
@@ -584,44 +799,71 @@ export default function AccountPage() {
                     />
                   </div>
 
-                  <div
-                    className="animate-fadeIn grid gap-4 sm:grid-cols-2"
-                    style={{ animationDelay: "0.2s" }}>
-                    <div>
-                      <label className="mb-2 block text-sm text-gray-600">
-                        City <span className="text-red-500">*</span>
-                      </label>
-                      <div className="relative">
-                        <select
-                          value={addressFormData.area}
-                          onChange={(e) =>
-                            setAddressFormData({ ...addressFormData, area: e.target.value })
-                          }
-                          className="w-full appearance-none rounded border border-gray-300 px-4 py-2 pr-10 transition-all duration-300 focus:border-black focus:shadow-md focus:outline-none">
-                          <option value="">Select City</option>
-                          {activeCities.map((city) => (
-                            <option key={city.id} value={city.id}>
-                              {city.name}
-                            </option>
-                          ))}
-                        </select>
-                        <ChevronDown className="pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="mb-2 block text-sm text-gray-600">
-                        Zip Code <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        value={addressFormData.address_2}
-                        onChange={(e) =>
-                          setAddressFormData({ ...addressFormData, address_2: e.target.value })
-                        }
-                        placeholder="2222"
-                        className="w-full rounded border border-gray-300 px-4 py-2 transition-all duration-300 focus:border-black focus:shadow-md focus:outline-none"
+                  <div>
+                    <label className="mb-2 block text-sm text-gray-600">
+                      City <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative">
+                      <button
+                        type="button"
+                        onClick={() => setShowCityDropdown(!showCityDropdown)}
+                        className="w-full appearance-none rounded-lg border border-gray-300 bg-white px-4 py-3 text-left transition-all duration-300 hover:border-gray-400 focus:border-black focus:shadow-lg focus:outline-none">
+                        <span className={addressFormData.area ? "text-black" : "text-gray-400"}>
+                          {addressFormData.area
+                            ? activeCities.find((c) => c.id === addressFormData.area)?.name
+                            : "Select City"}
+                        </span>
+                      </button>
+                      <ChevronDown
+                        className={`pointer-events-none absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-gray-400 transition-transform duration-300 ${
+                          showCityDropdown ? "rotate-180" : ""
+                        }`}
                       />
+
+                      {showCityDropdown && (
+                        <>
+                          <div
+                            className="fixed inset-0 z-10"
+                            onClick={() => setShowCityDropdown(false)}
+                          />
+                          <div className="animate-slideDown absolute z-20 mt-2 w-full rounded-lg border border-gray-200 bg-white shadow-2xl">
+                            <div className="scrollbar-hide max-h-60 overflow-y-auto p-2">
+                              {activeCities.map((city) => (
+                                <button
+                                  key={city.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setAddressFormData({ ...addressFormData, area: city.id });
+                                    setShowCityDropdown(false);
+                                  }}
+                                  className={`w-full rounded-lg px-4 py-3 text-left transition-all duration-200 hover:bg-gray-100 ${
+                                    addressFormData.area === city.id
+                                      ? "bg-black text-white hover:bg-gray-800"
+                                      : "text-gray-700"
+                                  }`}>
+                                  {city.name}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
+                  </div>
+
+                  <div className="animate-fadeIn" style={{ animationDelay: "0.2s" }}>
+                    <label className="mb-2 block text-sm text-gray-600">
+                      Zip Code <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={addressFormData.address_2}
+                      onChange={(e) =>
+                        setAddressFormData({ ...addressFormData, address_2: e.target.value })
+                      }
+                      placeholder="2222"
+                      className="w-full rounded border border-gray-300 px-4 py-2 transition-all duration-300 focus:border-black focus:shadow-md focus:outline-none"
+                    />
                   </div>
 
                   <div className="animate-fadeIn" style={{ animationDelay: "0.25s" }}>
@@ -698,11 +940,9 @@ export default function AccountPage() {
                           {editingAddressId ? "Updating..." : "Saving..."}
                         </>
                       ) : (
-                        <>
-                          <span className="transition-transform duration-300 group-hover:scale-110">
-                            {editingAddressId ? "Update Address" : "Save Address"}
-                          </span>
-                        </>
+                        <span className="transition-transform duration-300 group-hover:scale-110">
+                          {editingAddressId ? "Update Address" : "Save Address"}
+                        </span>
                       )}
                     </button>
                     <button
@@ -716,10 +956,8 @@ export default function AccountPage() {
               </div>
             )}
 
-            {/* Loading State */}
             {addressLoading && addresses.length === 0 && !showAddressForm && <AddressSkeleton />}
 
-            {/* Empty State */}
             {!addressLoading && addresses.length === 0 && !showAddressForm && (
               <div className="animate-fadeIn rounded-lg border-2 border-dashed border-gray-300 bg-white p-16 text-center transition-all duration-300 hover:border-gray-400">
                 <MapPin className="mx-auto h-16 w-16 animate-bounce text-gray-300" />
@@ -728,7 +966,6 @@ export default function AccountPage() {
               </div>
             )}
 
-            {/* Address List */}
             {addresses.length > 0 && (
               <div className="space-y-4">
                 {addresses.map((address, index) => (
@@ -828,6 +1065,17 @@ export default function AccountPage() {
           }
         }
 
+        @keyframes scaleIn {
+          from {
+            opacity: 0;
+            transform: scale(0.9);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+
         .animate-slideDown {
           animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
@@ -839,6 +1087,10 @@ export default function AccountPage() {
 
         .animate-shrink {
           animation: shrink 5s linear;
+        }
+
+        .animate-scaleIn {
+          animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
       `}</style>
     </div>

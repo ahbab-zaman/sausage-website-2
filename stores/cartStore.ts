@@ -9,6 +9,7 @@ interface CartStore {
   loading: boolean;
   error: string | null;
   lastSync: number | null;
+  isHydrated: boolean; // FIXED: Track hydration state
 
   fetchCart: (force?: boolean) => Promise<void>;
   addItem: (
@@ -28,10 +29,11 @@ interface CartStore {
   getTotal: () => number;
   getItemCount: () => number;
   resetError: () => void;
+  setHydrated: () => void; // FIXED: Mark store as hydrated
 }
 
-const CART_STALE_TIME = 5 * 60 * 1000; // 5 minutes
-const BACKGROUND_REFRESH_TIME = 3 * 60 * 1000; // 3 minutes
+const CART_STALE_TIME = 5 * 60 * 1000;
+const BACKGROUND_REFRESH_TIME = 3 * 60 * 1000;
 
 export const useCartStore = create<CartStore>()(
   persist(
@@ -40,19 +42,22 @@ export const useCartStore = create<CartStore>()(
       loading: false,
       error: null,
       lastSync: null,
+      isHydrated: false,
 
-      // Load server cart only when logged in
+      setHydrated: () => set({ isHydrated: true }),
+
       fetchCart: async (force = false) => {
         if (!authApiClient.isLoggedIn()) {
-          // Guest: nothing to fetch, just keep local data
           return;
         }
 
         const state = get();
         const now = Date.now();
 
+        // FIXED: Don't use stale data if not hydrated yet
         if (
           !force &&
+          state.isHydrated &&
           state.items.length > 0 &&
           state.lastSync &&
           now - state.lastSync < CART_STALE_TIME
@@ -66,14 +71,16 @@ export const useCartStore = create<CartStore>()(
           return;
         }
 
-        if (state.items.length === 0) {
+        // FIXED: Always show loading on first fetch or when items are empty
+        if (state.items.length === 0 || !state.isHydrated) {
           set({ loading: true, error: null });
         }
 
         try {
           const items = await cartApiClient.getCart();
-          set({ items, loading: false, lastSync: now });
+          set({ items, loading: false, lastSync: now, error: null });
         } catch (error) {
+          console.error("Cart fetch error:", error);
           set({
             error: error instanceof Error ? error.message : "Failed to fetch cart",
             loading: false
@@ -81,11 +88,9 @@ export const useCartStore = create<CartStore>()(
         }
       },
 
-      // Add item – works for guests & logged-in users
       addItem: async (product, quantity = 1) => {
         const isLoggedIn = authApiClient.isLoggedIn();
 
-        // Guest mode: fully local
         if (!isLoggedIn) {
           const currentItems = get().items;
           const existing = currentItems.find((i) => i.product_id === product.id);
@@ -117,11 +122,10 @@ export const useCartStore = create<CartStore>()(
             newItems = [...currentItems, newItem];
           }
 
-          set({ items: newItems, loading: false });
+          set({ items: newItems, loading: false, error: null });
           return;
         }
 
-        // Logged-in: server sync with optimistic update
         const currentItems = get().items;
         const existing = currentItems.find((i) => i.product_id === product.id);
 
@@ -147,7 +151,7 @@ export const useCartStore = create<CartStore>()(
 
         try {
           const items = await cartApiClient.addToCart(product.id, quantity);
-          set({ items, loading: false, lastSync: Date.now() });
+          set({ items, loading: false, lastSync: Date.now(), error: null });
         } catch (error) {
           set({ items: currentItems });
           set({
@@ -158,23 +162,20 @@ export const useCartStore = create<CartStore>()(
         }
       },
 
-      // Update quantity
       updateQuantity: async (key, quantity) => {
         if (quantity <= 0) return get().removeItem(key);
 
         const isLoggedIn = authApiClient.isLoggedIn();
 
         if (!isLoggedIn) {
-          // Guest: local update
           const currentItems = get().items;
           const newItems = currentItems.map((item) =>
             item.key === key ? { ...item, quantity, total: item.price * quantity } : item
           );
-          set({ items: newItems });
+          set({ items: newItems, error: null });
           return;
         }
 
-        // Logged-in: server sync
         const currentItems = get().items;
         const optimisticItems = currentItems.map((item) =>
           item.key === key ? { ...item, quantity, total: item.price * quantity } : item
@@ -184,7 +185,7 @@ export const useCartStore = create<CartStore>()(
 
         try {
           const items = await cartApiClient.updateCartItem(key, quantity);
-          set({ items, loading: false, lastSync: Date.now() });
+          set({ items, loading: false, lastSync: Date.now(), error: null });
         } catch (error) {
           set({ items: currentItems });
           set({
@@ -195,18 +196,15 @@ export const useCartStore = create<CartStore>()(
         }
       },
 
-      // Remove item
       removeItem: async (key) => {
         const isLoggedIn = authApiClient.isLoggedIn();
 
         if (!isLoggedIn) {
-          // Guest: local remove
           const currentItems = get().items;
-          set({ items: currentItems.filter((item) => item.key !== key) });
+          set({ items: currentItems.filter((item) => item.key !== key), error: null });
           return;
         }
 
-        // Logged-in: server sync
         const currentItems = get().items;
         const optimisticItems = currentItems.filter((item) => item.key !== key);
 
@@ -214,7 +212,7 @@ export const useCartStore = create<CartStore>()(
 
         try {
           const items = await cartApiClient.removeCartItem(key);
-          set({ items, loading: false, lastSync: Date.now() });
+          set({ items, loading: false, lastSync: Date.now(), error: null });
         } catch (error) {
           set({ items: currentItems });
           set({
@@ -225,12 +223,11 @@ export const useCartStore = create<CartStore>()(
         }
       },
 
-      // Clear cart
       clearCart: async () => {
         const isLoggedIn = authApiClient.isLoggedIn();
 
         if (!isLoggedIn) {
-          set({ items: [] });
+          set({ items: [], error: null });
           return;
         }
 
@@ -239,7 +236,7 @@ export const useCartStore = create<CartStore>()(
 
         try {
           await cartApiClient.emptyCart();
-          set({ loading: false, lastSync: Date.now() });
+          set({ loading: false, lastSync: Date.now(), error: null });
         } catch (error) {
           set({ items: currentItems });
           set({
@@ -267,11 +264,15 @@ export const useCartStore = create<CartStore>()(
       resetError: () => set({ error: null })
     }),
     {
-      name: "cart-storage", // persists in localStorage
+      name: "cart-storage",
       partialize: (state) => ({
         items: state.items,
         lastSync: state.lastSync
-      })
+      }),
+      // FIXED: Mark as hydrated after rehydration
+      onRehydrateStorage: () => (state) => {
+        state?.setHydrated();
+      }
     }
   )
 );

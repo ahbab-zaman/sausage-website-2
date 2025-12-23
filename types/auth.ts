@@ -146,7 +146,7 @@ export function normalizeApiResponse<T>(backendResponse: BackendApiResponse<T>):
   return {
     success: backendResponse.success === 1,
     data: backendResponse.data,
-    error: backendResponse.error?.length > 0 ? backendResponse.error.join(", ") : undefined,
+    error: backendResponse.error.length > 0 ? backendResponse.error.join(", ") : undefined,
     message: backendResponse.message
   };
 }

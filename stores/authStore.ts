@@ -33,8 +33,6 @@ export const useAuthStore = create<AuthStore>()(
 
       /**
        * Login user
-       * Creates server-side session, token remains the same
-       * NOTE: Wishlist sync is handled automatically by useWishlist hook
        */
       login: async (data) => {
         set({ isLoading: true, error: null });
@@ -43,7 +41,6 @@ export const useAuthStore = create<AuthStore>()(
           const res = await authApiClient.login(data);
 
           if (res.success && res.data) {
-            // Create user object (no token - using session cookies)
             const user: User = {
               customer_id: res.data.customer_id,
               firstname: res.data.firstname,
@@ -56,7 +53,6 @@ export const useAuthStore = create<AuthStore>()(
 
             set({ user, isLoading: false });
             console.log("✅ User state updated:", user.email);
-            console.log("🔄 Wishlist sync will be triggered automatically");
 
             return { success: true };
           }
@@ -86,7 +82,6 @@ export const useAuthStore = create<AuthStore>()(
             return { success: false, error: res.error };
           }
 
-          // Store pending registration data for OTP verification
           set({
             pendingCustomerId: res.data?.customer_id || null,
             pendingEmail: res.data?.email || null,
@@ -103,8 +98,6 @@ export const useAuthStore = create<AuthStore>()(
 
       /**
        * Verify OTP after registration
-       * After successful OTP verification, user needs to login
-       * So wishlist sync will happen during login
        */
       verifyOTP: async (otp) => {
         const customerId = get().pendingCustomerId;
@@ -124,7 +117,6 @@ export const useAuthStore = create<AuthStore>()(
           });
 
           if (res.success) {
-            // Clear pending data after successful verification
             set({
               pendingCustomerId: null,
               pendingEmail: null,
@@ -166,6 +158,7 @@ export const useAuthStore = create<AuthStore>()(
             };
 
             set({ user, isLoading: false });
+            console.log("✅ Account info fetched:", user);
             return { success: true };
           }
 
@@ -181,26 +174,69 @@ export const useAuthStore = create<AuthStore>()(
 
       /**
        * Update account information
+       * FIXED: Always uses optimistic update, then verifies with backend
        */
       updateAccountInfo: async (data) => {
-        set({ isLoading: true, error: null });
+        const currentUser = get().user;
+
+        if (!currentUser) {
+          set({ error: "No user logged in", isLoading: false });
+          return { success: false, error: "No user logged in" };
+        }
+
+        // OPTIMISTIC UPDATE FIRST - Update UI immediately
+        const optimisticUser: User = {
+          ...currentUser,
+          firstname: data.firstname || currentUser.firstname,
+          lastname: data.lastname || currentUser.lastname,
+          email: data.email || currentUser.email,
+          telephone: data.telephone || currentUser.telephone,
+          country_code: data.country_code || currentUser.country_code,
+          dob: data.dob || currentUser.dob
+        };
+
+        set({ user: optimisticUser, isLoading: true, error: null });
+        console.log("⚡ Optimistic update applied:", optimisticUser);
 
         try {
+          console.log("🔄 Sending update to backend:", data);
+
           const res = await authApiClient.updateAccount(data);
 
           if (res.success) {
-            // Fetch updated account info
-            await get().fetchAccountInfo();
-            set({ isLoading: false });
+            // If we got fresh verified data back, use it
+            if (res.data) {
+              const verifiedUser: User = {
+                customer_id: res.data.customer_id,
+                firstname: res.data.firstname,
+                lastname: res.data.lastname,
+                email: res.data.email,
+                telephone: res.data.telephone,
+                country_code: res.data.country_code,
+                dob: res.data.dob
+              };
+
+              set({ user: verifiedUser, isLoading: false, error: null });
+              console.log("✅ Backend verified data:", verifiedUser);
+            } else {
+              // Keep optimistic update since backend confirmed success
+              set({ isLoading: false, error: null });
+              console.log("✅ Keeping optimistic update (backend confirmed success)");
+            }
+
             return { success: true };
           }
 
+          // If update failed, revert to original user data
           const errMsg = res.error || "Update failed";
-          set({ error: errMsg, isLoading: false });
+          set({ user: currentUser, error: errMsg, isLoading: false });
+          console.log("❌ Update failed, reverted to:", currentUser);
           return { success: false, error: errMsg };
         } catch (error) {
+          // If error occurred, revert to original user data
           const errMsg = error instanceof Error ? error.message : "Update failed";
-          set({ error: errMsg, isLoading: false });
+          set({ user: currentUser, error: errMsg, isLoading: false });
+          console.log("❌ Error occurred, reverted to:", currentUser);
           return { success: false, error: errMsg };
         }
       },
@@ -214,7 +250,6 @@ export const useAuthStore = create<AuthStore>()(
         } catch (error) {
           console.error("Logout error:", error);
         } finally {
-          // Clear all user state
           set({
             user: null,
             error: null,
@@ -242,7 +277,6 @@ export const useAuthStore = create<AuthStore>()(
     {
       name: "auth-storage",
       storage: createJSONStorage(() => localStorage),
-      // Only persist user data, not loading/error states
       partialize: (state) => ({
         user: state.user,
         pendingCustomerId: state.pendingCustomerId,

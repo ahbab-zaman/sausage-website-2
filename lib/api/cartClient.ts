@@ -10,7 +10,7 @@ import {
 } from "@/types/cart";
 
 interface BackendApiResponse {
-  success: number; // 1 = success, 0 = fail
+  success: number;
   error: string[];
   data?: any;
 }
@@ -36,15 +36,29 @@ class CartApiClient {
       return isNaN(parsed) ? 0 : parsed;
     };
 
+    // FIXED: Better image fallback handling with multiple checks
+    const getImageUrl = (): string => {
+      // Try multiple possible image fields from backend
+      const possibleImages = [item.thumb, item.image, item.product_image, item.img, item.thumbnail];
+
+      for (const img of possibleImages) {
+        if (img && typeof img === "string" && img.trim() !== "") {
+          return img;
+        }
+      }
+
+      return "/placeholder.svg";
+    };
+
     return {
       id: item.product_id,
-      key: item.key,
+      key: item.key || `${item.product_id}_${Date.now()}`, // FIXED: Ensure key always exists
       product_id: item.product_id,
-      name: item.name,
+      name: item.name || "Unknown Product", // FIXED: Fallback for name
       price: parseNumber(item.price),
       quantity: parseNumber(item.quantity),
       total: parseNumber(item.total),
-      image: item.thumb || item.image || "/placeholder.svg",
+      image: getImageUrl(),
       model: item.model || undefined
     };
   }
@@ -86,7 +100,13 @@ class CartApiClient {
 
     const data: BackendCartResponse = await this.handleResponse(res);
 
-    return data.data?.products?.map(this.mapItem) ?? [];
+    // FIXED: Better handling of empty or malformed responses
+    if (!data.data || !Array.isArray(data.data.products)) {
+      console.warn("Cart data is empty or malformed:", data);
+      return [];
+    }
+
+    return data.data.products.map(this.mapItem.bind(this));
   }
 
   async addToCart(product_id: string, quantity: number = 1): Promise<CartItem[]> {

@@ -1,12 +1,10 @@
-// types/cart.ts
-
 import { z } from "zod";
 
 // Backend API Response Schemas
 export const BackendCartItemSchema = z.object({
-  key: z.string(),
+  key: z.string().optional(), // FIXED: Made optional since backend might not always provide it
   product_id: z.string(),
-  name: z.string(),
+  name: z.string().optional().default("Unknown Product"), // FIXED: Made optional with default
   model: z.string().optional(),
   quantity: z
     .union([z.string(), z.number()])
@@ -17,13 +15,19 @@ export const BackendCartItemSchema = z.object({
   total: z
     .union([z.string(), z.number()])
     .transform((val) => (typeof val === "string" ? parseFloat(val) : val)),
+  // FIXED: Added all possible image field names from backend
   image: z.string().optional(),
   thumb: z.string().optional(),
+  product_image: z.string().optional(),
+  img: z.string().optional(),
+  thumbnail: z.string().optional(),
   option: z.array(z.any()).optional()
 });
 
 export const BackendCartResponseSchema = z.object({
-  success: z.boolean(),
+  success: z
+    .union([z.boolean(), z.number()])
+    .transform((val) => (typeof val === "number" ? val === 1 : val)), // FIXED: Handle success as number (1/0) or boolean
   data: z
     .object({
       products: z.array(BackendCartItemSchema).optional().default([]),
@@ -46,7 +50,7 @@ export const BackendCartResponseSchema = z.object({
         .optional()
     })
     .optional(),
-  error: z.array(z.string()).optional()
+  error: z.array(z.string()).optional().default([]) // FIXED: Added default empty array
 });
 
 // Frontend Cart Item Schema
@@ -56,8 +60,8 @@ export const CartItemSchema = z.object({
   product_id: z.string(),
   name: z.string(),
   price: z.number(),
-  image: z.string(),
-  quantity: z.number(),
+  image: z.string(), // Always required in frontend (fallback to placeholder)
+  quantity: z.number().positive(), // FIXED: Ensure quantity is always positive
   total: z.number(),
   model: z.string().optional()
 });

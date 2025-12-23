@@ -117,7 +117,7 @@ export default function Navbar() {
                       </div>
                       <Link
                         href="/profile?tab=account"
-                        className="flex items-center gap-1 px-4 py-2 text-sm hover:bg-gray-100">
+                        className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100">
                         <svg
                           width="20"
                           height="20"
@@ -137,11 +137,11 @@ export default function Navbar() {
                             strokeLinecap="round"
                             strokeLinejoin="round"></path>
                         </svg>
-                        <span className="font-bold">Account Settings</span>
+                        <span className="font-semibold">Account Settings</span>
                       </Link>
                       <Link
                         href="/profile?tab=address"
-                        className="flex items-center gap-1 px-4 py-2 text-sm hover:bg-gray-100">
+                        className="flex items-center gap-2 px-4 py-2 text-sm hover:bg-gray-100">
                         <svg
                           width="20"
                           height="20"
@@ -161,11 +161,11 @@ export default function Navbar() {
                             strokeLinecap="round"
                             strokeLinejoin="round"></path>
                         </svg>
-                        <span className="font-bold">Address</span>
+                        <span className="font-semibold">Addresses</span>
                       </Link>
                       <button
                         onClick={handleLogout}
-                        className="flex w-full items-center gap-1 px-4 py-2 text-left text-sm hover:bg-gray-100">
+                        className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm hover:bg-gray-100">
                         <svg
                           width="20"
                           height="20"
@@ -191,7 +191,7 @@ export default function Navbar() {
                             strokeLinecap="round"
                             strokeLinejoin="round"></path>
                         </svg>
-                        <span className="font-bold">Sign Out</span>
+                        <span className="font-semibold">Sign Out</span>
                       </button>
                     </div>
                   </div>

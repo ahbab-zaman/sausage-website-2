@@ -8,15 +8,9 @@ import {
   VerifyOTPResponse,
   User,
   UpdateAccountRequest,
-  TokenResponse
+  TokenResponse,
+  ApiResponse // Import from your types file
 } from "@/types/auth";
-
-interface ApiResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-  message?: string;
-}
 
 interface BackendApiResponse<T> {
   success: number; // 1 = success, 0 = fail
@@ -188,7 +182,7 @@ class AuthApiClient {
   /**
    * Register new user
    */
-  async register(data: RegisterRequest) {
+  async register(data: RegisterRequest): Promise<ApiResponse<RegisterResponse>> {
     const formData = new FormData();
     Object.entries(data).forEach(([k, v]) => {
       if (v) formData.append(k, v as any);
@@ -203,7 +197,7 @@ class AuthApiClient {
   /**
    * Verify OTP after registration
    */
-  async verifyOTP(data: VerifyOTPRequest) {
+  async verifyOTP(data: VerifyOTPRequest): Promise<ApiResponse<VerifyOTPResponse>> {
     const formData = new FormData();
     formData.append("customer_id", data.customer_id);
     formData.append("otp", data.otp);
@@ -218,7 +212,7 @@ class AuthApiClient {
    * Login user (creates server-side session)
    * Token remains the same - only session changes
    */
-  async login(credentials: LoginRequest) {
+  async login(credentials: LoginRequest): Promise<ApiResponse<LoginResponse>> {
     const formData = new FormData();
     formData.append("email", credentials.email);
     formData.append("password", credentials.password);
@@ -243,27 +237,100 @@ class AuthApiClient {
   /**
    * Get account information
    */
-  async getAccountInfo() {
+  async getAccountInfo(): Promise<ApiResponse<User>> {
     return this.request<User>("/index.php?route=rest/account/account", { method: "GET" });
   }
 
-  /**
-   * Update account information
-   */
-  async updateAccount(data: UpdateAccountRequest) {
-    const formData = new FormData();
-    Object.entries(data).forEach(([k, v]) => {
-      if (v) formData.append(k, v);
+  // async updateAccount(data: UpdateAccountRequest): Promise<ApiResponse<User>> {
+  //   console.log("📤 Exact JSON payload being sent:", JSON.stringify(data, null, 2));
+
+  //   const updateRes = await this.request<any>("/index.php?route=rest/account/account", {
+  //     method: "POST",
+  //     headers: {
+  //       "Content-Type": "application/json"
+  //     },
+  //     body: JSON.stringify(data)
+  //   });
+
+  //   console.log("🔄 Update response:", updateRes);
+
+  //   if (updateRes.success) {
+  //     console.log("✅ Update successful, waiting for backend to process...");
+
+  //     // Try multiple fetches with increasing delays
+  //     const delays = [1000, 2000, 3000];
+
+  //     for (let i = 0; i < delays.length; i++) {
+  //       await new Promise((resolve) => setTimeout(resolve, delays[i]));
+
+  //       console.log(`🔄 Fetch attempt ${i + 1}/${delays.length}...`);
+
+  //       // Add cache busting
+  //       const timestamp = Date.now();
+  //       const accountRes = await this.request<User>(
+  //         `/index.php?route=rest/account/account?t=${timestamp}`,
+  //         {
+  //           method: "GET",
+  //           cache: "no-cache" as RequestCache
+  //         }
+  //       );
+
+  //       console.log(`📥 Attempt ${i + 1} response:`, accountRes.data);
+
+  //       if (accountRes.success && accountRes.data) {
+  //         // Check if data actually changed
+  //         const hasChanged =
+  //           accountRes.data.firstname === data.firstname &&
+  //           accountRes.data.lastname === data.lastname &&
+  //           accountRes.data.email === data.email;
+
+  //         if (hasChanged) {
+  //           console.log("✅ Data verified as updated!");
+  //           return {
+  //             success: true,
+  //             data: accountRes.data
+  //           };
+  //         } else {
+  //           console.log(`⚠️ Data not updated yet on attempt ${i + 1}`);
+  //         }
+  //       }
+  //     }
+
+  //     // All retries failed - backend has caching issue
+  //     console.log("⚠️ Backend returning stale data. Trusting optimistic update.");
+  //     return {
+  //       success: true,
+  //       message: "Update successful - data will refresh shortly"
+  //     };
+  //   }
+
+  //   return updateRes;
+  // }
+
+  async updateAccount(data: UpdateAccountRequest): Promise<ApiResponse<User>> {
+    const updateRes = await this.request<any>("/index.php?route=rest/account/account", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(data)
     });
 
-    return this.requestFormData<User>("/index.php?route=rest/account/account", formData);
-  }
+    if (updateRes.success) {
+      return {
+        success: true,
+        data: undefined,
+        message: "Account updated successfully. Please refresh the page to see changes."
+      };
+    }
 
+    return updateRes;
+  }
   /**
    * Logout user
    */
-  async logout() {
-    const res = await this.request("/index.php?route=rest/logout/logout", { method: "POST" });
+  async logout(): Promise<ApiResponse<void>> {
+    const res = await this.request<void>("/index.php?route=rest/logout/logout", { method: "POST" });
 
     this.setLoggedIn(false);
     console.log("✅ Logout successful");
@@ -271,13 +338,12 @@ class AuthApiClient {
     return res;
   }
 
-  async searchProducts(query: string, page = 1) {
+  async searchProducts(query: string, page = 1): Promise<ApiResponse<any>> {
     const res = await this.request<any>(
       `/index.php?route=feed/rest_api/search&search=${encodeURIComponent(query)}&page=${page}`,
       { method: "GET" }
     );
 
-    // Log the response structure to help debug
     if (res.success) {
       console.log("Search response structure:", res.data);
     }

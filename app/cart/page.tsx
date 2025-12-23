@@ -33,26 +33,28 @@ export default function CartPage() {
     getTotal,
     fetchCart,
     resetError,
-    clearCart
+    clearCart,
+    isHydrated // FIXED: Use hydration state
   } = useCartStore();
   const { isAuthenticated } = useAuthStore();
 
   const [couponCode, setCouponCode] = useState("");
   const [discount, setDiscount] = useState(0);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
-  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({}); // FIXED: Track image load errors
 
-  // Fetch cart on mount if authenticated
+  // FIXED: Wait for hydration before fetching
   useEffect(() => {
     const initializeCart = async () => {
+      if (!isHydrated) return; // Wait for hydration
+
       if (isAuthenticated()) {
-        await fetchCart();
+        await fetchCart(true); // Force fetch on mount
       }
-      setIsInitialLoading(false);
     };
 
     initializeCart();
-  }, [fetchCart, isAuthenticated]);
+  }, [isHydrated, fetchCart, isAuthenticated]);
 
   const handleCheckoutClick = (e: React.MouseEvent) => {
     if (!isAuthenticated()) {
@@ -61,7 +63,13 @@ export default function CartPage() {
     }
   };
 
-  if (isInitialLoading || (loading && items.length === 0)) {
+  // FIXED: Handle image loading errors
+  const handleImageError = (itemKey: string) => {
+    setImageErrors((prev) => ({ ...prev, [itemKey]: true }));
+  };
+
+  // FIXED: Show loading only when not hydrated or when fetching with no items
+  if (!isHydrated || (loading && items.length === 0)) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
@@ -75,13 +83,13 @@ export default function CartPage() {
     return (
       <div className="mx-auto max-w-4xl px-4 py-16 text-center sm:px-6 lg:px-8">
         <div className="rounded-lg p-6">
-          <p className="bg-black">{error}</p>
+          <p className="rounded bg-black p-4 text-white">{error}</p>
           <button
             onClick={() => {
               resetError();
-              fetchCart();
+              fetchCart(true);
             }}
-            className="mt-4 bg-black text-white py-4 px-2 rounded-full">
+            className="mt-4 rounded-full bg-black px-6 py-4 text-white">
             Try Again
           </button>
         </div>
@@ -162,7 +170,6 @@ export default function CartPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* Cart Items Section */}
           <div className="lg:col-span-2">
             <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
               <div className="grid grid-cols-12 gap-4 border-b border-gray-200 bg-gray-50 px-6 py-4 text-sm font-semibold text-gray-900">
@@ -176,18 +183,28 @@ export default function CartPage() {
                 {items.map((item) => {
                   const itemTotal = item.price * item.quantity;
                   const originalPrice = item.price * 1.18;
+                  const hasImageError = imageErrors[item.key];
 
                   return (
                     <div key={item.key} className="grid grid-cols-12 gap-4 px-6 py-6">
                       <div className="col-span-5 flex space-x-4">
-                        <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg border border-gray-200">
-                          <Image
-                            width={96}
-                            height={96}
-                            src={item.image || "/placeholder.svg"}
-                            alt={item.name}
-                            className="h-full w-full object-cover"
-                          />
+                        <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-50">
+                          {/* FIXED: Better image error handling with fallback */}
+                          {!hasImageError ? (
+                            <Image
+                              width={96}
+                              height={96}
+                              src={item.image || "/placeholder.svg"}
+                              alt={item.name}
+                              className="h-full w-full object-cover"
+                              onError={() => handleImageError(item.key)}
+                              unoptimized={item.image?.startsWith("http")}
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center bg-gray-100">
+                              <span className="text-xs text-gray-400">No image</span>
+                            </div>
+                          )}
                         </div>
                         <div className="flex flex-col justify-center">
                           <div className="mb-2 flex items-center space-x-2">
@@ -244,7 +261,6 @@ export default function CartPage() {
             </div>
           </div>
 
-          {/* Sidebar */}
           <div className="lg:col-span-1">
             <div className="space-y-6">
               <div className="rounded-lg border border-gray-200 bg-white p-6">
@@ -326,7 +342,6 @@ export default function CartPage() {
         </div>
       </div>
 
-      {/* Login Modal */}
       <Dialog open={isLoginModalOpen} onOpenChange={setIsLoginModalOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
