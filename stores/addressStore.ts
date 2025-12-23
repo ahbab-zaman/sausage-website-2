@@ -3,8 +3,15 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import { addressApiClient } from "@/lib/api/addressClient";
 import { Address, AddAddressRequest, UpdateAddressRequest } from "@/types/address";
 
+interface City {
+  id: string;
+  name: string;
+  status: string;
+}
+
 interface AddressStore {
   addresses: Address[];
+  cities: City[];
   currentAddress: Address | null;
   isLoading: boolean;
   error: string | null;
@@ -20,6 +27,7 @@ interface AddressStore {
   deleteAddress: (addressId: string) => Promise<{ success: boolean; error?: string }>;
   getAllAddresses: () => Promise<{ success: boolean; error?: string }>;
   setDefaultAddress: (addressId: string) => Promise<{ success: boolean; error?: string }>;
+  fetchCities: () => Promise<{ success: boolean; error?: string }>;
   clearError: () => void;
   clearCurrentAddress: () => void;
 }
@@ -28,9 +36,40 @@ export const useAddressStore = create<AddressStore>()(
   persist(
     (set, get) => ({
       addresses: [],
+      cities: [],
       currentAddress: null,
       isLoading: false,
       error: null,
+
+      /**
+       * Fetch available cities
+       */
+      fetchCities: async () => {
+        // Don't set loading if cities already exist
+        if (get().cities.length > 0) {
+          return { success: true };
+        }
+
+        set({ isLoading: true, error: null });
+
+        try {
+          const res = await addressApiClient.getCities();
+
+          if (res.success && res.data) {
+            console.log("✅ Cities fetched successfully:", res.data.length);
+            set({ cities: res.data, isLoading: false });
+            return { success: true };
+          }
+
+          const errMsg = res.error || "Failed to fetch cities";
+          set({ error: errMsg, isLoading: false });
+          return { success: false, error: errMsg };
+        } catch (error) {
+          const errMsg = error instanceof Error ? error.message : "Failed to fetch cities";
+          set({ error: errMsg, isLoading: false });
+          return { success: false, error: errMsg };
+        }
+      },
 
       /**
        * Add a new address
@@ -185,7 +224,6 @@ export const useAddressStore = create<AddressStore>()(
 
       /**
        * Set an address as default
-       * This updates the address with default: "1"
        */
       setDefaultAddress: async (addressId) => {
         set({ isLoading: true, error: null });
@@ -250,9 +288,10 @@ export const useAddressStore = create<AddressStore>()(
     {
       name: "address-storage",
       storage: createJSONStorage(() => localStorage),
-      // Only persist addresses, not loading/error states
+      // Persist addresses and cities
       partialize: (state) => ({
         addresses: state.addresses,
+        cities: state.cities,
         currentAddress: state.currentAddress
       })
     }

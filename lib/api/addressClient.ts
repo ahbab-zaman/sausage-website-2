@@ -21,6 +21,12 @@ interface BackendApiResponse<T> {
   data?: T;
 }
 
+interface City {
+  id: string;
+  name: string;
+  status: string;
+}
+
 class AddressApiClient {
   private baseUrl = API_CONFIG.BASE_URL;
   private clientToken: string | null = null;
@@ -138,6 +144,15 @@ class AddressApiClient {
   }
 
   /**
+   * Get available cities
+   */
+  async getCities(): Promise<ApiResponse<City[]>> {
+    return this.request<City[]>("/index.php?route=feed/rest_api/cities", {
+      method: "GET"
+    });
+  }
+
+  /**
    * Add new address
    */
   async addAddress(data: AddAddressRequest): Promise<ApiResponse<AddAddressResponse>> {
@@ -159,7 +174,7 @@ class AddressApiClient {
    */
   async updateAddress(addressId: string, data: UpdateAddressRequest): Promise<ApiResponse<any>> {
     return this.request<any>(`/index.php?route=rest/account/address&id=${addressId}`, {
-      method: "POST",
+      method: "PUT",
       body: JSON.stringify(data)
     });
   }
