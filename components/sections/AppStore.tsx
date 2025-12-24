@@ -8,8 +8,8 @@ export const AppStore = () => {
   return (
     <section className="py-16 lg:py-24">
       <div className="mx-auto max-w-5xl px-4 py-12">
-        <div className="relative rounded-2xl bg-[#3b3b3b] ">
-          <div className="grid lg:grid-cols-2 grid-cols-1 lg:h-[300px] h-auto ">
+        <div className="relative rounded-2xl bg-[#3b3b3b]">
+          <div className="grid h-auto grid-cols-1 lg:h-[300px] lg:grid-cols-2">
             {/* LEFT CONTENT */}
             <div className="px-6 py-10 text-white sm:px-10 lg:py-12">
               <h1 className="mb-4 text-2xl font-bold sm:text-3xl lg:text-4xl">The Bottle Store</h1>

@@ -19,15 +19,16 @@ export default function RecommendedSection() {
     }
   }, [fetchRecommended, isAuthenticated]);
 
-  // Update visible count on resize
   useEffect(() => {
     const updateVisibleCount = () => {
       if (typeof window === "undefined") return;
-      if (window.innerWidth >= 1280) setVisibleCount(5);
-      else if (window.innerWidth >= 1024) setVisibleCount(4);
-      else if (window.innerWidth >= 768) setVisibleCount(3);
-      else if (window.innerWidth >= 640) setVisibleCount(2);
-      else setVisibleCount(1);
+      if (window.innerWidth >= 1280)
+        setVisibleCount(5); // Desktop XL: 5 cards
+      else if (window.innerWidth >= 1024)
+        setVisibleCount(4); // Desktop: 4 cards
+      else if (window.innerWidth >= 768)
+        setVisibleCount(3); // Tablet: 3 cards
+      else setVisibleCount(2); // Mobile: 2 cards
     };
 
     updateVisibleCount();
@@ -71,7 +72,7 @@ export default function RecommendedSection() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          <div className="grid grid-cols-2 gap-8 lg:grid-cols-4 xl:grid-cols-5">
             {[...Array(5)].map((_, i) => (
               <div key={i} className="h-96 animate-pulse rounded-lg bg-gray-200" />
             ))}
@@ -85,7 +86,7 @@ export default function RecommendedSection() {
 
   return (
     <section className="bg-gray-50 py-12">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto w-[90%]">
         {/* Title & Description */}
         <div className="mb-12 text-center">
           <h2 className="mb-4 text-3xl font-bold text-gray-900 md:text-4xl">
@@ -128,7 +129,7 @@ export default function RecommendedSection() {
           {/* Track */}
           <div className="overflow-hidden">
             <div
-              className="flex gap-4 transition-transform duration-700 ease-in-out py-6"
+              className="flex gap-4 py-6 transition-transform duration-700 ease-in-out"
               style={{
                 transform: `translateX(-${currentIndex * (100 / visibleCount)}%)`
               }}>
@@ -146,7 +147,6 @@ export default function RecommendedSection() {
           </div>
         </div>
       </div>
-
     </section>
   );
 }

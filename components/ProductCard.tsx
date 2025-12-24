@@ -109,7 +109,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <div className="relative mx-auto flex h-[420px] lg:w-[225px] w-[165px] flex-col rounded-lg border border-[#E1E2E3] bg-white p-4 shadow-sm hover:shadow-md">
+    <div className="relative mx-auto flex lg:h-[420px] h-full  flex-col rounded-lg border border-[#E1E2E3] bg-white p-4 shadow-sm hover:shadow-md">
       {/* Image */}
       <Link href={`/products/${product.id}`} className="flex-shrink-0">
         <div className="relative mt-12 aspect-square">

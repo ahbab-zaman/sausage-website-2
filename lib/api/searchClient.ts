@@ -29,6 +29,7 @@ class SearchApiClient {
   private recentSearchCache: { data: string[]; timestamp: number } | null;
   private pendingRequests: Map<string, Promise<SearchProduct[]>>;
   private recentSearchPromise: Promise<string[]> | null;
+  private prefetchController: AbortController | null;
   private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
   private readonly RECENT_CACHE_DURATION = 2 * 60 * 1000; // 2 minutes
 
@@ -38,6 +39,7 @@ class SearchApiClient {
     this.recentSearchCache = null;
     this.pendingRequests = new Map();
     this.recentSearchPromise = null;
+    this.prefetchController = null;
   }
 
   /**
@@ -72,6 +74,66 @@ class SearchApiClient {
       await this.getRecentSearches();
     } catch (error) {
       console.error("Failed to prefetch recent searches:", error);
+    }
+  }
+
+  /**
+   * Prefetch search results for a query (fast fetching)
+   * Call this when user is typing to prepare results in advance
+   */
+  async prefetchSearch(query: string): Promise<void> {
+    if (!query.trim()) return;
+
+    const cacheKey = query.toLowerCase().trim();
+
+    // Don't prefetch if already cached or pending
+    if (this.searchCache.has(cacheKey) || this.pendingRequests.has(cacheKey)) {
+      return;
+    }
+
+    // Cancel previous prefetch
+    if (this.prefetchController) {
+      this.prefetchController.abort();
+    }
+
+    this.prefetchController = new AbortController();
+
+    try {
+      const url = `${this.baseUrl}/index.php?route=feed/rest_api/search&search=${encodeURIComponent(query)}`;
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: this.getAuthHeaders(),
+        credentials: "include",
+        signal: this.prefetchController.signal
+      });
+
+      if (!response.ok) return;
+
+      const data: SearchResponse = await response.json();
+
+      if (data.success === 1) {
+        const products = data.data?.products || [];
+        this.searchCache.set(cacheKey, {
+          data: products,
+          timestamp: Date.now()
+        });
+      }
+    } catch (error) {
+      // Ignore abort errors
+      if (error instanceof Error && error.name !== "AbortError") {
+        console.error("Prefetch error:", error);
+      }
+    }
+  }
+
+  /**
+   * Cancel any ongoing prefetch
+   */
+  cancelPrefetch(): void {
+    if (this.prefetchController) {
+      this.prefetchController.abort();
+      this.prefetchController = null;
     }
   }
 
@@ -242,6 +304,7 @@ class SearchApiClient {
   clearCache() {
     this.searchCache.clear();
     this.recentSearchCache = null;
+    this.cancelPrefetch();
   }
 
   /**

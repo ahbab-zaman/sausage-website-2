@@ -156,11 +156,11 @@ export default function ProductsPage() {
           </div>
         </div>
 
-        <div className="lg:px-16 px-4 py-2">
+        <div className="lg:px-16 py-2">
           <div className="flex flex-col gap-8 pt-2 lg:flex-row">
             {/* Filters Sidebar */}
             <div className="lg:w-64">
-              <div className="mb-4 lg:hidden">
+              <div className="mb-4 lg:hidden lg:px-0 px-2">
                 <Button
                   variant="outline"
                   onClick={() => setShowFilters(!showFilters)}
@@ -303,7 +303,7 @@ export default function ProductsPage() {
             </div>
             {/* Products Grid */}
             <div className="flex-1">
-              <div className="mb-6 flex items-center justify-between">
+              <div className="mb-6 flex items-center justify-between px-4">
                 <h1 className="text-2xl font-bold text-gray-900">
                   Products ({totalProducts})
                   {isPending && <span className="ml-2 text-sm text-gray-400">(updating...)</span>}
@@ -367,7 +367,7 @@ export default function ProductsPage() {
               {/* Products Grid */}
               {displayedProducts.length > 0 ? (
                 <>
-                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  <div className="grid gap-4 grid-cols-2 lg:grid-cols-4 p-3">
                     {displayedProducts.map((product) => (
                       <div className="w-full">
                         <ProductCard key={product.id} product={product} />

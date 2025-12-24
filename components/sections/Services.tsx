@@ -1,13 +1,15 @@
 "use client";
 import Link from "next/link";
 import Slider from "react-slick";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
 const Services = () => {
   const [isMobile, setIsMobile] = useState(false);
   const CARD_HEIGHT = "h-[240px]";
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const sliderRef = useRef<Slider>(null);
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     handleResize();
@@ -210,30 +212,31 @@ const Services = () => {
   ];
 
   const sliderSettings = {
-    dots: true,
+    dots: false, // Disable default dots
     infinite: false,
     speed: 500,
     slidesToShow: 1,
     slidesToScroll: 1,
     arrows: false,
     draggable: true,
-    swipeToSlide: true
+    swipeToSlide: true,
+    beforeChange: (current: number, next: number) => setCurrentSlide(next)
   };
 
   if (isMobile) {
     return (
       <div className="mx-auto max-w-full px-4 py-8">
-        <Slider className="overflow-visible" {...sliderSettings}>
+        <Slider ref={sliderRef} className="overflow-visible" {...sliderSettings}>
           {services.map((service, index) => (
             <div
               key={index}
               style={{
-                width: "250px", // fixed width
-                height: "250px", // fixed height
+                width: "250px",
+                height: "250px",
                 marginRight: "30px",
-                padding: "20px" // space between slides
+                padding: "20px"
               }}
-              className={`flex w-[250px] flex-col items-start gap-4 rounded-xl border border-gray-200 p-4 shadow-md ${CARD_HEIGHT}`}>
+              className={`mr-2 ml-2 flex w-[250px] flex-col items-start gap-4 p-4 ${CARD_HEIGHT}`}>
               <div className="flex-shrink-0">{service.icon}</div>
               <div className="flex flex-col text-black">
                 <span className="text-lg font-bold">{service.title}</span>
@@ -242,13 +245,52 @@ const Services = () => {
             </div>
           ))}
         </Slider>
+
+        {/* Custom Pagination */}
+        {/* Custom Pagination */}
+        <div className="mt-8 flex justify-center">
+          <div className="custom-pagination">
+            <button
+              className="pagination-arrow"
+              onClick={() => sliderRef.current?.slickPrev()}
+              disabled={currentSlide === 0}>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                strokeWidth="3"
+                strokeLinecap="round">
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </button>
+
+            <span className="pagination-counter">
+              {currentSlide + 1}/{services.length}
+            </span>
+
+            <button
+              className="pagination-arrow"
+              onClick={() => sliderRef.current?.slickNext()}
+              disabled={currentSlide === services.length - 1}>
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                strokeWidth="3"
+                strokeLinecap="round">
+                <path d="M9 18l6-6-6-6" />
+              </svg>
+            </button>
+          </div>
+        </div>
       </div>
     );
   }
-
   // Desktop layout
   return (
-    <div className="mx-auto flex max-w-6xl justify-between gap-4 border-gray-300 px-4 py-8">
+    <div className="mx-auto flex w-[90%] justify-between gap-4 border-gray-300 px-4 py-8">
       {services.map((service, index) => (
         <div
           key={index}

@@ -143,3 +143,54 @@
 .animate-marquee-horizontal {
   animation: marquee-horizontal linear infinite;
 }
+
+.slick-dots {
+  display: none !important;
+}
+
+.custom-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  background: #3a3938;
+  padding: 12px 24px;
+  border-radius: 50px;
+  width: fit-content;
+  margin: 0 auto;
+}
+
+.pagination-arrow {
+  width: 40px;
+  height: 40px;
+  background: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.pagination-arrow:hover:not(:disabled) {
+  background: #f5f5f5;
+}
+
+.pagination-arrow:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-arrow svg {
+  color: #dc2626;
+  stroke: #dc2626;
+}
+
+.pagination-counter {
+  color: white;
+  font-weight: 500;
+  font-size: 18px;
+  min-width: 50px;
+  text-align: center;
+}

@@ -85,16 +85,18 @@ export default function FeaturedProducts() {
           </div>
         </div>
 
-        <div className="mb-8 grid grid-cols-1 justify-center gap-7 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="mb-8 grid grid-cols-2 justify-center gap-4 lg:grid-cols-5">
           {featuredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
+            <div key={product.id} className="w-full">
+              <ProductCard product={product} />
+            </div>
           ))}
         </div>
 
         <div className="mt-8 flex justify-center">
           <button
             onClick={() => router.push("/products")}
-            className="group relative flex items-center justify-center gap-2 overflow-hidden rounded-lg bg-[#3A3938] px-5 py-2.5 text-sm font-medium text-white">
+            className="group relative flex items-center justify-center gap-2 overflow-hidden rounded-lg bg-[#3A3938] px-8 py-4 text-lg font-bold text-white">
             {/* Hover shade layer */}
             <span className="pointer-events-none absolute inset-0 -translate-x-full bg-[#4A4948] transition-transform duration-500 ease-[cubic-bezier(0.25,1,0.5,1)] group-hover:translate-x-0" />
 
