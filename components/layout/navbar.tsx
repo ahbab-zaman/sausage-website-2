@@ -1,7 +1,20 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ShoppingCart, User, X, Search, Globe, LayoutDashboard, Heart, Home } from "lucide-react";
+import {
+  ShoppingCart,
+  User,
+  X,
+  Search,
+  Globe,
+  LayoutDashboard,
+  Heart,
+  Home,
+  Store,
+  Tag,
+  Info,
+  Phone
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCartStore } from "@/stores/cartStore";
 import { useAuthStore } from "@/stores/authStore";
@@ -14,6 +27,7 @@ export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [showWishlistTooltip, setShowWishlistTooltip] = useState(false);
+  const [showMobileUserDropdown, setShowMobileUserDropdown] = useState(false);
 
   const router = useRouter();
 
@@ -65,9 +79,144 @@ export default function Navbar() {
                 <Logo />
               </div>
               <div className="flex items-center gap-2">
-                <button className="relative text-black">
-                  <User className="h-6 w-6" />
-                </button>
+                <div className="relative">
+                  <button
+                    onClick={() => setShowMobileUserDropdown(!showMobileUserDropdown)}
+                    className="relative text-black">
+                    <User className="h-6 w-6" />
+                  </button>
+
+                  {/* Mobile User Dropdown */}
+                  {showMobileUserDropdown && user && (
+                    <div className="absolute top-full right-0 z-50 mt-2 w-56 rounded-lg border border-gray-200 bg-white shadow-xl">
+                      <div className="border-b px-4 py-3">
+                        <p className="text-sm font-semibold text-gray-900">
+                          {user.firstname} {user.lastname}
+                        </p>
+                        <p className="text-xs text-gray-500">{user.email}</p>
+                      </div>
+                      <Link
+                        href="/profile?tab=account"
+                        onClick={() => setShowMobileUserDropdown(false)}
+                        className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 active:bg-gray-100">
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg">
+                          <path
+                            d="M12.1601 10.87C12.0601 10.86 11.9401 10.86 11.8301 10.87C9.45006 10.79 7.56006 8.84 7.56006 6.44C7.56006 3.99 9.54006 2 12.0001 2C14.4501 2 16.4401 3.99 16.4401 6.44C16.4301 8.84 14.5401 10.79 12.1601 10.87Z"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"></path>
+                          <path
+                            d="M7.15997 14.56C4.73997 16.18 4.73997 18.82 7.15997 20.43C9.90997 22.27 14.42 22.27 17.17 20.43C19.59 18.81 19.59 16.17 17.17 14.56C14.43 12.73 9.91997 12.73 7.15997 14.56Z"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"></path>
+                        </svg>
+                        <span className="font-medium">Account Settings</span>
+                      </Link>
+                      <Link
+                        href="/profile?tab=address"
+                        onClick={() => setShowMobileUserDropdown(false)}
+                        className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 active:bg-gray-100">
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg">
+                          <path
+                            d="M12 13.43C13.7231 13.43 15.12 12.0331 15.12 10.31C15.12 8.58687 13.7231 7.19 12 7.19C10.2769 7.19 8.88 8.58687 8.88 10.31C8.88 12.0331 10.2769 13.43 12 13.43Z"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"></path>
+                          <path
+                            d="M3.62001 8.49C5.59001 -0.169998 18.42 -0.159997 20.38 8.5C21.53 13.58 18.37 17.88 15.6 20.54C13.59 22.48 10.41 22.48 8.39001 20.54C5.63001 17.88 2.47001 13.57 3.62001 8.49Z"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"></path>
+                        </svg>
+                        <span className="font-medium">Addresses</span>
+                      </Link>
+                      <Link
+                        href="/profile?tab=orders"
+                        onClick={() => setShowMobileUserDropdown(false)}
+                        className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 active:bg-gray-100">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                          <path
+                            d="M8 12.2H15"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            stroke-miterlimit="10"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"></path>
+                          <path
+                            d="M8 16.2H12.38"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeMiterlimit="10"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"></path>
+                          <path
+                            d="M10 6H14C16 6 16 5 16 4C16 2 15 2 14 2H10C9 2 8 2 8 4C8 6 9 6 10 6Z"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeMiterlimit="10"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"></path>
+                          <path
+                            d="M16 4.02002C19.33 4.20002 21 5.43002 21 10V16C21 20 20 22 15 22H9C4 22 3 20 3 16V10C3 5.44002 4.67 4.20002 8 4.02002"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeMiterlimit="10"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"></path>
+                        </svg>
+                        <span className="font-medium">My Orders</span>
+                      </Link>
+                      <button
+                        onClick={() => {
+                          handleLogout();
+                          setShowMobileUserDropdown(false);
+                        }}
+                        className="flex w-full items-center gap-3 border-t px-4 py-3 text-left text-sm hover:bg-gray-50 active:bg-gray-100">
+                        <svg
+                          width="20"
+                          height="20"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg">
+                          <path
+                            d="M8.90002 7.55999C9.21002 3.95999 11.06 2.48999 15.11 2.48999H15.24C19.71 2.48999 21.5 4.27999 21.5 8.74999V15.27C21.5 19.74 19.71 21.53 15.24 21.53H15.11C11.09 21.53 9.24002 20.08 8.91002 16.54"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"></path>
+                          <path
+                            d="M15 12H3.62"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"></path>
+                          <path
+                            d="M5.85 8.6499L2.5 11.9999L5.85 15.3499"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"></path>
+                        </svg>
+                        <span className="font-medium text-red-600">Sign Out</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
                 <button onClick={() => setIsCartOpen(true)} className="relative ml-4 text-black">
                   <ShoppingCart className="h-6 w-6" />
                   {itemCount > 0 && (
@@ -163,6 +312,43 @@ export default function Navbar() {
                         </svg>
                         <span className="font-semibold">Addresses</span>
                       </Link>
+                      <Link
+                        href="/profile?tab=orders"
+                        onClick={() => setShowMobileUserDropdown(false)}
+                        className="flex items-center gap-3 px-4 py-3 text-sm hover:bg-gray-50 active:bg-gray-100">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                          <path
+                            d="M8 12.2H15"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeMiterlimit="10"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"></path>
+                          <path
+                            d="M8 16.2H12.38"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeMiterlimit="10"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"></path>
+                          <path
+                            d="M10 6H14C16 6 16 5 16 4C16 2 15 2 14 2H10C9 2 8 2 8 4C8 6 9 6 10 6Z"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeMiterlimit="10"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"></path>
+                          <path
+                            d="M16 4.02002C19.33 4.20002 21 5.43002 21 10V16C21 20 20 22 15 22H9C4 22 3 20 3 16V10C3 5.44002 4.67 4.20002 8 4.02002"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeMiterlimit="10"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"></path>
+                        </svg>
+                        <span className="font-medium">My Orders</span>
+                      </Link>
+
                       <button
                         onClick={handleLogout}
                         className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm hover:bg-gray-100">
@@ -205,7 +391,7 @@ export default function Navbar() {
                 {/* Wishlist – DESKTOP */}
                 <div className="group relative">
                   <button
-                    onClick={() => user && router.push("/wishlist")}
+                    onClick={() => user && router.push("/profile?tab=wishlist")}
                     className="flex flex-col items-center text-white transition-transform hover:scale-105">
                     <div className="relative">
                       <Heart className="h-6 w-6" />
@@ -281,10 +467,63 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Menu & Cart Sidebar (unchanged) */}
+        {/* Mobile Menu Sidebar */}
         <div
           className={`fixed top-0 left-0 z-50 h-full w-64 bg-white shadow-lg transition-transform ${isMenuOpen ? "translate-x-0" : "-translate-x-full"}`}>
-          {/* ... menu content ... */}
+          <div className="flex h-full flex-col">
+            <div className="flex items-center justify-between border-b p-4">
+              <h2 className="text-lg font-bold">Menu</h2>
+              <button
+                onClick={() => setIsMenuOpen(false)}
+                className="rounded-full p-2 hover:bg-gray-100">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <nav className="flex-1 overflow-y-auto p-4">
+              <Link
+                href="/"
+                onClick={() => setIsMenuOpen(false)}
+                className="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 hover:bg-gray-100">
+                <Home className="h-5 w-5" />
+                <span className="font-medium">Home</span>
+              </Link>
+              <Link
+                href="/shop"
+                onClick={() => setIsMenuOpen(false)}
+                className="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 hover:bg-gray-100">
+                <Store className="h-5 w-5" />
+                <span className="font-medium">Shop</span>
+              </Link>
+              <Link
+                href="/deals"
+                onClick={() => setIsMenuOpen(false)}
+                className="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 hover:bg-gray-100">
+                <Tag className="h-5 w-5" />
+                <span className="font-medium">Deals</span>
+              </Link>
+              <Link
+                href="/wishlist"
+                onClick={() => setIsMenuOpen(false)}
+                className="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 hover:bg-gray-100">
+                <Heart className="h-5 w-5" />
+                <span className="font-medium">Wishlist</span>
+              </Link>
+              <Link
+                href="/about"
+                onClick={() => setIsMenuOpen(false)}
+                className="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 hover:bg-gray-100">
+                <Info className="h-5 w-5" />
+                <span className="font-medium">About Us</span>
+              </Link>
+              <Link
+                href="/contact"
+                onClick={() => setIsMenuOpen(false)}
+                className="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 hover:bg-gray-100">
+                <Phone className="h-5 w-5" />
+                <span className="font-medium">Contact</span>
+              </Link>
+            </nav>
+          </div>
         </div>
         {isMenuOpen && (
           <div className="fixed inset-0 z-40 bg-black/30" onClick={() => setIsMenuOpen(false)} />
@@ -387,6 +626,14 @@ export default function Navbar() {
       {/* Click outside to close tooltip - Only show for mobile */}
       {showWishlistTooltip && (
         <div className="fixed inset-0 z-40 md:hidden" onClick={closeTooltip} />
+      )}
+
+      {/* Click outside to close mobile user dropdown */}
+      {showMobileUserDropdown && (
+        <div
+          className="fixed inset-0 z-40 md:hidden"
+          onClick={() => setShowMobileUserDropdown(false)}
+        />
       )}
     </>
   );
