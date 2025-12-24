@@ -7,7 +7,7 @@ import "slick-carousel/slick/slick-theme.css";
 
 const Services = () => {
   const [isMobile, setIsMobile] = useState(false);
-
+  const CARD_HEIGHT = "h-[240px]";
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     handleResize();
@@ -230,9 +230,10 @@ const Services = () => {
               style={{
                 width: "250px", // fixed width
                 height: "250px", // fixed height
-                marginRight: "30px", // space between slides
+                marginRight: "30px",
+                padding: "20px" // space between slides
               }}
-              className="flex flex-col items-start gap-4 rounded-xl border border-gray-200 p-4 shadow-md mr-6">
+              className={`flex w-[250px] flex-col items-start gap-4 rounded-xl border border-gray-200 p-4 shadow-md ${CARD_HEIGHT}`}>
               <div className="flex-shrink-0">{service.icon}</div>
               <div className="flex flex-col text-black">
                 <span className="text-lg font-bold">{service.title}</span>
@@ -247,11 +248,11 @@ const Services = () => {
 
   // Desktop layout
   return (
-    <div className="mx-auto flex max-w-6xl justify-between border-gray-300 px-4 py-8">
+    <div className="mx-auto flex max-w-6xl justify-between gap-4 border-gray-300 px-4 py-8">
       {services.map((service, index) => (
         <div
           key={index}
-          className={`flex flex-1 items-start gap-4 ${
+          className={`flex h-[220px] flex-1 items-start gap-4 ${
             index !== services.length - 1 ? "mr-6 border-r border-gray-300 pr-6" : ""
           }`}>
           <div className="flex-shrink-0">{service.icon}</div>

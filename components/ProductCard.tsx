@@ -109,7 +109,7 @@ export default function ProductCard({ product }: ProductCardProps) {
   };
 
   return (
-    <div className="relative mx-auto flex h-[400px] max-w-[260px] flex-col rounded-lg border border-[#E1E2E3] bg-white p-4 shadow-sm hover:shadow-md">
+    <div className="relative mx-auto flex h-[420px] lg:w-[225px] w-[165px] flex-col rounded-lg border border-[#E1E2E3] bg-white p-4 shadow-sm hover:shadow-md">
       {/* Image */}
       <Link href={`/products/${product.id}`} className="flex-shrink-0">
         <div className="relative mt-12 aspect-square">
@@ -117,7 +117,7 @@ export default function ProductCard({ product }: ProductCardProps) {
             fill
             src={product.image || "/placeholder.svg"}
             alt={product.name}
-            className="w-full object-contain p-4 pb-6"
+            className="w-full lg:object-contain object-cover p-4 pb-6"
           />
         </div>
       </Link>
@@ -129,7 +129,7 @@ export default function ProductCard({ product }: ProductCardProps) {
         <h3 className="line-clamp-2 text-[16px] font-bold text-gray-800">{product.name}</h3>
 
         {/* Price + Cart */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center lg:flex-nowrap flex-wrap space-x-2 justify-between gap-3">
           <div>
             <span className="text-xl font-bold">{product.price.toFixed(2)}</span>
             <span className="ml-1 text-xs font-bold">AED</span>

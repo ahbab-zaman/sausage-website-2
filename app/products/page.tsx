@@ -5,6 +5,7 @@ import ProductCard from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { useProductStore } from "@/stores/productStore";
 import { Spinner } from "@/components/ui/spinner";
+import Link from "next/link";
 export default function ProductsPage() {
   const { products, loading, error, fetchProducts, prefetchProducts } = useProductStore();
   const [isPending, startTransition] = useTransition();
@@ -15,6 +16,9 @@ export default function ProductsPage() {
   const [showSortDropdown, setShowSortDropdown] = useState(false);
   const [displayCount, setDisplayCount] = useState(12);
   const itemsPerLoad = 12;
+  const [openCategory, setOpenCategory] = useState(true);
+  const [openPrice, setOpenPrice] = useState(true);
+
   // Prefetch products on mount
   useEffect(() => {
     prefetchProducts();
@@ -139,223 +143,284 @@ export default function ProductsPage() {
     );
   }
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-      {/* Breadcrumb */}
-      <div className="mb-6 flex items-center text-sm text-gray-600">
-        <a href="/" className="hover:text-gray-900">
-          Home
-        </a>
-        <span className="mx-2">›</span>
-        <span className="text-gray-900">Beer & Cider</span>
-      </div>
-      <div className="flex flex-col gap-8 lg:flex-row">
-        {/* Filters Sidebar */}
-        <div className="lg:w-64">
-          <div className="mb-4 lg:hidden">
-            <Button
-              variant="outline"
-              onClick={() => setShowFilters(!showFilters)}
-              className="w-full">
-              <Filter className="mr-2 h-4 w-4" />
-              Filters
-            </Button>
-          </div>
-          <div className={`space-y-6 ${showFilters ? "block" : "hidden lg:block"}`}>
-            {/* Category Filter */}
-            <div>
-              <h3 className="mb-3 text-xs font-semibold tracking-widest text-gray-900 uppercase">
-                Product Type
-              </h3>
-              <div className="space-y-2">
-                {[
-                  { value: "all", label: "All Products" },
-                  { value: "halal", label: "Halal" },
-                  { value: "non-halal", label: "Non-Halal" }
-                ].map((category) => (
-                  <label key={category.value} className="group flex cursor-pointer items-center">
-                    <input
-                      type="radio"
-                      name="category"
-                      value={category.value}
-                      checked={selectedCategory === category.value}
-                      onChange={(e) => handleCategoryChange(e.target.value)}
-                      className="mr-3 h-4 w-4 cursor-pointer text-red-600 focus:ring-red-500"
-                    />
-                    <span className="text-sm text-gray-700 group-hover:text-gray-900">
-                      {category.label}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-            {/* Price Filter */}
-            <div>
-              <h3 className="mb-3 text-xs font-semibold tracking-widest text-gray-900 uppercase">
-                Price Range
-              </h3>
-              <div className="space-y-2">
-                {[
-                  { value: "all", label: "All Prices" },
-                  { value: "under-50", label: "Under $50" },
-                  { value: "50-100", label: "$50 - $100" },
-                  { value: "100-200", label: "$100 - $200" },
-                  { value: "over-200", label: "Over $200" }
-                ].map((option) => (
-                  <label key={option.value} className="group flex cursor-pointer items-center">
-                    <input
-                      type="radio"
-                      name="price"
-                      value={option.value}
-                      checked={priceRange === option.value}
-                      onChange={(e) => handlePriceChange(e.target.value)}
-                      className="mr-3 h-4 w-4 cursor-pointer text-red-600 focus:ring-red-500"
-                    />
-                    <span className="text-sm text-gray-700 group-hover:text-gray-900">
-                      {option.label}
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-            {/* Active Filters */}
-            {(selectedCategory !== "all" || priceRange !== "all") && (
-              <div className="border-t border-gray-200 pt-4">
-                <div className="mb-2 flex items-center justify-between">
-                  <h3 className="text-xs font-semibold tracking-widest text-gray-900 uppercase">
-                    Active Filters
-                  </h3>
-                  <button
-                    onClick={() => {
-                      handleCategoryChange("all");
-                      handlePriceChange("all");
-                    }}
-                    className="text-xs font-medium text-red-600 hover:text-red-700">
-                    Clear All
-                  </button>
-                </div>
-                <div className="space-y-1">
-                  {selectedCategory !== "all" && (
-                    <div className="text-xs text-gray-600">
-                      • {getCategoryLabel(selectedCategory)}
-                    </div>
-                  )}
-                  {priceRange !== "all" && (
-                    <div className="text-xs text-gray-600">
-                      •{" "}
-                      {
-                        [
-                          { value: "under-50", label: "Under $50" },
-                          { value: "50-100", label: "$50 - $100" },
-                          { value: "100-200", label: "$100 - $200" },
-                          { value: "over-200", label: "Over $200" }
-                        ].find((o) => o.value === priceRange)?.label
-                      }
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+    <>
+      <div>
+        {/* Breadcrumb */}
+        <div className="mb-6 flex w-full items-center bg-gray-200 text-sm text-gray-600">
+          <div className="mx-auto w-[90%] py-[6px]">
+            <Link href="/" className="hover:text-gray-900">
+              Home
+            </Link>
+            <span className="mx-2">›</span>
+            <span className="text-gray-900">All Products</span>
           </div>
         </div>
-        {/* Products Grid */}
-        <div className="flex-1">
-          <div className="mb-6 flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">
-              Products ({totalProducts})
-              {isPending && <span className="ml-2 text-sm text-gray-400">(updating...)</span>}
-            </h1>
-            {/* Sort Dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setShowSortDropdown(!showSortDropdown)}
-                className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm transition-colors hover:border-gray-400 focus:border-gray-400 focus:outline-none">
-                <span className="font-medium">Sort By</span>
-                <span className="text-gray-700">{getSortLabel()}</span>
-                {showSortDropdown ? (
-                  <ChevronUp className="h-4 w-4 text-gray-400" />
-                ) : (
-                  <ChevronDown className="h-4 w-4 text-gray-400" />
-                )}
-              </button>
-              {showSortDropdown && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setShowSortDropdown(false)} />
-                  <div className="absolute top-full right-0 z-50 mt-1 w-64 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
-                    {[
-                      { value: "featured", label: "Featured" },
-                      { value: "name-asc", label: "Name (A - Z)" },
-                      { value: "name-desc", label: "Name (Z - A)" },
-                      { value: "price-low", label: "Price (Low > High)" },
-                      { value: "price-high", label: "Price (High > Low)" },
-                      { value: "rating", label: "Highest Rated" }
-                    ].map((sort) => (
-                      <button
-                        key={sort.value}
-                        onClick={() => handleSortChange(sort.value)}
-                        className={`w-full px-4 py-3 text-left text-sm transition-colors hover:bg-gray-50 ${
-                          sortBy === sort.value
-                            ? "bg-red-600 text-white hover:bg-red-700"
-                            : "text-gray-900"
-                        }`}>
-                        {sort.label}
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-          {/* Products Grid */}
-          {displayedProducts.length > 0 ? (
-            <>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                {displayedProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
-              {hasMore && (
-                <div className="mt-12 flex flex-col items-center space-y-6">
-                  <div className="w-full max-w-md text-center">
-                    <p className="mb-4 text-base text-gray-700">
-                      You've viewed {displayedProducts.length} of {totalProducts} products
-                    </p>
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
-                      <div
-                        className="h-2 rounded-full bg-red-500 transition-all duration-300"
-                        style={{ width: `${(displayedProducts.length / totalProducts) * 100}%` }}
-                      />
-                    </div>
-                  </div>
-                  <button
-                    onClick={handleLoadMore}
-                    disabled={isPending}
-                    className="rounded-lg bg-gray-800 px-16 py-4 text-base font-bold tracking-wide text-white uppercase transition-colors duration-200 hover:bg-gray-900 disabled:cursor-not-allowed disabled:opacity-50">
-                    {isPending ? <Spinner className="size-6" /> : "LOAD MORE"}
-                  </button>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="py-12 text-center">
-              <div className="mx-auto max-w-md">
-                <Filter className="mx-auto mb-4 h-12 w-12 text-gray-400" />
-                <h3 className="mb-2 text-lg font-medium text-gray-900">No products found</h3>
-                <p className="mb-6 text-gray-500">
-                  No products match your current filters. Try adjusting your selection.
-                </p>
+
+        <div className="lg:px-16 px-4 py-2">
+          <div className="flex flex-col gap-8 pt-2 lg:flex-row">
+            {/* Filters Sidebar */}
+            <div className="lg:w-64">
+              <div className="mb-4 lg:hidden">
                 <Button
-                  onClick={() => {
-                    handleCategoryChange("all");
-                    handlePriceChange("all");
-                  }}
-                  variant="outline">
-                  Clear All Filters
+                  variant="outline"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="w-full">
+                  <Filter className="mr-2 h-4 w-4" />
+                  Filters
                 </Button>
               </div>
+
+              <div className={`space-y-6 ${showFilters ? "block" : "hidden lg:block"}`}>
+                {/* Category Filter */}
+                <div className="border-b border-gray-100 pb-4">
+                  <button
+                    onClick={() => setOpenCategory(!openCategory)}
+                    className="flex w-full items-center justify-between text-sm font-semibold tracking-widest text-gray-900 uppercase">
+                    Product Type
+                    <ChevronDown
+                      className={`h-4 w-4 transition-transform duration-300 ${
+                        openCategory ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  <div
+                    className={`grid transition-all duration-300 ease-in-out ${
+                      openCategory
+                        ? "mt-4 grid-rows-[1fr] opacity-100"
+                        : "grid-rows-[0fr] opacity-0"
+                    }`}>
+                    <div className="space-y-3 overflow-hidden">
+                      {[
+                        { value: "all", label: "All Products" },
+                        { value: "halal", label: "Halal" },
+                        { value: "non-halal", label: "Non-Halal" }
+                      ].map((category) => (
+                        <label
+                          key={category.value}
+                          className="group flex cursor-pointer items-center gap-3">
+                          <input
+                            type="radio"
+                            name="category"
+                            value={category.value}
+                            checked={selectedCategory === category.value}
+                            onChange={(e) => handleCategoryChange(e.target.value)}
+                            className="h-4 w-4 accent-red-600"
+                          />
+                          <span className="text-sm text-gray-700 transition group-hover:text-gray-900">
+                            {category.label}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Price Filter */}
+                <div className="">
+                  <button
+                    onClick={() => setOpenPrice(!openPrice)}
+                    className="flex w-full items-center justify-between text-sm font-semibold tracking-widest text-gray-900 uppercase">
+                    Price Range
+                    <ChevronDown
+                      className={`h-4 w-4 transition-transform duration-300 ${
+                        openPrice ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  <div
+                    className={`grid transition-all duration-300 ease-in-out ${
+                      openPrice ? "mt-4 grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+                    }`}>
+                    <div className="space-y-3 overflow-hidden">
+                      {[
+                        { value: "all", label: "All Prices" },
+                        { value: "under-50", label: "Under $50" },
+                        { value: "50-100", label: "$50 - $100" },
+                        { value: "100-200", label: "$100 - $200" },
+                        { value: "over-200", label: "Over $200" }
+                      ].map((option) => (
+                        <label
+                          key={option.value}
+                          className="group flex cursor-pointer items-center gap-3">
+                          <input
+                            type="radio"
+                            name="price"
+                            value={option.value}
+                            checked={priceRange === option.value}
+                            onChange={(e) => handlePriceChange(e.target.value)}
+                            className="h-4 w-4 accent-red-600"
+                          />
+                          <span className="text-sm text-gray-700 transition group-hover:text-gray-900">
+                            {option.label}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Active Filters */}
+                {(selectedCategory !== "all" || priceRange !== "all") && (
+                  <div className="border-t border-gray-200 pt-4">
+                    <div className="mb-2 flex items-center justify-between">
+                      <h3 className="text-xs font-semibold tracking-widest text-gray-900 uppercase">
+                        Active Filters
+                      </h3>
+                      <button
+                        onClick={() => {
+                          handleCategoryChange("all");
+                          handlePriceChange("all");
+                        }}
+                        className="text-xs font-medium text-red-600 hover:text-red-700">
+                        Clear All
+                      </button>
+                    </div>
+                    <div className="space-y-1">
+                      {selectedCategory !== "all" && (
+                        <div className="text-xs text-gray-600">
+                          • {getCategoryLabel(selectedCategory)}
+                        </div>
+                      )}
+                      {priceRange !== "all" && (
+                        <div className="text-xs text-gray-600">
+                          •{" "}
+                          {
+                            [
+                              { value: "under-50", label: "Under $50" },
+                              { value: "50-100", label: "$50 - $100" },
+                              { value: "100-200", label: "$100 - $200" },
+                              { value: "over-200", label: "Over $200" }
+                            ].find((o) => o.value === priceRange)?.label
+                          }
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          )}
+            {/* Products Grid */}
+            <div className="flex-1">
+              <div className="mb-6 flex items-center justify-between">
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Products ({totalProducts})
+                  {isPending && <span className="ml-2 text-sm text-gray-400">(updating...)</span>}
+                </h1>
+                {/* Sort Dropdown */}
+                <div className="relative">
+                  {/* Trigger */}
+                  <button
+                    onClick={() => setShowSortDropdown(!showSortDropdown)}
+                    className="flex items-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900 shadow-sm transition-all duration-200 hover:border-gray-400 hover:shadow-md focus:outline-none">
+                    <span className="text-gray-600">Sort by</span>
+                    <span className="font-semibold">{getSortLabel()}</span>
+
+                    <ChevronDown
+                      className={`ml-1 h-4 w-4 text-gray-400 transition-transform duration-300 ${
+                        showSortDropdown ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {/* Overlay */}
+                  {showSortDropdown && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setShowSortDropdown(false)}
+                      />
+
+                      {/* Dropdown */}
+                      <div className="animate-in fade-in zoom-in-95 absolute top-full right-0 z-50 mt-2 w-64 origin-top-right rounded-2xl border border-gray-200 bg-white shadow-xl duration-200">
+                        {[
+                          { value: "featured", label: "Featured" },
+                          { value: "name-asc", label: "Name (A – Z)" },
+                          { value: "name-desc", label: "Name (Z – A)" },
+                          { value: "price-low", label: "Price (Low → High)" },
+                          { value: "price-high", label: "Price (High → Low)" },
+                          { value: "rating", label: "Highest Rated" }
+                        ].map((sort) => {
+                          const isActive = sortBy === sort.value;
+
+                          return (
+                            <button
+                              key={sort.value}
+                              onClick={() => handleSortChange(sort.value)}
+                              className={`flex w-full items-center justify-between px-4 py-3 text-sm transition-all ${
+                                isActive
+                                  ? "bg-[#AA383A]/10 font-semibold text-[#AA383A]"
+                                  : "text-gray-800 hover:bg-gray-50"
+                              }`}>
+                              {sort.label}
+
+                              {isActive && <span className="h-2 w-2 rounded-full bg-[#AA383A]" />}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+              {/* Products Grid */}
+              {displayedProducts.length > 0 ? (
+                <>
+                  <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    {displayedProducts.map((product) => (
+                      <div className="w-full">
+                        <ProductCard key={product.id} product={product} />
+                      </div>
+                    ))}
+                  </div>
+                  {hasMore && (
+                    <div className="mt-12 flex flex-col items-center space-y-6">
+                      <div className="w-full max-w-md text-center">
+                        <p className="mb-4 text-base text-gray-700">
+                          You've viewed {displayedProducts.length} of {totalProducts} products
+                        </p>
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                          <div
+                            className="h-2 rounded-full bg-red-500 transition-all duration-300"
+                            style={{
+                              width: `${(displayedProducts.length / totalProducts) * 100}%`
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleLoadMore}
+                        disabled={isPending}
+                        className="rounded-lg bg-gray-800 px-16 py-4 text-base font-bold tracking-wide text-white uppercase transition-colors duration-200 hover:bg-gray-900 disabled:cursor-not-allowed disabled:opacity-50">
+                        {isPending ? <Spinner className="size-6" /> : "LOAD MORE"}
+                      </button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="py-12 text-center">
+                  <div className="mx-auto max-w-md">
+                    <Filter className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+                    <h3 className="mb-2 text-lg font-medium text-gray-900">No products found</h3>
+                    <p className="mb-6 text-gray-500">
+                      No products match your current filters. Try adjusting your selection.
+                    </p>
+                    <Button
+                      onClick={() => {
+                        handleCategoryChange("all");
+                        handlePriceChange("all");
+                      }}
+                      variant="outline">
+                      Clear All Filters
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

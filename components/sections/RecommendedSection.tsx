@@ -128,7 +128,7 @@ export default function RecommendedSection() {
           {/* Track */}
           <div className="overflow-hidden">
             <div
-              className="flex gap-6 transition-transform duration-700 ease-in-out py-6"
+              className="flex gap-4 transition-transform duration-700 ease-in-out py-6"
               style={{
                 transform: `translateX(-${currentIndex * (100 / visibleCount)}%)`
               }}>
