@@ -1,5 +1,3 @@
-// lib/api/checkoutClient.ts
-
 import { API_CONFIG } from "./config";
 import {
   ShippingAddressResponse,
@@ -7,9 +5,9 @@ import {
   TimeSlotResponse,
   SetPaymentMethodRequest,
   DeliveryRequest,
-  CouponRequest,
   ConfirmOrderRequest,
-  OrderConfirmationResponse
+  OrderConfirmationResponse,
+  PayOnlineResponse
 } from "@/types/checkout";
 
 interface ApiResponse<T> {
@@ -122,7 +120,7 @@ class CheckoutApiClient {
     );
   }
 
-  // Get payment and shipping methods
+  // Get payment and shipping methods (must be called after setting shipping address)
   async getPaymentMethods(): Promise<ApiResponse<PaymentMethodsResponse>> {
     return this.request<PaymentMethodsResponse>("/index.php?route=rest/payment_method/payments", {
       method: "GET"
@@ -142,7 +140,7 @@ class CheckoutApiClient {
     return this.requestFormData<any>("/index.php?route=rest/payment_method/payments", formData);
   }
 
-  // Get time slots for a date
+  // Get time slots for a date (format: DD-MM-YYYY)
   async getTimeSlots(date: string): Promise<ApiResponse<TimeSlotResponse>> {
     const formData = new FormData();
     formData.append("date", date);
@@ -177,7 +175,7 @@ class CheckoutApiClient {
     });
   }
 
-  // Confirm order
+  // Confirm order (after payment method is set)
   async confirmOrder(data?: ConfirmOrderRequest): Promise<ApiResponse<OrderConfirmationResponse>> {
     const formData = new FormData();
     if (data?.device_type) {
@@ -193,18 +191,41 @@ class CheckoutApiClient {
     );
   }
 
-  // Payment success confirmation
+  // Payment success confirmation (PUT method)
   async confirmPayment(): Promise<ApiResponse<any>> {
     return this.request<any>("/index.php?route=rest/confirm/confirm", {
       method: "PUT"
     });
   }
 
-  // Pay online
+  // Pay online - Get payment gateway HTML
   async payOnline(): Promise<ApiResponse<any>> {
-    return this.request<any>("/index.php?route=rest/confirm/confirm&page=pay", {
-      method: "GET"
-    });
+    try {
+      const token = await this.getClientToken();
+
+      const res = await fetch(`${this.baseUrl}/index.php?route=rest/confirm/confirm&page=pay`, {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+
+      if (!res.ok) {
+        return { success: false, error: `HTTP error ${res.status}` };
+      }
+
+      // For pay online, we get HTML content
+      const htmlContent = await res.text();
+
+      return {
+        success: true,
+        data: { html_content: htmlContent }
+      };
+    } catch (err: any) {
+      console.error("Pay online error:", err);
+      return { success: false, error: err.message || "Failed to load payment page" };
+    }
   }
 }
 

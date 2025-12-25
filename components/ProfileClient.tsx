@@ -538,10 +538,10 @@ export default function ProfileClient() {
         <h1 className="animate-fadeIn mb-8 text-4xl font-bold text-black">My Account</h1>
 
         {/* Tabs */}
-        <div className="mb-8 flex flex-wrap gap-8 border-b border-gray-200">
+        <div className="hide-scrollbar mb-8 flex w-full gap-8 overflow-x-auto overflow-y-hidden border-b border-gray-200">
           <button
             onClick={() => setActiveTab("account")}
-            className={`group relative flex items-center gap-2 pb-4 text-base font-medium transition-all duration-300 ${
+            className={`group relative flex flex-shrink-0 items-center gap-2 pb-4 text-base font-medium whitespace-nowrap transition-all duration-300 ${
               activeTab === "account" ? "text-black" : "text-gray-400 hover:text-gray-600"
             }`}>
             <User className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
@@ -555,7 +555,7 @@ export default function ProfileClient() {
 
           <button
             onClick={() => setActiveTab("address")}
-            className={`group relative flex items-center gap-2 pb-4 text-base font-medium transition-all duration-300 ${
+            className={`group relative flex items-center gap-2 pb-4 text-base font-medium transition-all duration-300 flex-shrink-0 whitespace-nowrap ${
               activeTab === "address" ? "text-black" : "text-gray-400 hover:text-gray-600"
             }`}>
             <MapPin className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
@@ -569,7 +569,7 @@ export default function ProfileClient() {
 
           <button
             onClick={() => setActiveTab("orders")}
-            className={`group relative flex items-center gap-2 pb-4 text-base font-medium transition-all duration-300 ${
+            className={`group relative flex items-center gap-2 pb-4 text-base font-medium transition-all duration-300 flex-shrink-0 whitespace-nowrap ${
               activeTab === "orders" ? "text-black" : "text-gray-400 hover:text-gray-600"
             }`}>
             <Package className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
@@ -583,7 +583,7 @@ export default function ProfileClient() {
 
           <button
             onClick={() => setActiveTab("wishlist")}
-            className={`group relative flex items-center gap-2 pb-4 text-base font-medium transition-all duration-300 ${
+            className={`group relative flex items-center gap-2 pb-4 text-base font-medium transition-all duration-300 flex-shrink-0 whitespace-nowrap ${
               activeTab === "wishlist" ? "text-black" : "text-gray-400 hover:text-gray-600"
             }`}>
             <Heart className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
@@ -1073,7 +1073,7 @@ export default function ProfileClient() {
 
                 {/* Grid */}
                 <div className="mx-auto max-w-7xl px-6 pb-16">
-                  <div className="grid gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                  <div className="grid gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                     {wishlistItems.map((item, index) => (
                       <div
                         key={item.product_id}

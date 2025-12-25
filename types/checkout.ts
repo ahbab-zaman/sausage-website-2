@@ -1,5 +1,3 @@
-// types/checkout.ts
-
 export interface ShippingAddress {
   address_id: string;
   name: string;
@@ -28,12 +26,19 @@ export interface PaymentMethod {
   sort_order: string;
 }
 
-export interface ShippingMethod {
+export interface ShippingQuote {
   code: string;
   title: string;
-  cost: string;
-  tax_class_id: string;
+  cost: number;
+  tax_class_id: number;
   text: string;
+}
+
+export interface ShippingMethod {
+  title: string;
+  quote: ShippingQuote[];
+  sort_order: string;
+  error: boolean;
 }
 
 export interface PaymentMethodsResponse {
@@ -51,7 +56,7 @@ export interface TimeSlot {
 
 export interface TimeSlotResponse {
   now: number;
-  time: TimeSlot[];
+  time: string[]; // Backend returns array of time strings
 }
 
 export interface SetPaymentMethodRequest {
@@ -77,6 +82,9 @@ export interface ConfirmOrderRequest {
 
 export interface OrderConfirmationResponse {
   order_id: string;
-  success: number;
-  error: string[];
+}
+
+export interface PayOnlineResponse {
+  html_content: string;
+  order_id: string;
 }
