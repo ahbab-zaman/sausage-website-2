@@ -1578,6 +1578,9 @@ export default function ProfileClient() {
         .animate-scaleIn {
           animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
+        .animate-scaleIn {
+          animation: scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
       `}</style>
     </div>
   );

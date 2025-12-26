@@ -1,4 +1,4 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://app.mr-sausages.com";
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
 export const API_CONFIG = {
   BASE_URL,
