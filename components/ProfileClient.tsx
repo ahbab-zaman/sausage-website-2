@@ -232,6 +232,192 @@ function WishlistSkeleton() {
   );
 }
 
+// === ADD THIS NEW MODAL COMPONENT (place it near the top with other modals) ===
+
+function OrderDetailModal({
+  isOpen,
+  onClose,
+  orderId
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  orderId: string;
+}) {
+  const {
+    selectedOrder,
+    isLoading: detailLoading,
+    error: detailError,
+    fetchOrderDetail
+  } = useOrderStore();
+
+  useEffect(() => {
+    if (isOpen && orderId) {
+      fetchOrderDetail(orderId);
+    }
+  }, [isOpen, orderId, fetchOrderDetail]);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+      {/* Backdrop */}
+      <div
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity duration-500"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <div className="animate-scaleIn relative w-full max-w-4xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 z-10 rounded-full bg-gray-100 p-2 text-gray-600 transition-all hover:scale-110 hover:bg-gray-200">
+          <X className="h-6 w-6" />
+        </button>
+
+        {detailLoading ? (
+          <div className="flex h-96 items-center justify-center">
+            <Loader2 className="h-12 w-12 animate-spin text-black" />
+          </div>
+        ) : detailError ? (
+          <div className="p-12 text-center">
+            <AlertCircle className="mx-auto h-12 w-12 text-red-500" />
+            <p className="mt-4 text-lg font-medium text-red-600">{detailError}</p>
+          </div>
+        ) : selectedOrder ? (
+          <div className="scrollbar-hide max-h-screen overflow-y-auto">
+            {/* Header */}
+            <div className="bg-gradient-to-r from-gray-900 to-black p-8 text-white">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-3xl font-bold">Order #{selectedOrder.order_id}</h2>
+                  <p className="mt-2 text-sm opacity-90">Placed on {selectedOrder.date_added}</p>
+                </div>
+                <div className="text-right">
+                  <span
+                    className={`rounded-full px-4 py-2 text-sm font-semibold ${
+                      selectedOrder.order_status.includes("Processing")
+                        ? "bg-blue-600"
+                        : selectedOrder.order_status.includes("Cancelled")
+                          ? "bg-red-600"
+                          : "bg-green-600"
+                    }`}>
+                    {selectedOrder.order_status}
+                  </span>
+                </div>
+              </div>
+              {selectedOrder.delivery_date && (
+                <p className="mt-4 text-lg">
+                  Delivery Slot: <strong>{selectedOrder.delivery_date}</strong>
+                </p>
+              )}
+            </div>
+
+            <div className="p-8">
+              {/* Addresses */}
+              <div className="mb-10 grid gap-8 md:grid-cols-2">
+                <div>
+                  <h3 className="mb-4 text-lg font-semibold text-gray-900">Shipping Address</h3>
+                  <p
+                    className="text-gray-700"
+                    dangerouslySetInnerHTML={{ __html: selectedOrder.shipping_address }}
+                  />
+                  <p className="mt-3 text-sm text-gray-500">
+                    {selectedOrder.telephone} • {selectedOrder.email}
+                  </p>
+                </div>
+                <div>
+                  <h3 className="mb-4 text-lg font-semibold text-gray-900">Payment Method</h3>
+                  <p className="text-gray-700">{selectedOrder.payment_method}</p>
+                </div>
+              </div>
+
+              {/* Products */}
+              <div className="mb-10">
+                <h3 className="mb-6 text-xl font-semibold text-gray-900">Order Items</h3>
+                <div className="space-y-6">
+                  {selectedOrder.products.map((product) => (
+                    <div
+                      key={product.order_product_id}
+                      className="flex gap-6 rounded-lg border border-gray-200 bg-gray-50 p-6 transition-all hover:border-gray-400">
+                      <div className="relative h-28 w-28 flex-shrink-0 overflow-hidden rounded-lg bg-white">
+                        <Image
+                          src={product.image}
+                          alt={product.name}
+                          fill
+                          className="object-contain p-2"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900">{product.name}</h4>
+                        <p className="mt-1 text-sm text-gray-500">Model: {product.model}</p>
+                        <div className="mt-3 flex items-center justify-between">
+                          <div>
+                            <p className="text-sm">
+                              Quantity: <strong>{product.quantity}</strong>
+                            </p>
+                            <p className="text-sm">
+                              Price: <strong>{product.price}</strong>
+                            </p>
+                          </div>
+                          <p className="text-lg font-bold text-gray-900">{product.total}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Totals */}
+              <div className="border-t border-gray-200 pt-6">
+                <h3 className="mb-4 text-xl font-semibold text-gray-900">Order Summary</h3>
+                <div className="space-y-3">
+                  {selectedOrder.totals.map((total) => (
+                    <div key={total.order_total_id} className="flex justify-between text-base">
+                      <span className="text-gray-600">{total.title}</span>
+                      <span
+                        className={
+                          total.code === "total" ? "text-xl font-bold text-black" : "text-gray-900"
+                        }>
+                        {total.value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* History */}
+              {selectedOrder.histories.length > 0 && (
+                <div className="mt-10">
+                  <h3 className="mb-4 text-lg font-semibold text-gray-900">Order History</h3>
+                  <div className="space-y-3">
+                    {selectedOrder.histories.map((history, i) => (
+                      <div key={i} className="flex items-start gap-4 rounded-lg bg-gray-50 p-4">
+                        <div className="flex-shrink-0">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-black text-xs font-bold text-white">
+                            {i + 1}
+                          </div>
+                        </div>
+                        <div>
+                          <p className="font-medium text-gray-900">{history.status}</p>
+                          <p className="text-sm text-gray-600">{history.date_added}</p>
+                          {history.comment && (
+                            <p className="mt-2 text-sm text-gray-700">{history.comment}</p>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 export default function ProfileClient() {
   const [activeTab, setActiveTab] = useState("account");
   const {
@@ -265,7 +451,8 @@ export default function ProfileClient() {
     fetchCities,
     clearError: clearAddressError
   } = useAddressStore();
-
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
   // === ORDERS HOOKS - MUST BE CALLED UNCONDITIONALLY ===
   const {
     orders,
@@ -1177,7 +1364,7 @@ export default function ProfileClient() {
         {/* My Orders Tab */}
         {activeTab === "orders" && (
           <div className="relative -mx-4 -mb-8 min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
-            {/* Full-screen loader ONLY during initial load (when no orders yet) */}
+            {/* Full-screen loader ONLY during initial load */}
             {ordersLoading && orders.length === 0 && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
                 <div className="text-center">
@@ -1223,10 +1410,9 @@ export default function ProfileClient() {
               </div>
             )}
 
-            {/* Orders List – Shown as soon as there is data */}
+            {/* Orders List */}
             {orders.length > 0 && (
               <>
-                {/* Header */}
                 <div className="mx-auto max-w-7xl px-6 py-8">
                   <div className="flex items-center justify-between">
                     <div>
@@ -1238,14 +1424,16 @@ export default function ProfileClient() {
                   </div>
                 </div>
 
-                {/* Orders Grid */}
                 <div className="mx-auto max-w-7xl px-6 pb-16">
                   <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                     {orders.map((order, index) => (
-                      <Link
+                      <div
                         key={order.order_id}
-                        href={`/profile/orders/${order.order_id}`}
-                        className="group relative flex flex-col overflow-hidden bg-white transition-all duration-500 hover:-translate-y-2 hover:shadow-xl"
+                        onClick={() => {
+                          setSelectedOrderId(order.order_id);
+                          setDetailModalOpen(true);
+                        }}
+                        className="group relative flex cursor-pointer flex-col overflow-hidden bg-white transition-all duration-500 hover:-translate-y-2 hover:shadow-xl"
                         style={{ animation: `fadeInUp 0.5s ease-out ${index * 0.1}s both` }}>
                         {/* Status Badge */}
                         <div className="absolute top-3 left-3 z-10">
@@ -1291,15 +1479,14 @@ export default function ProfileClient() {
                           </div>
                         </div>
 
-                        {/* Hover overlay */}
                         <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
                           <div className="absolute inset-0 bg-gradient-to-br from-gray-50/50 via-transparent to-gray-50/50" />
                         </div>
-                      </Link>
+                      </div>
                     ))}
                   </div>
 
-                  {/* Load More Button */}
+                  {/* Load More */}
                   {hasMore && (
                     <div className="mt-12 text-center">
                       <button
@@ -1325,6 +1512,13 @@ export default function ProfileClient() {
             )}
           </div>
         )}
+
+        {/* Order Detail Modal */}
+        <OrderDetailModal
+          isOpen={detailModalOpen}
+          onClose={() => setDetailModalOpen(false)}
+          orderId={selectedOrderId!}
+        />
       </div>
 
       <style jsx>{`
