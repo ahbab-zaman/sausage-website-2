@@ -1205,16 +1205,6 @@ export default function ProfileClient() {
           </div>
         )}
 
-        {/* My Orders Tab */}
-        {activeTab === "orders" && (
-          <div className="animate-fadeIn space-y-6">
-            <h2 className="text-2xl font-bold text-black">My Orders</h2>
-
-            {/* Placeholder loading state */}
-            {/* <OrdersSkeleton /> */}
-          </div>
-        )}
-
         {/* Wishlist Tab - Now with full beautiful design */}
         {activeTab === "wishlist" && (
           <div className="-mx-4 -mb-8 min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
