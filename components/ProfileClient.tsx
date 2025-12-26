@@ -26,6 +26,7 @@ import Link from "next/link";
 import { useCart } from "@/hooks/useCart";
 import { useWishlist } from "@/hooks/useWishlist";
 import Image from "next/image";
+import { useOrderStore } from "@/stores/OrderStore";
 
 // Success Popup Component
 function SuccessPopup({ message, onClose }: { message: string; onClose: () => void }) {
@@ -185,31 +186,31 @@ function AddressSkeleton() {
 }
 
 // Orders Skeleton
-function OrdersSkeleton() {
-  return (
-    <div className="animate-fadeIn space-y-6">
-      {[1, 2, 3].map((i) => (
-        <div key={i} className="rounded-lg border border-gray-200 bg-white p-6">
-          <div className="mb-4 flex items-center justify-between">
-            <div className="h-6 w-32 animate-pulse rounded bg-gray-200" />
-            <div className="h-5 w-24 animate-pulse rounded bg-gray-200" />
-          </div>
-          <div className="space-y-4">
-            {[1, 2].map((j) => (
-              <div key={j} className="flex gap-4">
-                <div className="h-20 w-20 animate-pulse rounded bg-gray-200" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-4 w-48 animate-pulse rounded bg-gray-200" />
-                  <div className="h-3 w-32 animate-pulse rounded bg-gray-200" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}
+// function OrdersSkeleton() {
+//   return (
+//     <div className="animate-fadeIn space-y-6">
+//       {[1, 2, 3].map((i) => (
+//         <div key={i} className="rounded-lg border border-gray-200 bg-white p-6">
+//           <div className="mb-4 flex items-center justify-between">
+//             <div className="h-6 w-32 animate-pulse rounded bg-gray-200" />
+//             <div className="h-5 w-24 animate-pulse rounded bg-gray-200" />
+//           </div>
+//           <div className="space-y-4">
+//             {[1, 2].map((j) => (
+//               <div key={j} className="flex gap-4">
+//                 <div className="h-20 w-20 animate-pulse rounded bg-gray-200" />
+//                 <div className="flex-1 space-y-2">
+//                   <div className="h-4 w-48 animate-pulse rounded bg-gray-200" />
+//                   <div className="h-3 w-32 animate-pulse rounded bg-gray-200" />
+//                 </div>
+//               </div>
+//             ))}
+//           </div>
+//         </div>
+//       ))}
+//     </div>
+//   );
+// }
 
 // Wishlist Skeleton
 function WishlistSkeleton() {
@@ -264,6 +265,33 @@ export default function ProfileClient() {
     fetchCities,
     clearError: clearAddressError
   } = useAddressStore();
+
+  // === ORDERS HOOKS - MUST BE CALLED UNCONDITIONALLY ===
+  const {
+    orders,
+    isLoading: ordersLoading,
+    error: ordersError,
+    hasMore,
+    fetchOrders,
+    currentPage
+  } = useOrderStore();
+
+  const [loadingMore, setLoadingMore] = useState(false);
+
+  // Fetch orders when tab becomes active
+  useEffect(() => {
+    if (activeTab === "orders") {
+      fetchOrders(1); // Reset and fetch first page
+    }
+  }, [activeTab, fetchOrders]);
+
+  // Load more handler
+  const loadMore = async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    await fetchOrders(currentPage + 1);
+    setLoadingMore(false);
+  };
 
   // Account update states
   const [showAccountUpdateForm, setShowAccountUpdateForm] = useState(false);
@@ -555,7 +583,7 @@ export default function ProfileClient() {
 
           <button
             onClick={() => setActiveTab("address")}
-            className={`group relative flex items-center gap-2 pb-4 text-base font-medium transition-all duration-300 flex-shrink-0 whitespace-nowrap ${
+            className={`group relative flex flex-shrink-0 items-center gap-2 pb-4 text-base font-medium whitespace-nowrap transition-all duration-300 ${
               activeTab === "address" ? "text-black" : "text-gray-400 hover:text-gray-600"
             }`}>
             <MapPin className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
@@ -569,7 +597,7 @@ export default function ProfileClient() {
 
           <button
             onClick={() => setActiveTab("orders")}
-            className={`group relative flex items-center gap-2 pb-4 text-base font-medium transition-all duration-300 flex-shrink-0 whitespace-nowrap ${
+            className={`group relative flex flex-shrink-0 items-center gap-2 pb-4 text-base font-medium whitespace-nowrap transition-all duration-300 ${
               activeTab === "orders" ? "text-black" : "text-gray-400 hover:text-gray-600"
             }`}>
             <Package className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
@@ -583,7 +611,7 @@ export default function ProfileClient() {
 
           <button
             onClick={() => setActiveTab("wishlist")}
-            className={`group relative flex items-center gap-2 pb-4 text-base font-medium transition-all duration-300 flex-shrink-0 whitespace-nowrap ${
+            className={`group relative flex flex-shrink-0 items-center gap-2 pb-4 text-base font-medium whitespace-nowrap transition-all duration-300 ${
               activeTab === "wishlist" ? "text-black" : "text-gray-400 hover:text-gray-600"
             }`}>
             <Heart className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
@@ -996,18 +1024,7 @@ export default function ProfileClient() {
             <h2 className="text-2xl font-bold text-black">My Orders</h2>
 
             {/* Placeholder loading state */}
-            <OrdersSkeleton />
-
-            {/* Optional empty state (uncomment when implementing real data) */}
-            {/*
-            {orders.length === 0 && (
-              <div className="rounded-lg border-2 border-dashed border-gray-300 bg-white p-16 text-center">
-                <Package className="mx-auto h-16 w-16 animate-bounce text-gray-300" />
-                <h3 className="mt-4 text-xl font-semibold text-gray-900">No orders yet</h3>
-                <p className="mt-2 text-gray-600">Your order history will appear here</p>
-              </div>
-            )}
-            */}
+            {/* <OrdersSkeleton /> */}
           </div>
         )}
 
@@ -1073,7 +1090,7 @@ export default function ProfileClient() {
 
                 {/* Grid */}
                 <div className="mx-auto max-w-7xl px-6 pb-16">
-                  <div className="grid gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+                  <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                     {wishlistItems.map((item, index) => (
                       <div
                         key={item.product_id}
@@ -1151,6 +1168,158 @@ export default function ProfileClient() {
                       </div>
                     ))}
                   </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* My Orders Tab */}
+        {activeTab === "orders" && (
+          <div className="relative -mx-4 -mb-8 min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+            {/* Full-screen loader ONLY during initial load (when no orders yet) */}
+            {ordersLoading && orders.length === 0 && (
+              <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+                <div className="text-center">
+                  <Loader2 className="mx-auto h-12 w-12 animate-spin text-black" />
+                  <p className="mt-4 text-sm font-medium text-gray-600">Loading your orders...</p>
+                </div>
+              </div>
+            )}
+
+            {/* Error State */}
+            {ordersError && orders.length === 0 && (
+              <div className="flex min-h-screen items-center justify-center">
+                <div className="text-center">
+                  <AlertCircle className="mx-auto h-12 w-12 text-red-500" />
+                  <p className="mt-4 font-medium text-red-600">{ordersError}</p>
+                  <button
+                    onClick={() => fetchOrders(1)}
+                    className="mt-6 rounded-full bg-black px-8 py-3 text-white transition hover:scale-105">
+                    Retry
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Empty State */}
+            {!ordersLoading && orders.length === 0 && !ordersError && (
+              <div className="mx-auto max-w-2xl px-6 py-24 text-center">
+                <div className="mb-6 inline-flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-gray-100 to-gray-200 shadow-inner">
+                  <Package className="h-12 w-12 text-gray-400" />
+                </div>
+                <h1 className="mb-3 text-4xl font-bold tracking-tight text-gray-900">
+                  No Orders Yet
+                </h1>
+                <p className="mb-10 text-lg text-gray-600">
+                  Your order history will appear here once you place an order
+                </p>
+                <Link href="/products">
+                  <button className="group inline-flex items-center rounded-full bg-black px-8 py-6 text-base font-semibold text-white shadow-lg transition-all hover:scale-105">
+                    Start Shopping
+                    <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
+                  </button>
+                </Link>
+              </div>
+            )}
+
+            {/* Orders List – Shown as soon as there is data */}
+            {orders.length > 0 && (
+              <>
+                {/* Header */}
+                <div className="mx-auto max-w-7xl px-6 py-8">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h1 className="text-3xl font-bold tracking-tight text-gray-900">My Orders</h1>
+                      <p className="mt-2 text-sm text-gray-600">
+                        {orders.length} {orders.length === 1 ? "order" : "orders"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Orders Grid */}
+                <div className="mx-auto max-w-7xl px-6 pb-16">
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {orders.map((order, index) => (
+                      <Link
+                        key={order.order_id}
+                        href={`/profile/orders/${order.order_id}`}
+                        className="group relative flex flex-col overflow-hidden bg-white transition-all duration-500 hover:-translate-y-2 hover:shadow-xl"
+                        style={{ animation: `fadeInUp 0.5s ease-out ${index * 0.1}s both` }}>
+                        {/* Status Badge */}
+                        <div className="absolute top-3 left-3 z-10">
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-semibold tracking-wide uppercase ${
+                              order.order_status.includes("Processing")
+                                ? "bg-blue-100 text-blue-700"
+                                : order.order_status.includes("Cancelled")
+                                  ? "bg-red-100 text-red-700"
+                                  : "bg-green-100 text-green-700"
+                            }`}>
+                            {order.order_status.replace(" -Undeliverable", "")}
+                          </span>
+                        </div>
+
+                        <div className="flex flex-1 flex-col p-6">
+                          <div className="mb-4">
+                            <p className="text-xs font-medium tracking-wide text-gray-500 uppercase">
+                              Order #{order.order_id}
+                            </p>
+                            <p className="mt-1 text-sm text-gray-600">{order.date_added}</p>
+                          </div>
+
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <Package className="h-4 w-4" />
+                              <span>
+                                {order.products} {order.products === 1 ? "item" : "items"}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="border-t border-gray-100 pt-4">
+                            <div className="flex items-center justify-between">
+                              <p className="text-xs tracking-wide text-gray-500 uppercase">Total</p>
+                              <p className="text-lg font-bold text-gray-900">{order.total}</p>
+                            </div>
+                          </div>
+
+                          <div className="mt-4 flex items-center justify-end text-sm font-medium text-gray-500 transition-colors group-hover:text-black">
+                            View Details
+                            <ChevronRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                          </div>
+                        </div>
+
+                        {/* Hover overlay */}
+                        <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
+                          <div className="absolute inset-0 bg-gradient-to-br from-gray-50/50 via-transparent to-gray-50/50" />
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+
+                  {/* Load More Button */}
+                  {hasMore && (
+                    <div className="mt-12 text-center">
+                      <button
+                        onClick={loadMore}
+                        disabled={loadingMore}
+                        className="group inline-flex items-center gap-2 rounded-full bg-white px-8 py-4 text-base font-medium text-black shadow-lg transition-all hover:scale-105 disabled:opacity-50">
+                        {loadingMore ? (
+                          <>
+                            <Loader2 className="h-5 w-5 animate-spin" />
+                            Loading more...
+                          </>
+                        ) : (
+                          <>
+                            Load More Orders
+                            <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </>
             )}

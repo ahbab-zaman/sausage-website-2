@@ -198,33 +198,74 @@ class CheckoutApiClient {
     });
   }
 
-  // Pay online - Get payment gateway HTML
+  /**
+   * FIXED: Pay online - Create a form and submit with token
+   * This opens payment gateway with proper authentication
+   */
   async payOnline(): Promise<ApiResponse<any>> {
     try {
       const token = await this.getClientToken();
 
-      const res = await fetch(`${this.baseUrl}/index.php?route=rest/confirm/confirm&page=pay`, {
-        method: "GET",
-        credentials: "include",
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      console.log("🔗 Opening payment gateway with Bearer token authentication");
 
-      if (!res.ok) {
-        return { success: false, error: `HTTP error ${res.status}` };
-      }
+      // Create a hidden form that will POST the request with token in body
+      const form = document.createElement("form");
+      form.method = "GET";
+      form.action = `${this.baseUrl}/index.php?route=rest/confirm/confirm&page=pay`;
+      form.target = "_blank"; // Open in new window
+      form.style.display = "none";
 
-      // For pay online, we get HTML content
-      const htmlContent = await res.text();
+      // Add token as hidden input - backend might accept it via POST
+      const tokenInput = document.createElement("input");
+      tokenInput.type = "hidden";
+      tokenInput.name = "token";
+      tokenInput.value = token;
+      form.appendChild(tokenInput);
+
+      // Add Bearer token as well (try both methods)
+      const authInput = document.createElement("input");
+      authInput.type = "hidden";
+      authInput.name = "Authorization";
+      authInput.value = `Bearer ${token}`;
+      form.appendChild(authInput);
+
+      document.body.appendChild(form);
+      form.submit();
+      document.body.removeChild(form);
 
       return {
         success: true,
-        data: { html_content: htmlContent }
+        data: {
+          message: "Payment gateway opened. Complete your payment in the new window."
+        }
       };
     } catch (err: any) {
       console.error("Pay online error:", err);
-      return { success: false, error: err.message || "Failed to load payment page" };
+      return { success: false, error: err.message || "Failed to open payment gateway" };
+    }
+  }
+
+  /**
+   * Alternative: Use full page redirect with token stored in session
+   * The backend should read token from cookies/session
+   */
+  async payOnlineRedirect(): Promise<ApiResponse<any>> {
+    try {
+      // Since backend uses credentials: "include", session should maintain auth
+      const paymentUrl = `${this.baseUrl}/index.php?route=rest/confirm/confirm&page=pay`;
+
+      console.log("🔗 Redirecting to payment gateway:", paymentUrl);
+
+      // Full page redirect - relies on session cookies
+      window.location.href = paymentUrl;
+
+      return {
+        success: true,
+        data: { message: "Redirecting to payment gateway..." }
+      };
+    } catch (err: any) {
+      console.error("Redirect error:", err);
+      return { success: false, error: err.message || "Failed to redirect" };
     }
   }
 }

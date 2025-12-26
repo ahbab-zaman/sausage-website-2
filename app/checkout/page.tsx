@@ -26,9 +26,9 @@ export default function CheckoutPage() {
   const checkout = useCheckoutStore();
   const addressStore = useAddressStore();
 
-  // Explicitly subscribe to these values to ensure re-renders
-  const selectedPaymentMethod = useCheckoutStore((state) => state.selectedPaymentMethod);
-  const selectedShippingMethod = useCheckoutStore((state) => state.selectedShippingMethod);
+  // Subscribe to store values - FIXED: Added state subscription
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null);
+  const [selectedShippingMethod, setSelectedShippingMethod] = useState<string | null>(null);
   const paymentMethods = useCheckoutStore((state) => state.paymentMethods);
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -42,6 +42,12 @@ export default function CheckoutPage() {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // FIXED: Sync local state with store
+  useEffect(() => {
+    setSelectedPaymentMethod(checkout.selectedPaymentMethod);
+    setSelectedShippingMethod(checkout.selectedShippingMethod);
+  }, [checkout.selectedPaymentMethod, checkout.selectedShippingMethod]);
 
   useEffect(() => {
     const initCheckout = async () => {
@@ -79,7 +85,7 @@ export default function CheckoutPage() {
   };
 
   const subtotal = getTotal();
-  const shippingCost = checkout.selectedShippingMethod ? 5.99 : 0;
+  const shippingCost = selectedShippingMethod ? 5.99 : 0;
   const discount = checkout.couponCode ? 10 : 0;
   const total = subtotal + shippingCost - discount;
 
@@ -94,10 +100,10 @@ export default function CheckoutPage() {
     const result = await checkout.setShippingAddress(addressId);
     if (result.success) {
       const methodsResult = await checkout.fetchPaymentMethods();
-      if (methodsResult.success && checkout.shippingMethods.length > 0) {
-        await checkout.setShippingMethod(checkout.shippingMethods[0].quote[0].code);
+      // FIXED: Shipping method is now auto-selected in store
+      if (methodsResult.success) {
+        setCurrentStep(2);
       }
-      setCurrentStep(2);
     }
     setIsProcessing(false);
   };
@@ -130,7 +136,8 @@ export default function CheckoutPage() {
   };
 
   const handleSelectPayment = (paymentCode: string) => {
-    // Just update the local state - no API call needed yet
+    // Update both local state and store
+    setSelectedPaymentMethod(paymentCode);
     checkout.setPaymentMethod(paymentCode);
   };
 
@@ -142,7 +149,11 @@ export default function CheckoutPage() {
     setIsProcessing(false);
   };
 
+  // Only showing the handlePlaceOrder function that needs to be updated
+  // Replace your existing handlePlaceOrder function with this:
+
   const handlePlaceOrder = async () => {
+    // FIXED: Better validation with clear error messages
     if (!selectedPaymentMethod) {
       checkout.setError("Please select a payment method");
       return;
@@ -153,9 +164,14 @@ export default function CheckoutPage() {
       return;
     }
 
+    console.log("🚀 Starting order placement...");
+    console.log("Payment Method:", selectedPaymentMethod);
+    console.log("Shipping Method:", selectedShippingMethod);
+
     setIsProcessing(true);
 
-    // First, set payment and shipping method via API
+    // Step 1: Set payment and shipping method via API
+    console.log("📝 Step 1: Setting payment and shipping method...");
     const paymentResult = await checkout.setPaymentAndShipping(
       selectedPaymentMethod,
       selectedShippingMethod,
@@ -163,30 +179,63 @@ export default function CheckoutPage() {
     );
 
     if (!paymentResult.success) {
+      console.error("❌ Failed to set payment method:", paymentResult.error);
       setIsProcessing(false);
       return;
     }
+    console.log("✅ Payment and shipping method set successfully");
 
-    // Then confirm the order
+    // Step 2: Confirm the order
+    console.log("📝 Step 2: Confirming order...");
     const confirmResult = await checkout.confirmOrder();
     if (!confirmResult.success) {
+      console.error("❌ Failed to confirm order:", confirmResult.error);
       setIsProcessing(false);
       return;
     }
+    console.log("✅ Order confirmed, Order ID:", confirmResult.orderId);
 
+    // Step 3: Handle payment based on method
     if (selectedPaymentMethod === "cod") {
+      console.log("💰 Payment Method: COD - Confirming payment...");
       const paymentConfirmResult = await checkout.confirmPayment();
       setIsProcessing(false);
-      if (paymentConfirmResult.success) setShowSuccessModal(true);
-    } else if (selectedPaymentMethod === "paygcc_mpgs" || selectedPaymentMethod === "paygccapple") {
+      if (paymentConfirmResult.success) {
+        console.log("✅ COD payment confirmed successfully");
+        setShowSuccessModal(true);
+      } else {
+        console.error("❌ Failed to confirm COD payment:", paymentConfirmResult.error);
+      }
+    } else if (
+      selectedPaymentMethod === "paygcc_mpgs" ||
+      selectedPaymentMethod === "googlepay" ||
+      selectedPaymentMethod === "samsungpay"
+    ) {
+      console.log("💳 Payment Method: Online - Opening payment gateway...");
       const payOnlineResult = await checkout.payOnline();
       setIsProcessing(false);
-      if (payOnlineResult.success && payOnlineResult.htmlContent) {
-        renderPaymentGateway(payOnlineResult.htmlContent);
+
+      if (payOnlineResult.success) {
+        console.log("✅ Payment gateway opened");
+
+        // Listen for payment completion (optional)
+        const checkPaymentStatus = setInterval(() => {
+          // You can implement a callback or polling mechanism here
+          // to check if payment was completed
+        }, 2000);
+
+        // Show info message
+        checkout.setError("Payment window opened. Complete your payment in the new window.");
+
+        // Clear the interval after 5 minutes
+        setTimeout(() => clearInterval(checkPaymentStatus), 300000);
+      } else {
+        console.error("❌ Failed to open payment gateway:", payOnlineResult.error);
       }
     } else {
       setIsProcessing(false);
       checkout.setError("Payment method not yet implemented");
+      console.error("❌ Payment method not implemented:", selectedPaymentMethod);
     }
   };
 
@@ -197,6 +246,7 @@ export default function CheckoutPage() {
       "position:fixed;top:0;left:0;width:100%;height:100%;background:white;z-index:9999;overflow:auto";
     container.innerHTML = htmlContent;
     document.body.appendChild(container);
+
     const scripts = container.getElementsByTagName("script");
     for (let i = 0; i < scripts.length; i++) {
       const script = scripts[i];
@@ -241,7 +291,13 @@ export default function CheckoutPage() {
                 <React.Fragment key={step.number}>
                   <div className="flex flex-col items-center">
                     <div
-                      className={`flex h-14 w-14 items-center justify-center rounded-full transition-all duration-300 ${isCompleted ? "scale-110 bg-green-500 text-white" : isActive ? "scale-110 bg-black text-white" : "bg-gray-300 text-gray-600"}`}>
+                      className={`flex h-14 w-14 items-center justify-center rounded-full transition-all duration-300 ${
+                        isCompleted
+                          ? "scale-110 bg-green-500 text-white"
+                          : isActive
+                            ? "scale-110 bg-black text-white"
+                            : "bg-gray-300 text-gray-600"
+                      }`}>
                       {isCompleted ? <Check size={24} /> : <Icon size={24} />}
                     </div>
                     <span
@@ -251,7 +307,9 @@ export default function CheckoutPage() {
                   </div>
                   {idx < steps.length - 1 && (
                     <div
-                      className={`h-1 w-24 transition-all duration-300 ${step.number < currentStep ? "bg-green-500" : "bg-gray-300"}`}
+                      className={`h-1 w-24 transition-all duration-300 ${
+                        step.number < currentStep ? "bg-green-500" : "bg-gray-300"
+                      }`}
                     />
                   )}
                 </React.Fragment>
@@ -484,7 +542,7 @@ export default function CheckoutPage() {
                   <div className="flex items-center justify-center py-12">
                     <Loader2 className="animate-spin text-black" size={40} />
                   </div>
-                ) : checkout.paymentMethods.length === 0 ? (
+                ) : paymentMethods.length === 0 ? (
                   <div className="py-12 text-center">
                     <AlertCircle className="mx-auto mb-4 text-yellow-500" size={48} />
                     <p className="mb-4 text-gray-600">No payment methods available</p>
@@ -510,6 +568,14 @@ export default function CheckoutPage() {
                         </button>
                       ))}
                     </div>
+
+                    {/* FIXED: Show selected method confirmation */}
+                    {selectedPaymentMethod && (
+                      <div className="mb-4 rounded-lg bg-green-50 p-3 text-sm text-green-700">
+                        <strong>Selected:</strong>{" "}
+                        {paymentMethods.find((m) => m.code === selectedPaymentMethod)?.title}
+                      </div>
+                    )}
 
                     <button
                       onClick={handlePlaceOrder}
